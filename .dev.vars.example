@@ -1,0 +1,2 @@
+# Keep the real URI in .dev.vars and in a Wrangler secret, never in source control.
+MONGODB_URI=""

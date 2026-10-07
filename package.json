@@ -1,0 +1,24 @@
+{
+  "name": "animesparks-v2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "deploy": "npm run build && node scripts/prepare-deploy.mjs && wrangler deploy",
+    "postinstall": "node scripts/patch-tr46.mjs"
+  },
+  "dependencies": {
+    "astro": "7.3.6",
+    "@astrojs/cloudflare": "14.3.4",
+    "mongodb": "7.7.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.6",
+    "typescript": "^5.9.3",
+    "wrangler": "4.148.0"
+  }
+}

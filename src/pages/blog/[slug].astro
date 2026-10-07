@@ -1,0 +1,33 @@
+---
+import { env } from 'cloudflare:workers';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { withDatabase } from '../../lib/content/mongodb';
+import { getArticleBySlug } from '../../lib/content/articles';
+import { r2ImageUrl } from '../../lib/content/images';
+import { articleSeo, SITE } from '../../lib/content/seo';
+import { renderPortableText, tableOfContents } from '../../lib/content/portable-text';
+const slug = Astro.params.slug || '';
+const article = await withDatabase(env.MONGODB_URI, db => getArticleBySlug(db, slug));
+if (!article) return new Response('Article not found', { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Robots-Tag': 'noindex, nofollow' } });
+const seo = articleSeo(article);
+const hero = r2ImageUrl(article.mainImage);
+const authorImage = r2ImageUrl(article.author?.image);
+const toc = tableOfContents(article.body);
+const faq = (article.faq || []).filter(x => x.question && x.answer);
+const sources = (article.sources || []).filter(x => x.name || x.url);
+const published = article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) : '';
+const modified = seo.modified ? new Date(seo.modified).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) : '';
+const readTime = Math.max(1, Math.ceil((article.body || []).flatMap(x => x.children || []).map(x => x.text || '').join(' ').split(/\s+/).length / 225));
+---
+<SiteLayout title={`${seo.title} | AnimeSparks`} description={seo.description} canonical={seo.canonical} image={seo.image} socialTitle={seo.title} spanishAlternate={article.alternateSlug ? `${SITE}/es/blog/${article.alternateSlug}` : undefined} type="article" jsonLd={seo.jsonLd}>
+  <main class="article-page">
+    <div class="shell article-utility"><nav aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href={`${SITE}/blogs`}>Blogs</a>{article.categories[0] && <><span>/</span><a href={`${SITE}/categories/${article.categories[0].slug}`}>{article.categories[0].title}</a></>}</nav><nav aria-label="Language"><a href={`/blog/${article.slug}`} aria-current="page" hreflang="en">EN</a>{article.alternateSlug && <a href={`${SITE}/es/blog/${article.alternateSlug}`} hreflang="es">ES</a>}</nav></div>
+    <header class="article-hero">{hero && <img class="article-hero__image" src={hero} alt={article.mainImage?.alt || article.title} fetchpriority="high" />}<div class="shell article-hero__inner"><div class="article-classification">{article.categories.slice(0,2).map(category => <a href={`${SITE}/categories/${category.slug}`}>{category.title}</a>)}{article.articleType && <span>{article.articleType.replaceAll('-', ' ')}</span>}</div><h1>{article.title}</h1>{article.excerpt && <p class="article-deck">{article.excerpt}</p>}<p class="article-hero__foot"><span>{readTime} min read</span>{article.animeName && <span>{article.animeName}</span>}</p></div></header>
+    <div class="shell byline-bar"><div class="byline">{authorImage ? <img src={authorImage} alt={article.author?.name || ''} /> : <span class="avatar">{(article.author?.name || 'A')[0]}</span>}<div><a href="#article-author-heading">{article.author?.name || 'AnimeSparks Editorial'}</a><p>{modified && modified !== published ? `Updated ${modified} · Originally published ${published}` : published}</p></div></div><span>Share this case file</span></div>
+    <div class="shell reading-grid"><article class="article-content"><div class="portable-text" set:html={renderPortableText(article.body)} />
+      {article.tags?.length && <section class="tags" aria-labelledby="tags-heading"><h2 id="tags-heading">Filed under</h2><div>{article.tags.map(tag => <a href={`${SITE}/tags/${encodeURIComponent(tag)}`}>#{tag}</a>)}</div></section>}
+      {faq.length > 0 && <section class="reference-panel" aria-labelledby="faq-heading"><p class="kicker red">FAQ</p><h2 id="faq-heading">Frequently asked questions</h2>{faq.map(item => <details><summary>{item.question}</summary><p>{item.answer}</p></details>)}</section>}
+      {sources.length > 0 && <section class="sources"><details><summary>Sources & references <span>{sources.length} sources</span></summary><ol>{sources.map(source => <li>{source.url ? <a href={source.url} rel="noopener noreferrer">{source.name || source.url}</a> : source.name}</li>)}</ol></details></section>}
+    </article><aside class="article-sidebar"><nav aria-label="In this article"><p class="kicker">Contents</p><h2>In this article</h2><ol>{toc.map((item,index) => <li><a href={`#${item.id}`}><span>{String(index+1).padStart(2,'0')}</span>{item.title}</a></li>)}</ol></nav><section aria-labelledby="article-author-heading"><h2 id="article-author-heading">About the author</h2><p class="author-name">{article.author?.name || 'AnimeSparks Editorial'}</p>{article.author?.bio && <div class="author-bio" set:html={renderPortableText(article.author.bio)} />}</section></aside></div>
+  </main>
+</SiteLayout>

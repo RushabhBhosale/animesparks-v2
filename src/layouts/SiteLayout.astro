@@ -1,0 +1,47 @@
+---
+import '../styles/site.css';
+const { title, description, canonical, image, socialTitle = title, spanishAlternate, type = 'website', jsonLd = [] } = Astro.props as {
+  title: string; description: string; canonical: string; image: string; socialTitle?: string; spanishAlternate?: string; type?: 'website' | 'article'; jsonLd?: unknown[];
+};
+const testHost = new URL(Astro.request.url).hostname !== 'www.animesparks.blog';
+if (testHost) Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c');
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/favicon-48x48.png" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  <link rel="alternate" hreflang="en" href={canonical} />
+  {spanishAlternate && <link rel="alternate" hreflang="es" href={spanishAlternate} />}
+  <link rel="alternate" hreflang="x-default" href={canonical} />
+  <meta name="robots" content={testHost ? 'noindex, nofollow' : 'index, follow'} />
+  <meta property="og:title" content={socialTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:type" content={type} />
+  <meta property="og:site_name" content="AnimeSparks" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:image" content={image} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={socialTitle} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={image} />
+  {jsonLd.map(data => <script type="application/ld+json" set:html={safeJson(data)} />)}
+</head>
+<body>
+  <header class="site-header"><div class="shell site-header__inner">
+    <a href="/" class="wordmark" aria-label="AnimeSparks home"><span class="wordmark__spark">✦</span>AnimeSparks<span class="red">.</span></a>
+    <nav aria-label="Main navigation"><a href="/">Home</a><a href="https://www.animesparks.blog/blogs">Blogs</a><a href="https://www.animesparks.blog/categories">Sections</a><a href="https://www.animesparks.blog/trending">Trending</a><a href="https://www.animesparks.blog/blogs/es">ES</a></nav>
+  </div></header>
+  <slot />
+  <footer class="site-footer"><div class="shell footer-grid">
+    <div><a href="/" class="wordmark"><span class="wordmark__spark">✦</span>AnimeSparks<span class="red">.</span></a><p>Anime, examined closely.<br />Stories, characters, and the ideas that stay with us.</p></div>
+    <nav aria-label="Footer explore"><h2>Explore</h2><a href="https://www.animesparks.blog/blogs">All blogs</a><a href="https://www.animesparks.blog/categories">Editorial sections</a><a href="https://www.animesparks.blog/trending">Trending</a><a href="https://www.animesparks.blog/blogs/es">En español</a></nav>
+    <nav aria-label="Publication"><h2>The publication</h2><a href="https://www.animesparks.blog/about">About AnimeSparks</a><a href="https://www.animesparks.blog/contact">Contact</a><a href="https://www.animesparks.blog/rss.xml">RSS feed</a><a href="https://www.animesparks.blog/sitemap">Sitemap</a></nav>
+  </div><div class="shell site-footer__bottom">© {new Date().getFullYear()} AnimeSparks. All rights reserved. <a href="https://www.animesparks.blog/privacy">Privacy policy</a></div></footer>
+</body></html>

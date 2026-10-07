@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "animesparks-v2",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-10-07",
+  "workers_dev": true,
+  "vars": {
+    "MONGODB_DB_NAME": "animesparks"
+  }
+}

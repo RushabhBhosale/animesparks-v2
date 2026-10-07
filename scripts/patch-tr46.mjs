@@ -1,0 +1,11 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const file = require.resolve('tr46');
+const before = readFileSync(file, 'utf8');
+const original = 'require("punycode/")';
+const replacement = 'require("node:punycode")';
+if (before.includes(replacement)) process.exit(0);
+if (!before.includes(original)) throw new Error('Unexpected tr46 package shape; review MongoDB Worker compatibility');
+writeFileSync(file, before.replace(original, replacement));
+console.log('Prepared MongoDB URL dependency for Cloudflare workerd');

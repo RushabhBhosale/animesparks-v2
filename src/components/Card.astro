@@ -1,0 +1,18 @@
+---
+import type { ArticleCard } from '../lib/content/types';
+import { r2ImageUrl } from '../lib/content/images';
+const { article, layout = 'grid' } = Astro.props as { article: ArticleCard; layout?: 'grid' | 'row' };
+const image = r2ImageUrl(article.mainImage);
+const date = article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+---
+<article class:list={['story-card', layout === 'row' && 'story-card--row']}>
+  <a class="story-card__image" href={`/blog/${article.slug}`} aria-label={`Read ${article.title}`}>
+    {image && <img src={image} alt={article.mainImage?.alt || article.title} loading="lazy" decoding="async" />}
+  </a>
+  <div class="story-card__body">
+    <div class="story-card__meta">{article.categories[0] && <a href={`https://www.animesparks.blog/categories/${article.categories[0].slug}`}>{article.categories[0].title}</a>}{date && <time datetime={article.publishedAt}>{date}</time>}</div>
+    <h3><a href={`/blog/${article.slug}`}>{article.title}</a></h3>
+    {article.excerpt && <p>{article.excerpt}</p>}
+    <span class="story-card__author">{article.author?.name || 'AnimeSparks Editorial'}</span>
+  </div>
+</article>
