@@ -66,6 +66,7 @@ jobs:
       - name: Build and verify production assets
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          CLOUDFLARE_INCLUDE_PROCESS_ENV: "true"
           MONGODB_DB_NAME: animesparks
           CONTENT_FINGERPRINT: ${{ needs.detect.outputs.fingerprint }}
           ADMIN_WRITES_ENABLED: ${{ vars.ADMIN_WRITES_ENABLED }}

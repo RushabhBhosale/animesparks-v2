@@ -31,9 +31,10 @@ if (production) {
     stdio: 'inherit',
   });
   if (fingerprintManifest.status !== 0) process.exit(fingerprintManifest.status ?? 1);
-  // Wrangler's prerender environment may leave the local .dev.vars file in
-  // the server output. It is only a build input and must never ship.
+  // Wrangler's isolated prerender environment may leave temporary .dev.vars
+  // files in the server output. They are build inputs and must never ship.
   rmSync('dist/server/.dev.vars', { force: true });
+  rmSync('dist/server/.prerender/.dev.vars', { force: true });
   const verification = spawnSync(process.execPath, ['scripts/verify-production-build.mjs'], {
     env: environment,
     stdio: 'inherit',
