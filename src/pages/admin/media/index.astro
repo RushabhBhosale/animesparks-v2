@@ -1,0 +1,160 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { env } from 'cloudflare:workers';
+import { withDatabase } from '../../../lib/content/mongodb';
+import { isWritesEnabled } from '../../../lib/admin/write-guard';
+import type { ArticleDocument } from '../../../lib/content/types';
+
+const cursor = Astro.url.searchParams.get('cursor') || undefined;
+const prefix = Astro.url.searchParams.get('prefix') || '';
+const writesEnabled = isWritesEnabled(env);
+
+interface MediaItem {
+  key: string;
+  size?: number;
+  uploaded?: string;
+  publicUrl: string;
+}
+
+let items: MediaItem[] = [];
+let nextCursor: string | undefined = undefined;
+
+// Attempt listing from native Cloudflare R2 bucket binding first
+if (env.IMAGES_BUCKET && typeof env.IMAGES_BUCKET.list === 'function') {
+  try {
+    const listRes = await env.IMAGES_BUCKET.list({
+      limit: 36,
+      cursor,
+      prefix: prefix || undefined,
+    });
+    items = listRes.objects.map((obj: { key: string; size: number; uploaded: Date }) => ({
+      key: obj.key,
+      size: obj.size,
+      uploaded: obj.uploaded ? new Date(obj.uploaded).toLocaleDateString() : undefined,
+      publicUrl: `https://images.animesparks.blog/${obj.key.split('/').map(encodeURIComponent).join('/')}`,
+    }));
+    if (listRes.truncated) nextCursor = listRes.cursor;
+  } catch (err) {
+    console.error('R2 list error:', err);
+  }
+}
+
+// Fallback: If R2 binding is not available in local simulation, query distinct image assets from MongoDB
+if (items.length === 0) {
+  const mongoAssets = await withDatabase(env.MONGODB_URI, async db => {
+    return db.collection<ArticleDocument>('articles').aggregate([
+      { $match: { 'mainImage.asset.r2Key': { $exists: true, $ne: null } } },
+      { $project: { _id: 0, key: '$mainImage.asset.r2Key', title: '$title' } },
+      { $limit: 36 },
+    ]).toArray();
+  });
+
+  items = mongoAssets.map(doc => ({
+    key: doc.key as string,
+    publicUrl: `https://images.animesparks.blog/${(doc.key as string).split('/').map(encodeURIComponent).join('/')}`,
+  }));
+}
+---
+
+<AdminLayout title="Media Library" activeNav="media">
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-header__title">Media Library</h1>
+      <p class="admin-header__desc">
+        R2 Storage Bucket: <code>animesparks-staging</code> (served via <code>https://images.animesparks.blog/</code>)
+      </p>
+    </div>
+
+    <div class="admin-header__actions">
+      <button
+        type="button"
+        class="btn btn--primary"
+        disabled={!writesEnabled}
+        title={!writesEnabled ? 'Uploads disabled by safety guard' : 'Upload image'}
+      >
+        {writesEnabled ? 'Upload Image' : 'Upload (Disabled by Guard)'}
+      </button>
+    </div>
+  </div>
+
+  <!-- Media Search Filter -->
+  <form method="GET" action="/admin/media" class="admin-filters">
+    <div class="admin-filters__search">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input
+        type="search"
+        name="prefix"
+        value={prefix}
+        placeholder="Filter by prefix or path (e.g. images/)..."
+      />
+    </div>
+    <button type="submit" class="btn btn--secondary btn--sm">Filter</button>
+    {prefix && <a href="/admin/media" class="btn btn--secondary btn--sm">Reset</a>}
+  </form>
+
+  <!-- Media Grid -->
+  <div class="media-grid">
+    {items.map(item => (
+      <div class="media-item" data-url={item.publicUrl} data-key={item.key}>
+        <div class="media-item__thumb">
+          <img
+            src={item.publicUrl}
+            alt={item.key}
+            loading="lazy"
+            decoding="async"
+            onerror="this.onerror=null; this.src='/favicon-48x48.png';"
+          />
+        </div>
+        <div class="media-item__info">
+          <div class="media-item__key" title={item.key}>{item.key}</div>
+          <div class="media-item__meta">
+            <span>{item.size ? `${Math.round(item.size / 1024)} KB` : 'R2 asset'}</span>
+            <button
+              type="button"
+              class="copy-url-btn btn btn--secondary btn--sm"
+              style="padding: 2px 6px; font-size: 10px;"
+              data-copy={item.publicUrl}
+            >
+              Copy URL
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {items.length === 0 && (
+    <div style="text-align: center; padding: 60px 20px; color: var(--admin-text-muted);">
+      No media assets found matching the query.
+    </div>
+  )}
+
+  <!-- Pagination via cursor -->
+  {nextCursor && (
+    <div style="margin-top: 24px; text-align: center;">
+      <a href={`/admin/media?cursor=${encodeURIComponent(nextCursor)}&prefix=${encodeURIComponent(prefix)}`} class="btn btn--secondary">
+        Load Next Page →
+      </a>
+    </div>
+  )}
+
+  <script>
+    document.querySelectorAll<HTMLButtonElement>('.copy-url-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const url = btn.dataset.copy;
+        if (!url) return;
+        try {
+          await navigator.clipboard.writeText(url);
+          const orig = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        } catch {
+          // ignore
+        }
+      });
+    });
+  </script>
+</AdminLayout>

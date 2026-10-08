@@ -1,0 +1,84 @@
+---
+import '../../styles/admin.css';
+import { env } from 'cloudflare:workers';
+import { verifySession } from '../../lib/admin/auth';
+
+// If already logged in, redirect straight to dashboard
+const user = await verifySession(Astro.request, env.ADMIN_JWT_SECRET);
+if (user) {
+  return Astro.redirect('/admin');
+}
+
+const error = Astro.url.searchParams.get('error');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="/favicon-48x48.png" />
+  <title>Admin Login — AnimeSparks CMS</title>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body class="admin-body">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-brand">
+        <div class="admin-sidebar__logo" aria-hidden="true">✦</div>
+        <h1>AnimeSparks Admin</h1>
+      </div>
+
+      {error === 'invalid' && (
+        <div class="login-error">
+          Invalid username or password. Please try again.
+        </div>
+      )}
+
+      {error === 'missing_config' && (
+        <div class="login-error">
+          Admin secrets are not configured in Wrangler environment.
+        </div>
+      )}
+
+      <form action="/api/admin/auth/login" method="POST">
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            required
+            autocomplete="username"
+            class="form-input"
+            placeholder="admin"
+          />
+        </div>
+
+        <div class="form-group" style="margin-top: 14px;">
+          <label class="form-label" for="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autocomplete="current-password"
+            class="form-input"
+            placeholder="••••••••••••"
+          />
+        </div>
+
+        <div style="margin-top: 24px;">
+          <button type="submit" class="btn btn--primary" style="width: 100%; padding: 10px;">
+            Sign in to Dashboard
+          </button>
+        </div>
+      </form>
+
+      <div style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--admin-text-faint);">
+        Protected area. Authorized editorial staff only.
+      </div>
+    </div>
+  </div>
+</body>
+</html>

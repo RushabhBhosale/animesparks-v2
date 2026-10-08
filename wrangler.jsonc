@@ -4,7 +4,25 @@
   "main": "@astrojs/cloudflare/entrypoints/server",
   "compatibility_date": "2026-10-07",
   "workers_dev": true,
+  "assets": {
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "routes": [
+    { "pattern": "admin.animesparks.blog", "custom_domain": true }
+  ],
   "vars": {
-    "MONGODB_DB_NAME": "animesparks"
-  }
+    "MONGODB_DB_NAME": "animesparks",
+    // Keep all admin database and R2 mutations disabled during pre-production.
+    "ADMIN_WRITES_ENABLED": "false"
+  },
+  // Native R2 bucket binding — images.animesparks.blog is a custom domain on this bucket.
+  // The bucket name is confirmed as "animesparks-staging".
+  // Never expose R2 credentials to the browser; all access is server-side via this binding.
+  "r2_buckets": [
+    {
+      "binding": "IMAGES_BUCKET",
+      "bucket_name": "animesparks-staging"
+    }
+  ]
 }

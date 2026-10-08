@@ -1,0 +1,14 @@
+---
+export const prerender = true;
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { SITE, homeImage } from '../lib/content/seo';
+const email = 'rushabhbhosale25757@gmail.com';
+const contacts = [
+  ['Editorial tips & pitches', 'Send story ideas, lore deep-dives, and exclusive insights.'],
+  ['Corrections & fact checks', 'Flag inaccuracies with episode numbers, sources, and screenshots.'],
+  ['Partnerships & sponsors', 'Collaborations, sponsorships, and brand placements.'],
+];
+---
+<SiteLayout title="Contact | AnimeSparks" socialTitle="Contact" description="Get in touch with AnimeSparks for questions, feedback, or collaboration inquiries related to anime content and analysis." canonical={`${SITE}/contact`} image={homeImage}>
+  <main><header class="page-hero"><div class="shell"><p class="kicker red">Contact</p><h1>Contact AnimeSparks<span class="red">.</span></h1><p>Direct lines to the editorial desk for pitches, sourcing, corrections, and brand conversations.</p></div></header><div class="shell editorial-section"><div class="contact-grid">{contacts.map(([heading, note]) => <section class="side-panel"><h2>{heading}</h2><p>{note}</p><a href={`mailto:${email}`}>{email} ↗</a>{heading === 'Partnerships & sponsors' && <p><a href="tel:+919137996317">+91 9137996317</a></p>}</section>)}</div><div class="contact-grid contact-detail"><section class="side-panel"><h2>What to include</h2><ul><li>Series/episode/chapter, character names, and source links.</li><li>Context screenshots or timestamps for lore or corrections.</li><li>Clear headline and 2–3 lines summarizing the pitch.</li><li>Preferred credit name and any embargo or exclusivity notes.</li></ul></section><section class="side-panel"><h2>Response window</h2><p>We typically reply within 24–48 hours on weekdays. Urgent corrections are prioritized.</p><p>For immediate takedowns or sensitive tips, mark the subject line with <strong>[TIME-SENSITIVE]</strong>.</p></section></div></div></main>
+</SiteLayout>

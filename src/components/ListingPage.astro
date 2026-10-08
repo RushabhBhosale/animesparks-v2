@@ -1,0 +1,206 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import Card from './Card.astro';
+import type { ArticleCard, CategoryDocument } from '../lib/content/types';
+import { homeImage } from '../lib/content/seo';
+import { listingHref } from '../lib/content/listing';
+
+export interface Props {
+  eyebrow: string;
+  heading: string;
+  description: string;
+  metaDescription?: string;
+  title: string;
+  socialTitle?: string;
+  canonical: string;
+  posts: ArticleCard[];
+  categories?: CategoryDocument[];
+  tags?: string[];
+  locale?: 'en' | 'es';
+  path: string;
+  query?: string;
+  sort?: string;
+  range?: string;
+  page: number;
+  pageCount: number;
+  total: number;
+  robotsNoindex?: boolean;
+  showSearch?: boolean;
+  showRange?: boolean;
+  showExcerpt?: boolean;
+  jsonLd?: unknown[];
+}
+
+const {
+  eyebrow,
+  heading,
+  description,
+  metaDescription = description,
+  title,
+  socialTitle = title.replace(/ \| AnimeSparks$/, ''),
+  canonical,
+  posts,
+  categories = [],
+  tags = [],
+  locale = 'en',
+  path,
+  query = '',
+  sort = '',
+  range = '',
+  page,
+  pageCount,
+  total,
+  robotsNoindex = false,
+  showSearch = false,
+  showRange = false,
+  showExcerpt = true,
+  jsonLd = [],
+} = Astro.props;
+
+const es = locale === 'es';
+const filters = { q: query || undefined, sort: sort || undefined, range: range || undefined };
+---
+
+<SiteLayout
+  title={title}
+  socialTitle={socialTitle}
+  description={metaDescription}
+  canonical={canonical}
+  image={homeImage}
+  lang={locale}
+  robotsNoindex={robotsNoindex}
+  jsonLd={jsonLd}
+>
+  <main class="listing-page" lang={locale}>
+    <header class="page-hero">
+      <div class="shell">
+        <p class="kicker red">{eyebrow}</p>
+        <h1>{heading}<span class="text-accent">.</span></h1>
+        <p>{description}</p>
+      </div>
+    </header>
+
+    <div class="shell listing-layout">
+      <section class="listing-main" aria-label={heading}>
+        {showSearch && (
+          <form class="search-form" action={path} method="get">
+            <label for="listing-query">{es ? 'Buscar artículos' : 'Search articles'}</label>
+            <div>
+              <input
+                id="listing-query"
+                type="search"
+                name="q"
+                value={query}
+                placeholder={es ? 'Busca un tema o serie' : 'Search a topic or series'}
+              />
+              <button type="submit">{es ? 'Buscar' : 'Search'} ↗</button>
+            </div>
+          </form>
+        )}
+
+        <nav class="listing-filters" aria-label={es ? 'Orden de artículos' : 'Article order'}>
+          <a
+            href={listingHref(path, { q: query || undefined, range: range || undefined }, 1)}
+            aria-current={!sort ? 'page' : undefined}
+          >
+            {es ? 'Todos los artículos' : 'All blogs'}
+          </a>
+          <a
+            href={listingHref(path, { q: query || undefined, sort: 'recent', range: range || undefined }, 1)}
+            aria-current={sort === 'recent' ? 'page' : undefined}
+          >
+            {es ? 'Más recientes' : 'Newest first'}
+          </a>
+          <a
+            href={listingHref(path, { q: query || undefined, sort: 'popular', range: range || undefined }, 1)}
+            aria-current={sort === 'popular' ? 'page' : undefined}
+          >
+            {es ? 'Populares' : 'Popular'}
+          </a>
+          <span>{total} {es ? 'artículos' : 'blogs'}</span>
+        </nav>
+
+        {showRange && (
+          <nav class="listing-filters" aria-label="Time range">
+            {(['week', 'month', 'year'] as const).map(value => (
+              <a
+                href={listingHref(path, { sort: sort || undefined, range: value }, 1)}
+                aria-current={range === value ? 'page' : undefined}
+              >
+                {value}
+              </a>
+            ))}
+            <a href={listingHref(path, { sort: 'discussed', range }, 1)}>Discussed</a>
+            <a href={listingHref(path, { sort: 'visual', range }, 1)}>Visual</a>
+          </nav>
+        )}
+
+        {posts.length > 0 ? (
+          <div class="story-list">
+            {posts.map(post => (
+              <Card article={post} locale={post.language} variant="horizontal" showExcerpt={showExcerpt} />
+            ))}
+          </div>
+        ) : (
+          <p class="empty-state">
+            {es ? 'No se encontraron artículos.' : 'No articles found matching your criteria.'}
+          </p>
+        )}
+
+        {pageCount > 1 && (
+          <nav class="pagination" aria-label="Pagination">
+            {page > 1 && (
+              <a href={listingHref(path, filters, page - 1)}>
+                ← {es ? 'Anterior' : 'Previous'}
+              </a>
+            )}
+            <span>{page} / {pageCount}</span>
+            {page < pageCount && (
+              <a href={listingHref(path, filters, page + 1)}>
+                {es ? 'Siguiente' : 'Next'} →
+              </a>
+            )}
+          </nav>
+        )}
+      </section>
+
+      <aside class="listing-sidebar">
+        {categories.length > 0 && (
+          <section class="side-panel">
+            <p class="side-panel__label">{es ? 'Explorar' : 'Explore'}</p>
+            <h2>{es ? 'Secciones editoriales' : 'Editorial sections'}</h2>
+            <div class="side-links">
+              {categories.map(category => (
+                <a class="side-link" href={`/categories/${category.slug}`}>
+                  <span>{category.title}</span>
+                  <span aria-hidden="true">→</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {tags.length > 0 && (
+          <section class="side-panel">
+            <p class="side-panel__label">Further reading</p>
+            <h2>Explore a topic</h2>
+            <div class="tag-cloud">
+              {tags.map(tag => (
+                <a href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section class="side-panel panel-highlight">
+          <p class="side-panel__label">Editions</p>
+          <h2>{es ? 'Elige tu idioma' : 'Read in your language'}</h2>
+          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+            <a href="/blogs" hreflang="en" style="color: #fff; font-weight: 700;">English Edition ↗</a>
+            <a href="/blogs/es" hreflang="es" style="color: #fff; font-weight: 700;">Edición en Español ↗</a>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</SiteLayout>

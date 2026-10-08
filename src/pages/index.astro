@@ -1,24 +1,231 @@
 ---
-import { env } from 'cloudflare:workers';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Card from '../components/Card.astro';
-import { withDatabase } from '../lib/content/mongodb';
-import { getHomepage } from '../lib/content/homepage';
+import { getBuildData } from '../lib/content/build-data';
 import { r2ImageUrl } from '../lib/content/images';
 import { SITE, homeDescription, homeImage, homeTitle } from '../lib/content/seo';
-const data = await withDatabase(env.MONGODB_URI, getHomepage);
+
+export const prerender = true;
+const data = (await getBuildData()).home;
 const featured = data.featured;
 const hero = r2ImageUrl(featured?.mainImage);
 ---
+
 <SiteLayout title={homeTitle} description={homeDescription} canonical={SITE} image={homeImage}>
-  <main class="home-page"><div class="shell">
-    <div class="edition-line"><span><i></i> Independent anime editorial</span><span>Analysis / Characters / Culture</span></div>
-    <nav class="section-nav" aria-label="Editorial sections"><span class="kicker">Explore</span>{data.sections.map(section => <a href={`${SITE}/categories/${section.slug}`}>{section.title}</a>)}<a href={`${SITE}/categories`}>All sections ↗</a></nav>
-    {featured && <section class="cover-story" aria-labelledby="cover-title">
-      <div class="cover-story__copy"><p class="kicker lime">The cover story <span class="muted">/ 01</span></p>{featured.categories[0] && <a class="category-link" href={`${SITE}/categories/${featured.categories[0].slug}`}>{featured.categories[0].title}</a>}<h1 id="cover-title"><a href={`/blog/${featured.slug}`}>{featured.title}</a></h1><p class="cover-story__deck">{featured.excerpt}</p><p class="cover-story__byline">{featured.author?.name || 'AnimeSparks Editorial'} {featured.publishedAt && <time datetime={featured.publishedAt}>{new Date(featured.publishedAt).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</time>}</p><a class="read-button" href={`/blog/${featured.slug}`}>Read the story ↗</a></div>
-      {hero && <a class="cover-story__image" href={`/blog/${featured.slug}`} aria-label={`Read ${featured.title}`}><img src={hero} alt={featured.mainImage?.alt || featured.title} fetchpriority="high" /><span>AnimeSparks · Featured Story</span></a>}
-    </section>}
-    <section class="editorial-section" aria-labelledby="editors-heading"><div class="section-heading"><div><p class="kicker">Selected reading</p><h2 id="editors-heading">Editor’s picks<span class="red">.</span></h2></div><a href={`${SITE}/blogs`}>Explore the archive ↗</a></div><div class="card-grid">{data.editorsPicks.map(article => <Card article={article} />)}</div></section>
-    <div class="home-columns editorial-section"><section aria-labelledby="latest-heading"><div class="section-heading"><div><p class="kicker">From the editorial desk</p><h2 id="latest-heading">Latest stories<span class="red">.</span></h2></div><a href={`${SITE}/blogs`}>View all ↗</a></div><div class="story-list">{data.latest.map(article => <Card article={article} layout="row" />)}</div><a class="archive-link" href={`${SITE}/blogs`}>Browse all blogs ↗</a></section><aside class="home-sidebar"><section class="side-panel"><p class="kicker">The reading list</p><h2>Popular this week</h2><ol>{data.popular.map((article, index) => <li><span>{String(index + 1).padStart(2,'0')}</span><a href={`/blog/${article.slug}`}>{article.title}</a></li>)}</ol></section><section class="side-panel"><p class="kicker">Find your next read</p><h2>Editorial sections</h2>{data.sections.map(section => <a class="side-link" href={`${SITE}/categories/${section.slug}`}>{section.title} ↗</a>)}</section><section class="side-panel rss-panel"><p class="kicker">Keep reading</p><h2>A closer look at anime.</h2><p>New essays, character studies, and story breakdowns in your feed reader.</p><a href={`${SITE}/rss.xml`}>Follow via RSS ↗</a></section></aside></div>
-  </div></main>
+  <main class="home-page">
+    <div class="shell">
+      <!-- Edition Header Strip -->
+      <!-- Quick Section Navigation -->
+      <nav class="section-nav" aria-label="Editorial sections">
+        <span class="section-nav__label">Explore</span>
+        {data.sections.map(section => (
+          <a href={`/categories/${section.slug}`}>{section.title}</a>
+        ))}
+        <a class="section-nav__all" href="/categories">All sections ↗</a>
+      </nav>
+
+      <!-- Featured Story / Cover Story -->
+      {featured && (
+        <section class="cover-story" aria-labelledby="cover-title">
+          <div class="cover-story__copy">
+            <div class="cover-story__eyebrow">
+              <span class="kicker red">Cover Story</span>
+              {featured.categories[0] && (
+                <a class="cover-story__category" href={`/categories/${featured.categories[0].slug}`}>
+                  {featured.categories[0].title}
+                </a>
+              )}
+            </div>
+
+            <h1 id="cover-title" class="cover-story__title">
+              <a href={`/blog/${featured.slug}`}>{featured.title}</a>
+            </h1>
+
+            {featured.excerpt && (
+              <p class="cover-story__excerpt">{featured.excerpt}</p>
+            )}
+
+            <div class="cover-story__meta">
+              <span>{featured.author?.name || 'AnimeSparks Editorial'}</span>
+              {featured.publishedAt && (
+                <time datetime={featured.publishedAt}>
+                  {new Date(featured.publishedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </time>
+              )}
+            </div>
+
+            <a class="cover-story__cta" href={`/blog/${featured.slug}`}>
+              <span>Read the story</span>
+              <span aria-hidden="true">→</span>
+            </a>
+          </div>
+
+          {hero && (
+            <div class="cover-story__image-wrap">
+              <a href={`/blog/${featured.slug}`} aria-label={`Read ${featured.title}`}>
+                <img
+                  src={hero}
+                  alt={featured.mainImage?.alt || featured.title}
+                  fetchpriority="high"
+                  loading="eager"
+                />
+              </a>
+            </div>
+          )}
+        </section>
+      )}
+
+      <!-- Editor's Picks -->
+      {data.editorsPicks.length > 0 && (
+        <section class="editorial-section" aria-labelledby="editors-heading">
+          <div class="section-header">
+            <div>
+              <p class="kicker">Selected Reading</p>
+              <h2 id="editors-heading">Editor’s Picks<span class="text-accent">.</span></h2>
+            </div>
+            <a class="section-header__link" href="/blogs">Explore the archive ↗</a>
+          </div>
+          <div class="card-grid card-grid--3">
+            {data.editorsPicks.map(article => (
+              <Card article={article} variant="large" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Latest Stories + Editorial Sidebar -->
+      <div class="home-columns editorial-section">
+        <section class="home-main" aria-labelledby="latest-heading">
+          <div class="section-header">
+            <div>
+              <p class="kicker">From the Editorial Desk</p>
+              <h2 id="latest-heading">Latest Stories<span class="text-accent">.</span></h2>
+            </div>
+            <a class="section-header__link" href="/blogs">View all ↗</a>
+          </div>
+
+          <div class="story-list">
+            {data.latest.map(article => (
+              <Card article={article} variant="horizontal" />
+            ))}
+          </div>
+
+          <div style="margin-top: 32px;">
+            <a class="outline-button" href="/blogs">Browse full archive ↗</a>
+          </div>
+        </section>
+
+        <!-- Sidebar -->
+        <aside class="home-sidebar">
+          {data.popular.length > 0 && (
+            <section class="side-panel" aria-labelledby="popular-heading">
+              <p class="side-panel__label">The Reading List</p>
+              <h2 id="popular-heading">Popular this week</h2>
+              <ol>
+                {data.popular.map((article, index) => (
+                  <li>
+                    <span class="side-panel__num">{String(index + 1).padStart(2, '0')}</span>
+                    <a href={`/blog/${article.slug}`}>{article.title}</a>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {data.sections.length > 0 && (
+            <section class="side-panel" aria-labelledby="sections-heading">
+              <p class="side-panel__label">Find Your Next Read</p>
+              <h2 id="sections-heading">Editorial Sections</h2>
+              <div class="side-links">
+                {data.sections.map(section => (
+                  <a class="side-link" href={`/categories/${section.slug}`}>
+                    <span>{section.title}</span>
+                    <span aria-hidden="true">→</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section class="side-panel panel-highlight" aria-labelledby="rss-heading">
+            <p class="side-panel__label">Stay Updated</p>
+            <h2 id="rss-heading">A closer look at anime.</h2>
+            <p>New essays, character studies, and episode breakdowns directly in your feed.</p>
+            <div style="margin-top: 16px;">
+              <a href="/rss.xml">Follow via RSS feed ↗</a>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <!-- Anime Series In Focus (Clusters) -->
+      {data.animeClusters.length > 0 && (
+        <section class="editorial-section" aria-labelledby="clusters-heading">
+          <div class="section-header">
+            <div>
+              <p class="kicker">Series in Focus</p>
+              <h2 id="clusters-heading">Explore by Anime<span class="text-accent">.</span></h2>
+            </div>
+            <a class="section-header__link" href="/my-anime-list">Anime database ↗</a>
+          </div>
+          <div class="cluster-grid">
+            {data.animeClusters.map(cluster => {
+              const coverUrl = r2ImageUrl(cluster.cover);
+              return (
+                <a class="cluster-card" href={`/search?q=${encodeURIComponent(cluster.name)}`}>
+                  {coverUrl && (
+                    <img src={coverUrl} alt={cluster.name} loading="lazy" decoding="async" />
+                  )}
+                  <div class="cluster-card__text">
+                    <span>{cluster.name}</span>
+                    <small>{cluster.count} {cluster.count === 1 ? 'article' : 'articles'}</small>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      <!-- Trending Section -->
+      {data.trending.length > 0 && (
+        <section class="editorial-section" aria-labelledby="trending-heading">
+          <div class="section-header">
+            <div>
+              <p class="kicker">In Focus</p>
+              <h2 id="trending-heading">Trending Now<span class="text-accent">.</span></h2>
+            </div>
+            <a class="section-header__link" href="/trending">All trending ↗</a>
+          </div>
+          <div class="card-grid card-grid--3">
+            {data.trending.slice(0, 6).map(article => (
+              <Card article={article} variant="standard" />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Spanish Content Section (if available) -->
+      {data.spanish.length > 0 && (
+        <section class="editorial-section" aria-labelledby="spanish-heading">
+          <div class="section-header">
+            <div>
+              <p class="kicker">Edición en Español</p>
+              <h2 id="spanish-heading">AnimeSparks en Español<span class="text-accent">.</span></h2>
+            </div>
+            <a class="section-header__link" href="/blogs/es">Ver todos en español ↗</a>
+          </div>
+          <div class="card-grid card-grid--3">
+            {data.spanish.map(article => (
+              <Card article={article} variant="standard" locale="es" />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </main>
 </SiteLayout>

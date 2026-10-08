@@ -1,0 +1,96 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { env } from 'cloudflare:workers';
+import { withDatabase } from '../../../lib/content/mongodb';
+import { getAdminCategories } from '../../../lib/admin/db';
+import { isWritesEnabled } from '../../../lib/admin/write-guard';
+import type { ArticleDocument } from '../../../lib/content/types';
+
+const { categories, articleCounts } = await withDatabase(env.MONGODB_URI, async db => {
+  const cats = await getAdminCategories(db);
+  const counts = await db.collection<ArticleDocument>('articles').aggregate([
+    { $unwind: '$categorySanityIds' },
+    { $group: { _id: '$categorySanityIds', count: { $sum: 1 } } },
+  ]).toArray();
+  const countMap = new Map(counts.map(c => [c._id, c.count]));
+  return { categories: cats, articleCounts: countMap };
+});
+
+const writesEnabled = isWritesEnabled(env);
+---
+
+<AdminLayout title="Categories" activeNav="categories">
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-header__title">Category Management</h1>
+      <p class="admin-header__desc">
+        Editorial sections and classification taxonomy for AnimeSparks articles.
+      </p>
+    </div>
+
+    <div class="admin-header__actions">
+      <button
+        type="button"
+        class="btn btn--primary"
+        disabled={!writesEnabled}
+        title={!writesEnabled ? 'Writes disabled by safety guard' : 'New Category'}
+      >
+        + Add Category
+      </button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Category Title</th>
+          <th>URL Slug</th>
+          <th>Internal ID</th>
+          <th>Articles</th>
+          <th>Status</th>
+          <th style="text-align: right;">Public Section</th>
+        </tr>
+      </thead>
+      <tbody>
+        {categories.map(cat => {
+          const count = articleCounts.get(cat.sanityId) || 0;
+          return (
+            <tr>
+              <td>
+                <div style="font-weight: 600; color: var(--admin-text);">{cat.title}</div>
+                {cat.description && (
+                  <div style="font-size: 12px; color: var(--admin-text-muted); margin-top: 2px;">{cat.description}</div>
+                )}
+              </td>
+              <td>
+                <code style="background: var(--admin-bg); padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                  /categories/{cat.slug}
+                </code>
+              </td>
+              <td style="font-size: 11px; color: var(--admin-text-faint); font-family: var(--admin-font-mono);">
+                {cat.sanityId}
+              </td>
+              <td>
+                <span class="badge badge--neutral">{count} articles</span>
+              </td>
+              <td>
+                <span class="badge badge--published">{cat.publicationState || 'published'}</span>
+              </td>
+              <td style="text-align: right;">
+                <a
+                  href={`/categories/${cat.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn--secondary btn--sm"
+                >
+                  View Page ↗
+                </a>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>

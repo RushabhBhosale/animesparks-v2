@@ -5,15 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/build.mjs",
+    "build:staging": "node scripts/build.mjs --target=staging",
+    "build:production": "node scripts/build.mjs --target=production",
     "preview": "astro preview",
     "check": "astro check",
-    "deploy": "npm run build && node scripts/prepare-deploy.mjs && wrangler deploy",
+    "deploy": "node scripts/deploy-staging.mjs",
     "postinstall": "node scripts/patch-tr46.mjs"
   },
   "dependencies": {
-    "astro": "7.3.6",
     "@astrojs/cloudflare": "14.3.4",
+    "@tiptap/core": "^3.31.4",
+    "@tiptap/extension-image": "^3.31.4",
+    "@tiptap/extension-link": "^3.31.4",
+    "@tiptap/starter-kit": "^3.31.4",
+    "astro": "7.3.6",
+    "fuse.js": "^6.6.2",
     "mongodb": "7.7.0"
   },
   "devDependencies": {

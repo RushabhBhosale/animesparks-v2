@@ -1,0 +1,320 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import Card from './Card.astro';
+import type { ArticleCard, ArticlePageData } from '../lib/content/types';
+import { r2ImageUrl } from '../lib/content/images';
+import { articleSeo, SITE } from '../lib/content/seo';
+import { renderPortableText, tableOfContents } from '../lib/content/portable-text';
+
+export interface Props {
+  article: ArticlePageData;
+  related: ArticleCard[];
+}
+
+const { article, related } = Astro.props;
+const es = article.language === 'es';
+const seo = articleSeo(article);
+const hero = r2ImageUrl(article.mainImage);
+const authorImage = r2ImageUrl(article.author?.image);
+const toc = tableOfContents(article.body);
+const faq = (article.faq || []).filter(item => item.question && item.answer);
+const sources = (article.sources || []).filter(item => item.name || item.url);
+const dateLocale = es ? 'es-ES' : 'en-US';
+
+const formatDate = (val?: string) =>
+  val ? new Date(val).toLocaleDateString(dateLocale, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
+const published = formatDate(article.publishedAt);
+
+const readTime = Math.max(
+  1,
+  Math.ceil(
+    (article.body || [])
+      .flatMap(block => block.children || [])
+      .map(span => span.text || '')
+      .join(' ')
+      .split(/\s+/).length / 225
+  )
+);
+
+const archive = es ? '/blogs/es' : '/blogs';
+const englishPath = es ? article.alternateSlug && `/blog/${article.alternateSlug}` : `/blog/${article.slug}`;
+const spanishPath = es ? `/es/blog/${article.slug}` : article.alternateSlug && `/es/blog/${article.alternateSlug}`;
+
+const locale = es
+  ? {
+      home: 'Inicio',
+      share: 'Compartir',
+      copy: 'Copiar enlace',
+      copied: 'Copiado',
+      contents: 'En este artículo',
+      author: 'Sobre el autor',
+      tags: 'Archivado en',
+      faq: 'Preguntas frecuentes',
+      sources: 'Fuentes y referencias',
+      related: 'Artículos relacionados',
+      read: 'min de lectura',
+    }
+  : {
+      home: 'Home',
+      share: 'Share',
+      copy: 'Copy link',
+      copied: 'Copied',
+      contents: 'In this article',
+      author: 'About the author',
+      tags: 'Filed under',
+      faq: 'Frequently asked questions',
+      sources: 'Sources & references',
+      related: 'Related Articles',
+      read: 'min read',
+    };
+---
+
+<SiteLayout
+  title={`${seo.title} | AnimeSparks`}
+  socialTitle={seo.title}
+  description={seo.description}
+  canonical={seo.canonical}
+  image={seo.image}
+  lang={article.language}
+  englishAlternate={englishPath ? `${SITE}${englishPath}` : undefined}
+  spanishAlternate={spanishPath ? `${SITE}${spanishPath}` : undefined}
+  type="article"
+  jsonLd={seo.jsonLd}
+>
+  <main class="article-page" lang={article.language}>
+    <!-- Breadcrumb & Language Switcher -->
+    <div class="shell article-utility">
+      <nav class="article-breadcrumb" aria-label="Breadcrumb">
+        <a href="/">{locale.home}</a>
+        <span aria-hidden="true">/</span>
+        <a href={archive}>Blogs</a>
+        {article.categories[0] && (
+          <>
+            <span aria-hidden="true">/</span>
+            <a href={`/categories/${article.categories[0].slug}`}>
+              {article.categories[0].title}
+            </a>
+          </>
+        )}
+      </nav>
+
+      <nav class="article-lang" aria-label="Language editions">
+        {englishPath && (
+          <a href={englishPath} hreflang="en" aria-current={!es ? 'page' : undefined}>
+            EN
+          </a>
+        )}
+        {spanishPath && (
+          <a href={spanishPath} hreflang="es" aria-current={es ? 'page' : undefined}>
+            ES
+          </a>
+        )}
+      </nav>
+    </div>
+
+    <!-- Article Hero Banner -->
+    <header class="article-hero">
+      {hero && (
+        <img
+          class="article-hero__bg"
+          src={hero}
+          alt={article.mainImage?.alt || article.title}
+          fetchpriority="high"
+          loading="eager"
+        />
+      )}
+      <div class="shell article-hero__inner">
+        <div class="article-classification">
+          {article.categories.slice(0, 2).map(cat => (
+            <a href={`/categories/${cat.slug}`}>{cat.title}</a>
+          ))}
+          {article.articleType && (
+            <span>{article.articleType.replaceAll('-', ' ')}</span>
+          )}
+        </div>
+
+        <h1>{article.title}</h1>
+
+        {article.excerpt && (
+          <p class="article-deck">{article.excerpt}</p>
+        )}
+
+        <div class="article-hero__foot">
+          <span>{readTime} {locale.read}</span>
+          {article.animeName && <span>· {article.animeName}</span>}
+        </div>
+      </div>
+    </header>
+
+    <!-- Byline & Social Share Bar -->
+    <div class="shell byline-bar">
+      <div class="byline">
+        <div class="byline__avatar">
+          {authorImage ? (
+            <img src={authorImage} alt={article.author?.name || ''} />
+          ) : (
+            <span>{(article.author?.name || 'A')[0]}</span>
+          )}
+        </div>
+        <div class="byline__text">
+          <span class="byline__name">
+            <a href="#article-author-heading">
+              {article.author?.name || 'AnimeSparks Editorial'}
+            </a>
+          </span>
+          <span class="byline__dates">
+            {published}
+          </span>
+        </div>
+      </div>
+
+      <div class="share-controls">
+        <span class="share-controls__label">{locale.share}:</span>
+        <a
+          href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(seo.canonical)}&text=${encodeURIComponent(article.title)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          X ↗
+        </a>
+        <a
+          href={`https://www.reddit.com/submit?url=${encodeURIComponent(seo.canonical)}&title=${encodeURIComponent(article.title)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Reddit ↗
+        </a>
+        <button type="button" data-copy-url={seo.canonical} data-copied={locale.copied}>
+          {locale.copy}
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Reading Grid (Article + Sidebar) -->
+    <div class="shell reading-grid">
+      <article class="article-content">
+        <!-- Rendered Portable Text Body -->
+        <div class="portable-text" set:html={renderPortableText(article.body)} />
+
+        <!-- Tags -->
+        {article.tags && article.tags.length > 0 && (
+          <section class="tags" aria-labelledby="tags-heading">
+            <h2 id="tags-heading">{locale.tags}</h2>
+            <div>
+              {article.tags.map(tag => (
+                <a href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <!-- FAQ Section -->
+        {faq.length > 0 && (
+          <section class="reference-panel" aria-labelledby="faq-heading">
+            <p class="kicker red">FAQ</p>
+            <h2 id="faq-heading">{locale.faq}</h2>
+            {faq.map(item => (
+              <details>
+                <summary>{item.question}</summary>
+                <p>{item.answer}</p>
+              </details>
+            ))}
+          </section>
+        )}
+
+        <!-- Sources & References -->
+        {sources.length > 0 && (
+          <section class="sources">
+            <details>
+              <summary>
+                <span>{locale.sources}</span>
+                <span>{sources.length} sources</span>
+              </summary>
+              <ol>
+                {sources.map(source => (
+                  <li>
+                    {source.url ? (
+                      <a href={source.url} rel="noopener noreferrer" target="_blank">
+                        {source.name || source.url}
+                      </a>
+                    ) : (
+                      source.name
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </details>
+          </section>
+        )}
+
+      </article>
+
+      <!-- Sidebar on Desktop (TOC + Author Bio) -->
+      <aside class="article-sidebar">
+        {toc.length >= 2 && (
+          <nav aria-label={locale.contents}>
+            <p class="kicker">{locale.contents}</p>
+            <h2>{locale.contents}</h2>
+            <ol>
+              {toc.map((item, index) => (
+                <li>
+                  <a href={`#${item.id}`}>
+                    <span class="toc-num">{String(index + 1).padStart(2, '0')}</span>
+                    <span>{item.title}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
+
+        <section aria-labelledby="article-author-heading">
+          {authorImage && (
+            <img class="author-image" src={authorImage} alt={article.author?.name || ''} loading="lazy" />
+          )}
+          <p class="kicker">{locale.author}</p>
+          <h2 id="article-author-heading">{article.author?.name || 'AnimeSparks Editorial'}</h2>
+          {article.author?.bio && (
+            <div class="author-bio" set:html={renderPortableText(article.author.bio)} />
+          )}
+        </section>
+      </aside>
+    </div>
+
+    <!-- Related Articles Section -->
+    {related.length > 0 && (
+      <section class="shell editorial-section" aria-labelledby="related-heading">
+        <div class="section-header">
+          <div>
+            <p class="kicker">{article.animeName || 'AnimeSparks'}</p>
+            <h2 id="related-heading">{locale.related}<span class="text-accent">.</span></h2>
+          </div>
+          <a class="section-header__link" href={archive}>Blogs ↗</a>
+        </div>
+        <div class="card-grid card-grid--3">
+          {related.slice(0, 6).map(item => (
+            <Card article={item} locale={article.language} variant="standard" />
+          ))}
+        </div>
+      </section>
+    )}
+  </main>
+
+  <script>
+    document.querySelectorAll<HTMLButtonElement>('[data-copy-url]').forEach(button => {
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(button.dataset.copyUrl || '');
+          const original = button.textContent;
+          button.textContent = button.dataset.copied || 'Copied';
+          setTimeout(() => {
+            button.textContent = original;
+          }, 2000);
+        } catch {
+          // fallback
+        }
+      });
+    });
+  </script>
+</SiteLayout>

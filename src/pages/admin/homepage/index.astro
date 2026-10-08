@@ -1,0 +1,113 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { env } from 'cloudflare:workers';
+import { withDatabase } from '../../../lib/content/mongodb';
+import { getAdminHomepageData } from '../../../lib/admin/db';
+import { isWritesEnabled } from '../../../lib/admin/write-guard';
+
+const { editorsPicks, moreBlogs } = await withDatabase(env.MONGODB_URI, getAdminHomepageData);
+const writesEnabled = isWritesEnabled(env);
+---
+
+<AdminLayout title="Homepage Settings" activeNav="homepage">
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-header__title">Homepage Curation</h1>
+      <p class="admin-header__desc">
+        Curate featured stories and editor picks stored in the MongoDB <code>homepageSettings</code> collection.
+      </p>
+    </div>
+
+    <div class="admin-header__actions">
+      <a href="/" target="_blank" rel="noopener noreferrer" class="btn btn--secondary">
+        Preview Homepage ↗
+      </a>
+      <button
+        type="button"
+        class="btn btn--primary"
+        disabled={!writesEnabled}
+        title={!writesEnabled ? 'Writes disabled by safety guard' : 'Save Curation'}
+      >
+        {writesEnabled ? 'Save Changes' : 'Save (Disabled by Guard)'}
+      </button>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px;">
+    <!-- Editor's Picks Section -->
+    <div class="admin-card">
+      <h2 class="admin-card__title">Editor’s Picks Curation</h2>
+      <p style="font-size: 13px; color: var(--admin-text-muted); margin-bottom: 16px;">
+        Curated stories appearing in the 3-card "Selected Reading" grid on the homepage.
+      </p>
+
+      <div class="table-container" style="border: 0; margin: 0;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th>Article</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {editorsPicks.map((pick, i) => (
+              <tr>
+                <td style="color: var(--admin-text-faint); font-weight: 700;">{i + 1}</td>
+                <td>
+                  <div style="font-weight: 600; color: var(--admin-text);">{pick.title}</div>
+                  <div style="font-size: 11px; color: var(--admin-text-faint); font-family: var(--admin-font-mono);">
+                    {pick.sanityId}
+                  </div>
+                </td>
+                <td style="text-align: right;">
+                  <a href={`/admin/articles/${pick.sanityId}`} class="btn btn--secondary btn--sm">
+                    View
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- More Blogs Curation -->
+    <div class="admin-card">
+      <h2 class="admin-card__title">More Blogs / Secondary Feature</h2>
+      <p style="font-size: 13px; color: var(--admin-text-muted); margin-bottom: 16px;">
+        Secondary curated queue from previous editorial editions.
+      </p>
+
+      <div class="table-container" style="border: 0; margin: 0;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th>Article</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {moreBlogs.map((pick, i) => (
+              <tr>
+                <td style="color: var(--admin-text-faint); font-weight: 700;">{i + 1}</td>
+                <td>
+                  <div style="font-weight: 600; color: var(--admin-text);">{pick.title}</div>
+                  <div style="font-size: 11px; color: var(--admin-text-faint); font-family: var(--admin-font-mono);">
+                    {pick.sanityId}
+                  </div>
+                </td>
+                <td style="text-align: right;">
+                  <a href={`/admin/articles/${pick.sanityId}`} class="btn btn--secondary btn--sm">
+                    View
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

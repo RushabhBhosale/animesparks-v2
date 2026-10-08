@@ -1,0 +1,174 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { env } from 'cloudflare:workers';
+import { withDatabase } from '../../lib/content/mongodb';
+import { getAdminStats } from '../../lib/admin/db';
+
+const stats = await withDatabase(env.MONGODB_URI, getAdminStats);
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+---
+
+<AdminLayout title="Dashboard" activeNav="dashboard">
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-header__title">Editorial Overview</h1>
+      <p class="admin-header__desc">Live publication statistics and recent content activity from MongoDB.</p>
+    </div>
+
+    <div class="admin-header__actions">
+      <a href="/admin/articles/new" class="btn btn--primary">
+        + Create Article
+      </a>
+      <a href="/admin/anime" class="btn btn--secondary">
+        Browse Anime
+      </a>
+      <a href="/admin/homepage" class="btn btn--secondary">
+        Manage Homepage
+      </a>
+    </div>
+  </div>
+
+  <!-- Key Metrics Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card__label">Total Articles</div>
+      <div class="stat-card__value">{stats.totalArticles}</div>
+      <div class="stat-card__sub">{stats.publishedArticles} published · {stats.draftArticles} drafts</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__label">English (EN)</div>
+      <div class="stat-card__value">{stats.enArticles}</div>
+      <div class="stat-card__sub">Primary publication edition</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__label">Spanish (ES)</div>
+      <div class="stat-card__value">{stats.esArticles}</div>
+      <div class="stat-card__sub">Translated editorial edition</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__label">Anime Database</div>
+      <div class="stat-card__value">{stats.totalAnime}</div>
+      <div class="stat-card__sub">Series entries in database</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__label">Categories</div>
+      <div class="stat-card__value">{stats.totalCategories}</div>
+      <div class="stat-card__sub">Active editorial sections</div>
+    </div>
+  </div>
+
+  <!-- Activity Panels (2 Columns) -->
+  <div class="admin-dashboard-panels">
+    <!-- Recent Drafts / In Progress -->
+    <div class="admin-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+        <h2 class="admin-card__title" style="margin: 0; border: 0; padding: 0;">Recent Drafts</h2>
+        <span class="badge badge--draft">{stats.draftArticles} drafts</span>
+      </div>
+
+      {stats.recentDrafts.length > 0 ? (
+        <div class="table-container" style="border: 0; margin: 0;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Lang</th>
+                <th>Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.recentDrafts.map(doc => (
+                <tr>
+                  <td>
+                    <a href={`/admin/articles/${doc.sanityId}`} class="table-row-title">
+                      {doc.title || 'Untitled Draft'}
+                    </a>
+                    <div class="table-row-slug">/{doc.slug}</div>
+                  </td>
+                  <td>
+                    <span class:list={['badge', doc.language === 'es' ? 'badge--es' : 'badge--en']}>
+                      {doc.language.toUpperCase()}
+                    </span>
+                  </td>
+                  <td style="color: var(--admin-text-muted); font-size: 12px;">
+                    {formatDate(doc.updatedAt || doc.publishedAt)}
+                  </td>
+                  <td>
+                    <a href={`/admin/articles/${doc.sanityId}`} class="btn btn--secondary btn--sm">
+                      Edit
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p style="color: var(--admin-text-muted); font-size: 13px; margin: 12px 0 0;">
+          No active drafts found in MongoDB. All articles are published.
+        </p>
+      )}
+    </div>
+
+    <!-- Recently Updated Content -->
+    <div class="admin-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+        <h2 class="admin-card__title" style="margin: 0; border: 0; padding: 0;">Recently Updated</h2>
+        <a href="/admin/articles" style="font-size: 12px; color: var(--admin-primary); text-decoration: none;">
+          View all ↗
+        </a>
+      </div>
+
+      <div class="table-container" style="border: 0; margin: 0;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Updated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stats.recentUpdated.map(doc => (
+              <tr>
+                <td>
+                  <a href={`/admin/articles/${doc.sanityId}`} class="table-row-title">
+                    {doc.title}
+                  </a>
+                  <div class="table-row-slug">/{doc.slug}</div>
+                </td>
+                <td>
+                  <span class:list={['badge', doc.publicationState === 'published' ? 'badge--published' : 'badge--draft']}>
+                    {doc.publicationState}
+                  </span>
+                </td>
+                <td style="color: var(--admin-text-muted); font-size: 12px;">
+                  {formatDate(doc.updatedAt || doc.publishedAt)}
+                </td>
+                <td>
+                  <a href={`/admin/articles/${doc.sanityId}`} class="btn btn--secondary btn--sm">
+                    Edit
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

@@ -1,0 +1,217 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { env } from 'cloudflare:workers';
+import { withDatabase } from '../../../lib/content/mongodb';
+import { getAdminArticles, getAdminCategories } from '../../../lib/admin/db';
+import { r2ImageUrl } from '../../../lib/content/images';
+
+const url = Astro.url;
+const q = url.searchParams.get('q') || '';
+const status = url.searchParams.get('status') || 'all';
+const language = url.searchParams.get('language') || 'all';
+const category = url.searchParams.get('category') || 'all';
+const sort = (url.searchParams.get('sort') || 'updated') as 'updated' | 'published' | 'title';
+const page = parseInt(url.searchParams.get('page') || '1', 10);
+
+const { data, allCategories } = await withDatabase(env.MONGODB_URI, async db => {
+  const [data, allCategories] = await Promise.all([
+    getAdminArticles(db, { q, status, language, category, sort, page, limit: 20 }),
+    getAdminCategories(db),
+  ]);
+  return { data, allCategories };
+});
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+// Helper for building filter URLs
+const buildFilterUrl = (params: Record<string, string | number>) => {
+  const next = new URL(url);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v === '' || v === 'all') next.searchParams.delete(k);
+    else next.searchParams.set(k, String(v));
+  });
+  return next.search;
+};
+---
+
+<AdminLayout title="Articles" activeNav="articles">
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-header__title">Article Management</h1>
+      <p class="admin-header__desc">
+        Showing {data.items.length} of {data.total} articles across English and Spanish editions.
+      </p>
+    </div>
+
+    <div class="admin-header__actions">
+      <a href="/admin/articles/new" class="btn btn--primary">
+        + Create Article
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters & Search Toolbar -->
+  <form method="GET" action="/admin/articles" class="admin-filters">
+    <div class="admin-filters__search">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input
+        type="search"
+        name="q"
+        value={q}
+        placeholder="Search title, slug, anime name..."
+      />
+    </div>
+
+    <select name="status" class="admin-select" onchange="this.form.submit()">
+      <option value="all" selected={status === 'all'}>All Statuses</option>
+      <option value="published" selected={status === 'published'}>Published</option>
+      <option value="draft" selected={status === 'draft'}>Drafts</option>
+    </select>
+
+    <select name="language" class="admin-select" onchange="this.form.submit()">
+      <option value="all" selected={language === 'all'}>All Languages</option>
+      <option value="en" selected={language === 'en'}>English (EN)</option>
+      <option value="es" selected={language === 'es'}>Spanish (ES)</option>
+    </select>
+
+    <select name="category" class="admin-select" onchange="this.form.submit()">
+      <option value="all" selected={category === 'all'}>All Categories</option>
+      {allCategories.map(cat => (
+        <option value={cat.sanityId} selected={category === cat.sanityId}>
+          {cat.title}
+        </option>
+      ))}
+    </select>
+
+    <select name="sort" class="admin-select" onchange="this.form.submit()">
+      <option value="updated" selected={sort === 'updated'}>Sort: Last Updated</option>
+      <option value="published" selected={sort === 'published'}>Sort: Published Date</option>
+      <option value="title" selected={sort === 'title'}>Sort: Title A-Z</option>
+    </select>
+
+    <button type="submit" class="btn btn--secondary btn--sm">Filter</button>
+    {(q || status !== 'all' || language !== 'all' || category !== 'all' || sort !== 'updated') && (
+      <a href="/admin/articles" class="btn btn--secondary btn--sm">Reset</a>
+    )}
+  </form>
+
+  <!-- Articles Data Table -->
+  <div class="table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Title & Slug</th>
+          <th>Lang</th>
+          <th>Categories</th>
+          <th>Status</th>
+          <th>Published</th>
+          <th>Updated</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.items.map(article => (
+          <tr>
+            <td>
+              <div class="admin-article-summary">
+                {r2ImageUrl(article.mainImage) ? (
+                  <img
+                    class="admin-article-summary__image"
+                    src={r2ImageUrl(article.mainImage)}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <span class="admin-article-summary__placeholder" aria-hidden="true">No image</span>
+                )}
+                <div class="admin-article-summary__text">
+                  <a href={`/admin/articles/${article.sanityId}`} class="table-row-title">
+                    {article.title}
+                  </a>
+                  <div class="table-row-slug">/{article.slug}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class:list={['badge', article.language === 'es' ? 'badge--es' : 'badge--en']}>
+                {article.language.toUpperCase()}
+              </span>
+            </td>
+            <td>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                {article.categories.map(cat => (
+                  <span class="badge badge--neutral">{cat.title}</span>
+                ))}
+              </div>
+            </td>
+            <td>
+              <span class:list={['badge', article.publicationState === 'published' ? 'badge--published' : 'badge--draft']}>
+                {article.publicationState}
+              </span>
+            </td>
+            <td style="color: var(--admin-text-muted); font-size: 12px; white-space: nowrap;">
+              {formatDate(article.publishedAt)}
+            </td>
+            <td style="color: var(--admin-text-muted); font-size: 12px; white-space: nowrap;">
+              {formatDate(article.updatedAt || article.sourceUpdatedAt)}
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <div style="display: inline-flex; gap: 6px;">
+                <a href={`/admin/articles/${article.sanityId}`} class="btn btn--secondary btn--sm">
+                  Edit
+                </a>
+                <a
+                  href={article.language === 'es' ? `/es/blog/${article.slug}` : `/blog/${article.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn--secondary btn--sm"
+                >
+                  View ↗
+                </a>
+              </div>
+            </td>
+          </tr>
+        ))}
+        {data.items.length === 0 && (
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 36px; color: var(--admin-text-muted);">
+              No articles found matching the current filters.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {data.totalPages > 1 && (
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px;">
+      <span style="font-size: 12px; color: var(--admin-text-muted);">
+        Page {data.page} of {data.totalPages} ({data.total} total)
+      </span>
+
+      <div style="display: flex; gap: 6px;">
+        {data.page > 1 && (
+          <a href={buildFilterUrl({ page: data.page - 1 })} class="btn btn--secondary btn--sm">
+            ← Previous
+          </a>
+        )}
+        {data.page < data.totalPages && (
+          <a href={buildFilterUrl({ page: data.page + 1 })} class="btn btn--secondary btn--sm">
+            Next →
+          </a>
+        )}
+      </div>
+    </div>
+  )}
+</AdminLayout>

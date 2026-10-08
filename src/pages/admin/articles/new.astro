@@ -1,0 +1,454 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { env } from 'cloudflare:workers';
+import { withDatabase } from '../../../lib/content/mongodb';
+import { getAdminCategories } from '../../../lib/admin/db';
+import { isWritesEnabled } from '../../../lib/admin/write-guard';
+import type { AuthorDocument } from '../../../lib/content/types';
+
+const { allCategories, allAuthors } = await withDatabase(env.MONGODB_URI, async db => {
+  const [cats, authors] = await Promise.all([
+    getAdminCategories(db),
+    db.collection<AuthorDocument>('authors').find({}, { projection: { _id: 0, sanityId: 1, name: 1 } }).sort({ name: 1 }).toArray(),
+  ]);
+  return { allCategories: cats, allAuthors: authors };
+});
+
+const writesEnabled = isWritesEnabled(env);
+---
+
+<AdminLayout title="Create New Article" activeNav="articles">
+  <div class="admin-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+        <a href="/admin/articles" style="font-size: 12px; color: var(--admin-text-muted); text-decoration: none;">
+          ← Back to Articles
+        </a>
+      </div>
+      <h1 class="admin-header__title">Create Article</h1>
+      <p class="admin-header__desc">Draft a new story for AnimeSparks publication.</p>
+    </div>
+
+    <div class="admin-header__actions">
+      <button
+        type="button"
+        class="btn btn--primary"
+        id="create-article-btn"
+        disabled={!writesEnabled}
+        title={!writesEnabled ? 'Writes disabled by safety guard' : 'Create Draft'}
+      >
+        {writesEnabled ? 'Create Draft' : 'Create Draft (Disabled)'}
+      </button>
+    </div>
+  </div>
+  <p class="admin-form-status" id="article-create-status" role="status" aria-live="polite"></p>
+
+  <form id="new-article-form" class="admin-form-layout">
+    <input type="hidden" id="editor-tiptap-data" value='{"type":"doc","content":[{"type":"paragraph"}]}' />
+
+    <!-- Left Column: Content -->
+    <div>
+      <div class="admin-card">
+        <h2 class="admin-card__title">Story Details</h2>
+
+        <div class="form-group">
+          <label class="form-label" for="article-title">Headline</label>
+          <input
+            type="text"
+            id="article-title"
+            name="title"
+            class="form-input"
+            placeholder="e.g. Why One Piece's Egghead Arc Redefines Modern Shonen"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-excerpt">Excerpt</label>
+          <textarea
+            id="article-excerpt"
+            name="excerpt"
+            class="form-textarea"
+            rows="3"
+            placeholder="A compelling 1-2 sentence lead for card previews and social meta..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Body Content</label>
+          <div class="editor-container">
+            <div class="editor-toolbar" id="editor-toolbar">
+              <button type="button" class="editor-btn" data-command="bold"><strong>B</strong></button>
+              <button type="button" class="editor-btn" data-command="italic"><em>I</em></button>
+              <span style="color: var(--admin-border); margin: 0 4px;">|</span>
+              <button type="button" class="editor-btn" data-command="heading" data-level="2">H2</button>
+              <button type="button" class="editor-btn" data-command="heading" data-level="3">H3</button>
+              <button type="button" class="editor-btn" data-command="paragraph">P</button>
+              <span style="color: var(--admin-border); margin: 0 4px;">|</span>
+              <button type="button" class="editor-btn" data-command="bulletList">• List</button>
+              <button type="button" class="editor-btn" data-command="orderedList">1. List</button>
+              <button type="button" class="editor-btn" data-command="blockquote">“ Quote</button>
+              <button type="button" class="editor-btn" data-command="link">🔗 Link</button>
+              <button type="button" class="editor-btn" id="insert-image-btn">📷 Image</button>
+              <input type="file" id="content-image-file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" hidden />
+              <span style="color: var(--admin-border); margin: 0 4px;">|</span>
+              <button type="button" class="editor-btn" data-command="link">🔗 Link</button>
+            </div>
+            <div id="tiptap-editor-el" class="editor-content"></div>
+          </div>
+          <div class="form-hint">
+            <span id="content-image-status" role="status" aria-live="polite">Paste an image into the editor or use the Image button.</span>
+            <span id="word-count">0 words</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEO Panel -->
+      <div class="admin-card">
+        <h2 class="admin-card__title">Search Engine Optimization</h2>
+
+        <div class="form-group">
+          <label class="form-label" for="article-meta-title">SEO Title</label>
+          <input
+            type="text"
+            id="article-meta-title"
+            name="metaTitle"
+            class="form-input"
+            placeholder="Target 50-60 characters"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-meta-desc">Meta Description</label>
+          <textarea
+            id="article-meta-desc"
+            name="metaDescription"
+            class="form-textarea"
+            rows="2"
+            placeholder="Target 140-160 characters"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Settings -->
+    <div>
+      <div class="admin-card">
+        <h2 class="admin-card__title">Configuration</h2>
+
+        <div class="form-group">
+          <label class="form-label" for="article-lang">Edition</label>
+          <select id="article-lang" name="language" class="form-input">
+            <option value="en" selected>English (EN)</option>
+            <option value="es">Spanish (ES)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-slug">URL Slug</label>
+          <input
+            type="text"
+            id="article-slug"
+            name="slug"
+            class="form-input"
+            placeholder="url-friendly-slug"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-status">Status</label>
+          <select id="article-status" name="publicationState" class="form-input">
+            <option value="draft" selected>Draft</option>
+            <option value="published">Published</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-author">Author</label>
+          <select id="article-author" name="authorSanityId" class="form-input">
+            <option value="">Editorial Staff</option>
+            {allAuthors.map(auth => (
+              <option value={auth.sanityId}>{auth.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2 class="admin-card__title">Taxonomy</h2>
+
+        <div class="form-group">
+          <label class="form-label">Categories</label>
+          <div style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto;">
+            {allCategories.map(cat => (
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                <input type="checkbox" name="categorySanityIds" value={cat.sanityId} />
+                <span>{cat.title}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 14px;">
+          <label class="form-label" for="article-anime-name">Anime Series</label>
+          <input
+            type="text"
+            id="article-anime-name"
+            name="animeName"
+            class="form-input"
+            placeholder="e.g. One Piece"
+          />
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2 class="admin-card__title">Hero Image</h2>
+        <div class="hero-image-preview" id="hero-image-preview">
+          <div class="hero-image-empty" id="hero-image-empty">No hero image selected</div>
+        </div>
+        <div class="hero-image-dropzone" id="hero-image-dropzone" tabindex="0" role="region" aria-label="Hero image paste and drop area">
+          <strong>Paste an image here with ⌘V or Ctrl+V</strong>
+          <span>Or drag an image here · JPG, PNG, WebP, AVIF or GIF · up to 10 MB</span>
+          <button type="button" class="btn btn--secondary btn--sm" id="hero-image-choose">Choose image</button>
+        </div>
+        <input type="file" id="hero-image-file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" hidden />
+        <p class="image-upload-status" id="hero-image-status" role="status" aria-live="polite"></p>
+        <div class="form-group">
+          <label class="form-label" for="hero-r2-key">R2 Storage Key</label>
+          <input type="text" id="hero-r2-key" class="form-input" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="hero-alt">Alt Text</label>
+          <input type="text" id="hero-alt" class="form-input" placeholder="Describe the image" />
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <script>
+    import { Editor } from '@tiptap/core';
+    import StarterKit from '@tiptap/starter-kit';
+    import Link from '@tiptap/extension-link';
+    import { PortableTextImage } from '../../../lib/admin/portable-text-image-extension';
+    import { tiptapToPortableText } from '../../../lib/admin/portable-text-adapter';
+    import { clipboardHasImage, uploadAdminImage, uploadClipboardImage } from '../../../lib/admin/image-upload-client';
+
+    const editorEl = document.getElementById('tiptap-editor-el');
+    const dataEl = document.getElementById('editor-tiptap-data') as HTMLInputElement | null;
+
+    if (editorEl && dataEl) {
+      const editor = new Editor({
+        element: editorEl,
+        extensions: [
+          StarterKit.configure({ heading: { levels: [2, 3, 4] } }),
+          Link.configure({ openOnClick: false }),
+          PortableTextImage,
+        ],
+        content: '<p></p>',
+        onUpdate({ editor }) {
+          dataEl.value = JSON.stringify(editor.getJSON());
+          const wordCountEl = document.getElementById('word-count');
+          if (wordCountEl) {
+            const text = editor.getText().trim();
+            wordCountEl.textContent = `${text ? text.split(/\s+/).length : 0} words`;
+          }
+        },
+      });
+
+      const contentImageStatus = document.getElementById('content-image-status');
+      const contentImageInput = document.getElementById('content-image-file') as HTMLInputElement | null;
+      const insertUploadedImage = (key: string, publicUrl: string, position?: number) => {
+        const node = { type: 'ptImage', attrs: { r2Key: key, publicUrl, sanityId: null, alt: '', caption: '', _key: null, extraFields: null } };
+        if (typeof position === 'number') editor.chain().insertContentAt(position, node).focus().run();
+        else editor.chain().focus().insertContent(node).run();
+      };
+      const uploadContentImage = async (file: File, position?: number) => {
+        if (contentImageStatus) contentImageStatus.textContent = `Uploading ${file.name || 'image'} to R2…`;
+        try {
+          const uploaded = await uploadAdminImage(file);
+          insertUploadedImage(uploaded.key, uploaded.publicUrl, position);
+          if (contentImageStatus) contentImageStatus.textContent = 'Image uploaded to R2 and added to the article.';
+        } catch (error) {
+          if (contentImageStatus) contentImageStatus.textContent = error instanceof Error ? error.message : 'Image upload failed.';
+        }
+      };
+
+      const toolbar = document.getElementById('editor-toolbar');
+      if (toolbar) {
+        toolbar.querySelectorAll<HTMLButtonElement>('[data-command]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const cmd = btn.dataset.command;
+            const level = btn.dataset.level ? parseInt(btn.dataset.level, 10) : undefined;
+            if (cmd === 'bold') editor.chain().focus().toggleBold().run();
+            else if (cmd === 'italic') editor.chain().focus().toggleItalic().run();
+            else if (cmd === 'heading' && level) editor.chain().focus().toggleHeading({ level: level as 2 | 3 | 4 }).run();
+            else if (cmd === 'paragraph') editor.chain().focus().setParagraph().run();
+            else if (cmd === 'bulletList') editor.chain().focus().toggleBulletList().run();
+            else if (cmd === 'orderedList') editor.chain().focus().toggleOrderedList().run();
+            else if (cmd === 'blockquote') editor.chain().focus().toggleBlockquote().run();
+            else if (cmd === 'link') {
+              const url = prompt('Enter link URL:');
+              if (url) editor.chain().focus().setLink({ href: url }).run();
+              else editor.chain().focus().unsetLink().run();
+            }
+          });
+        });
+      }
+
+      contentImageInput?.addEventListener('change', () => {
+        const file = contentImageInput.files?.[0];
+        if (!file) return;
+        const position = Number(contentImageInput.dataset.insertPosition);
+        void uploadContentImage(file, Number.isFinite(position) ? position : undefined);
+        contentImageInput.value = '';
+      });
+      document.getElementById('insert-image-btn')?.addEventListener('click', () => {
+        if (!contentImageInput) return;
+        contentImageInput.dataset.insertPosition = String(editor.state.selection.from);
+        contentImageInput.click();
+      });
+      editorEl.addEventListener('paste', async event => {
+        const clipboard = (event as ClipboardEvent).clipboardData;
+        if (!clipboardHasImage(clipboard)) return;
+        event.preventDefault();
+        const position = editor.state.selection.from;
+        if (contentImageStatus) contentImageStatus.textContent = 'Uploading pasted image to R2…';
+        try {
+          const uploaded = await uploadClipboardImage(clipboard);
+          if (uploaded) {
+            insertUploadedImage(uploaded.key, uploaded.publicUrl, position);
+            if (contentImageStatus) contentImageStatus.textContent = 'Image uploaded to R2 and added to the article.';
+          }
+        } catch (error) {
+          if (contentImageStatus) contentImageStatus.textContent = error instanceof Error ? error.message : 'Image upload failed.';
+        }
+      });
+
+      const heroDropzone = document.getElementById('hero-image-dropzone') as HTMLDivElement | null;
+      const heroFileInput = document.getElementById('hero-image-file') as HTMLInputElement | null;
+      const heroKeyInput = document.getElementById('hero-r2-key') as HTMLInputElement | null;
+      const heroAltInput = document.getElementById('hero-alt') as HTMLInputElement | null;
+      const heroPreview = document.getElementById('hero-image-preview');
+      const heroStatus = document.getElementById('hero-image-status');
+      const uploadHeroImage = async (file: File) => {
+        if (heroStatus) heroStatus.textContent = `Uploading ${file.name || 'image'} to R2…`;
+        try {
+          const uploaded = await uploadAdminImage(file);
+          if (heroKeyInput) heroKeyInput.value = uploaded.key;
+          if (heroPreview) {
+            const image = document.createElement('img');
+            image.src = uploaded.publicUrl;
+            image.alt = heroAltInput?.value || '';
+            image.onload = () => { if (heroStatus) heroStatus.textContent = 'Image uploaded to R2 and ready to save.'; };
+            image.onerror = () => { if (heroStatus) heroStatus.textContent = 'Uploaded, but the image preview could not be loaded yet.'; };
+            heroPreview.replaceChildren(image);
+          }
+        } catch (error) {
+          if (heroStatus) heroStatus.textContent = error instanceof Error ? error.message : 'Image upload failed.';
+        }
+      };
+      document.getElementById('hero-image-choose')?.addEventListener('click', () => heroFileInput?.click());
+      heroDropzone?.addEventListener('paste', async event => {
+        const clipboard = (event as ClipboardEvent).clipboardData;
+        if (!clipboardHasImage(clipboard)) return;
+        event.preventDefault();
+        if (heroStatus) heroStatus.textContent = 'Uploading pasted image to R2…';
+        try {
+          const uploaded = await uploadClipboardImage(clipboard);
+          if (uploaded && heroKeyInput) {
+            heroKeyInput.value = uploaded.key;
+            if (heroPreview) {
+              const image = document.createElement('img');
+              image.src = uploaded.publicUrl;
+              image.alt = heroAltInput?.value || '';
+              image.onload = () => { if (heroStatus) heroStatus.textContent = 'Image uploaded to R2 and ready to save.'; };
+              image.onerror = () => { if (heroStatus) heroStatus.textContent = 'Uploaded, but the image preview could not be loaded yet.'; };
+              heroPreview.replaceChildren(image);
+            }
+          }
+        } catch (error) {
+          if (heroStatus) heroStatus.textContent = error instanceof Error ? error.message : 'Image upload failed.';
+        }
+      });
+      heroDropzone?.addEventListener('dragover', event => { event.preventDefault(); heroDropzone.classList.add('is-dragging'); });
+      heroDropzone?.addEventListener('dragleave', () => heroDropzone.classList.remove('is-dragging'));
+      heroDropzone?.addEventListener('drop', event => {
+        event.preventDefault();
+        heroDropzone.classList.remove('is-dragging');
+        const file = (event as DragEvent).dataTransfer?.files[0];
+        if (file) void uploadHeroImage(file);
+      });
+      heroFileInput?.addEventListener('change', () => {
+        const file = heroFileInput.files?.[0];
+        if (file) void uploadHeroImage(file);
+        heroFileInput.value = '';
+      });
+
+      const createButton = document.getElementById('create-article-btn') as HTMLButtonElement | null;
+      const createStatus = document.getElementById('article-create-status');
+      const createForm = document.getElementById('new-article-form') as HTMLFormElement | null;
+      createButton?.addEventListener('click', async () => {
+        if (!createForm) return;
+        const values = new FormData(createForm);
+        const title = String(values.get('title') || '').trim();
+        const slug = String(values.get('slug') || '').trim();
+        if (!title || !slug) {
+          if (createStatus) createStatus.textContent = 'Add a headline and URL slug before creating the article.';
+          return;
+        }
+        const key = heroKeyInput?.value.trim() || '';
+        const payload = {
+          title,
+          slug,
+          language: String(values.get('language') || 'en'),
+          publicationState: String(values.get('publicationState') || 'draft'),
+          excerpt: String(values.get('excerpt') || ''),
+          metaTitle: String(values.get('metaTitle') || ''),
+          metaDescription: String(values.get('metaDescription') || ''),
+          authorSanityId: String(values.get('authorSanityId') || '') || null,
+          categorySanityIds: values.getAll('categorySanityIds').map(String),
+          animeName: String(values.get('animeName') || ''),
+          mainImage: key ? { _type: 'image', alt: heroAltInput?.value || '', asset: { r2Key: key } } : null,
+          body: tiptapToPortableText(editor.getJSON()),
+        };
+
+        createButton.disabled = true;
+        if (createStatus) createStatus.textContent = 'Creating article…';
+        try {
+          const response = await fetch('/api/admin/articles/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload),
+          });
+          const result = await response.json() as { success?: boolean; id?: string; error?: string };
+          if (!response.ok || !result.success || !result.id) throw new Error(result.error || 'Article could not be created.');
+          window.location.href = `/admin/articles/${encodeURIComponent(result.id)}`;
+        } catch (error) {
+          if (createStatus) createStatus.textContent = error instanceof Error ? error.message : 'Article could not be created.';
+          createButton.disabled = false;
+        }
+      });
+    }
+
+    // Auto-slug generator from title
+    const titleInput = document.getElementById('article-title') as HTMLInputElement | null;
+    const slugInput = document.getElementById('article-slug') as HTMLInputElement | null;
+    if (titleInput && slugInput) {
+      titleInput.addEventListener('input', () => {
+        if (!slugInput.dataset.manual) {
+          slugInput.value = titleInput.value
+            .toLowerCase()
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-+$/g, '');
+        }
+      });
+      slugInput.addEventListener('input', () => {
+        slugInput.dataset.manual = 'true';
+      });
+    }
+  </script>
+</AdminLayout>

@@ -1,18 +1,84 @@
 ---
 import type { ArticleCard } from '../lib/content/types';
 import { r2ImageUrl } from '../lib/content/images';
-const { article, layout = 'grid' } = Astro.props as { article: ArticleCard; layout?: 'grid' | 'row' };
+
+export interface Props {
+  article: ArticleCard;
+  variant?: 'featured' | 'large' | 'standard' | 'compact' | 'horizontal';
+  layout?: 'grid' | 'row'; // for backwards compatibility
+  locale?: 'en' | 'es';
+  showExcerpt?: boolean;
+}
+
+const {
+  article,
+  variant: propVariant,
+  layout,
+  locale = article.language,
+  showExcerpt = true,
+} = Astro.props;
+
+// Map legacy layout prop to variant
+const variant = propVariant || (layout === 'row' ? 'horizontal' : 'standard');
+
 const image = r2ImageUrl(article.mainImage);
-const date = article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+const date = article.publishedAt
+  ? new Date(article.publishedAt).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  : '';
+
+const href = `${locale === 'es' ? '/es' : ''}/blog/${article.slug}`;
+const primaryCategory = article.categories?.[0];
+const categoryHref = primaryCategory ? `/categories/${primaryCategory.slug}` : undefined;
 ---
-<article class:list={['story-card', layout === 'row' && 'story-card--row']}>
-  <a class="story-card__image" href={`/blog/${article.slug}`} aria-label={`Read ${article.title}`}>
-    {image && <img src={image} alt={article.mainImage?.alt || article.title} loading="lazy" decoding="async" />}
+
+<article class:list={[
+  'card',
+  variant === 'large' && 'card--large',
+  variant === 'horizontal' && 'card--row',
+  variant === 'compact' && 'card--compact',
+  variant === 'featured' && 'card--featured',
+]}>
+  <a class="card__image-link" href={href} aria-label={`Read ${article.title}`}>
+    {image ? (
+      <img
+        src={image}
+        alt={article.mainImage?.alt || article.title}
+        loading="lazy"
+        decoding="async"
+      />
+    ) : (
+      <div class="card__placeholder" aria-hidden="true"></div>
+    )}
   </a>
-  <div class="story-card__body">
-    <div class="story-card__meta">{article.categories[0] && <a href={`https://www.animesparks.blog/categories/${article.categories[0].slug}`}>{article.categories[0].title}</a>}{date && <time datetime={article.publishedAt}>{date}</time>}</div>
-    <h3><a href={`/blog/${article.slug}`}>{article.title}</a></h3>
-    {article.excerpt && <p>{article.excerpt}</p>}
-    <span class="story-card__author">{article.author?.name || 'AnimeSparks Editorial'}</span>
+
+  <div class="card__body">
+    <div class="card__meta">
+      {primaryCategory && (
+        <a class="card__category" href={categoryHref}>
+          {primaryCategory.title}
+        </a>
+      )}
+      {date && (
+        <time class="card__date" datetime={article.publishedAt}>{date}</time>
+      )}
+    </div>
+
+    <h3 class="card__title">
+      <a href={href}>{article.title}</a>
+    </h3>
+
+    {variant !== 'compact' && showExcerpt && article.excerpt && (
+      <p class="card__excerpt">{article.excerpt}</p>
+    )}
+
+    {variant !== 'compact' && (
+      <span class="card__author">
+        {article.author?.name || 'AnimeSparks Editorial'}
+      </span>
+    )}
   </div>
 </article>

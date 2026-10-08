@@ -11,10 +11,12 @@ export interface PortableBlock {
   listItem?: string;
   level?: number;
   alt?: string;
+  caption?: string;
   asset?: R2Asset;
 }
-export interface CategoryDocument { sanityId: string; title: string; slug: string; description?: string }
+export interface CategoryDocument { sanityId: string; title: string; slug: string; description?: string; publicationState?: string }
 export interface AuthorDocument { sanityId: string; name: string; slug?: string; bio?: PortableBlock[]; image?: ContentImage }
+export interface AnimeEntryDocument { sanityId: string; publicationState: string; title: string; score: number; coverImage?: string | null; bannerImage?: string | null; genres?: string[]; year?: number }
 export interface ArticleDocument {
   sanityId: string;
   publicationState: 'published' | 'draft' | string;
@@ -38,6 +40,8 @@ export interface ArticleDocument {
   viewCount?: number;
   faq?: Array<{ question?: string; answer?: string }>;
   sources?: Array<{ name?: string; url?: string }>;
+  updateHistory?: Array<{ date?: string; summary?: string }>;
+  internalLinks?: unknown[];
 }
 export interface HomepageSettingsDocument {
   editorsPicks?: Array<{ sanityId: string }>;
@@ -48,10 +52,15 @@ export interface ArticleCard extends ArticleDocument {
   author?: AuthorDocument;
 }
 export interface ArticlePageData extends ArticleCard { alternateSlug?: string }
+export interface CategoryWithArticles extends CategoryDocument { count: number; cover?: ArticleCard }
+export interface AnimeCluster { name: string; count: number; cover?: ContentImage }
 export interface HomePageData {
   featured: ArticleCard | null;
   editorsPicks: ArticleCard[];
   latest: ArticleCard[];
   popular: ArticleCard[];
   sections: CategoryDocument[];
+  trending: ArticleCard[];
+  animeClusters: AnimeCluster[];
+  spanish: ArticleCard[];
 }

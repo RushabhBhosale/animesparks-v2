@@ -3,7 +3,7 @@ import type { ArticleCard, ArticleDocument, ArticlePageData, AuthorDocument, Cat
 
 const published = { language: 'en', publicationState: 'published' } as const;
 const cardProjection = { sourceDocument: 0, sourceUnknownFields: 0, body: 0, faq: 0, sources: 0, internalLinks: 0 } as const;
-const isLive = (article: ArticleDocument) => {
+export const isLive = (article: Pick<ArticleDocument, 'publishedAt'>) => {
   const date = Date.parse(article.publishedAt || '');
   return Number.isFinite(date) && date <= Date.now();
 };
@@ -25,20 +25,41 @@ export async function hydrateCards(db: Db, docs: ArticleDocument[]): Promise<Art
   }));
 }
 
-export async function getArticleBySlug(db: Db, slug: string): Promise<ArticlePageData | null> {
+export async function getArticleBySlug(db: Db, slug: string, language: 'en' | 'es' = 'en'): Promise<ArticlePageData | null> {
   const article = await db.collection<ArticleDocument>('articles').findOne(
-    { ...published, slug },
+    { language, publicationState: 'published', slug },
     { projection: { _id: 0, sourceDocument: 0, sourceUnknownFields: 0 } },
   );
   if (!article || !isLive(article)) return null;
   const [hydrated, translation] = await Promise.all([
     hydrateCards(db, [article]),
     db.collection<ArticleDocument>('articles').findOne(
-      { language: 'es', publicationState: 'published', translationOfSanityId: article.sanityId },
+      language === 'en'
+        ? { language: 'es', publicationState: 'published', translationOfSanityId: article.sanityId }
+        : { language: 'en', publicationState: 'published', sanityId: article.translationOfSanityId },
       { projection: { _id: 0, slug: 1, publishedAt: 1 } },
     ),
   ]);
   return { ...hydrated[0], alternateSlug: translation && isLive(translation) ? translation.slug : undefined };
+}
+
+export async function getPublishedArticles(db: Db, language: 'en' | 'es' = 'en'): Promise<ArticleCard[]> {
+  const docs = await db.collection<ArticleDocument>('articles').find(
+    { language, publicationState: 'published' },
+    { projection: cardProjection },
+  ).sort({ publishedAt: -1 }).toArray();
+  return hydrateCards(db, docs.filter(isLive));
+}
+
+export async function getRelatedArticles(db: Db, article: ArticleDocument, limit = 5): Promise<ArticleCard[]> {
+  const cards = await getPublishedArticles(db, article.language);
+  return cards.filter(item => item.slug !== article.slug).sort((a, b) => {
+    const score = (item: ArticleCard) =>
+      (article.animeName && item.animeName === article.animeName ? 10 : 0) +
+      (item.categorySanityIds || []).filter(id => article.categorySanityIds?.includes(id)).length * 2 +
+      (item.tags || []).filter(tag => article.tags?.includes(tag)).length;
+    return score(b) - score(a) || Date.parse(b.publishedAt || '') - Date.parse(a.publishedAt || '');
+  }).slice(0, limit);
 }
 
 export async function getLatestArticles(db: Db, limit = 18): Promise<ArticleDocument[]> {

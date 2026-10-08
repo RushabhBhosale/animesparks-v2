@@ -7,7 +7,7 @@ const safeHref = (href?: string) => {
   try {
     const url = new URL(href, 'https://www.animesparks.blog');
     if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) return undefined;
-    if (url.hostname === 'www.animesparks.blog' && url.pathname.startsWith('/blog/')) return `${url.pathname}${url.search}${url.hash}`;
+    if (['www.animesparks.blog', 'animesparks.blog'].includes(url.hostname) && url.pathname.startsWith('/blog/')) return `${url.pathname}${url.search}${url.hash}`;
     return href;
   } catch { return undefined; }
 };
@@ -23,6 +23,7 @@ const renderSpan = (span: PortableSpan, block: PortableBlock) => {
     else if (mark === 'strike-through') html = `<s>${html}</s>`;
     else {
       const def = block.markDefs?.find(item => item._key === mark);
+      if (!def || def._type !== 'link') throw new Error(`Unsupported Portable Text mark: ${mark}`);
       const href = safeHref(def?.href);
       if (href) html = `<a href="${escapeHtml(href)}"${href.startsWith('http') && !href.startsWith('https://www.animesparks.blog') ? ' rel="noopener noreferrer"' : ''}>${html}</a>`;
     }
@@ -34,11 +35,12 @@ const renderBlock = (block: PortableBlock, headingIds: Map<string, number>) => {
     const src = r2ImageUrl(block);
     if (!src) return '';
     const alt = escapeHtml(block.alt || '');
-    return `<figure><img src="${escapeHtml(src)}" alt="${alt}" loading="lazy" decoding="async"><figcaption>${alt}</figcaption></figure>`;
+    const caption = escapeHtml(block.caption || block.alt || '');
+    return `<figure><img src="${escapeHtml(src)}" alt="${alt}" loading="lazy" decoding="async">${caption ? `<figcaption>${caption}</figcaption>` : ''}</figure>`;
   }
-  if (block._type !== 'block') return '';
+  if (block._type !== 'block') throw new Error(`Unsupported Portable Text block: ${block._type}`);
   const content = (block.children || []).map(child => renderSpan(child, block)).join('');
-  if (block.listItem) return `<li>${content}</li>`;
+  if (block.listItem) return `<li>${content}`;
   const style = block.style || 'normal';
   if (['h1', 'h2', 'h3', 'h4'].includes(style)) {
     const tag = style === 'h1' ? 'h2' : style;
@@ -48,22 +50,31 @@ const renderBlock = (block: PortableBlock, headingIds: Map<string, number>) => {
     return `<${tag} id="${base}${count > 1 ? `-${count}` : ''}">${content}</${tag}>`;
   }
   if (style === 'blockquote') return `<blockquote>${content}</blockquote>`;
+  if (style !== 'normal') throw new Error(`Unsupported Portable Text style: ${style}`);
   return `<p>${content}</p>`;
 };
 export function renderPortableText(blocks: PortableBlock[] = []): string {
   const headingIds = new Map<string, number>();
-  let listTag = '';
+  const listTags: string[] = [];
   let html = '';
   for (const block of blocks) {
     const nextTag = block.listItem ? (block.listItem === 'number' ? 'ol' : 'ul') : '';
-    if (listTag !== nextTag) {
-      if (listTag) html += `</${listTag}>`;
-      if (nextTag) html += `<${nextTag}>`;
-      listTag = nextTag;
+    if (block.listItem && !['bullet', 'number'].includes(block.listItem)) throw new Error(`Unsupported Portable Text list: ${block.listItem}`);
+    if (!nextTag) {
+      while (listTags.length) html += `</li></${listTags.pop()}>`;
+      html += renderBlock(block, headingIds);
+      continue;
     }
+    const level = Math.max(1, Math.min(block.level || 1, listTags.length + 1));
+    while (listTags.length > level) html += `</li></${listTags.pop()}>`;
+    if (listTags.length === level && listTags[level - 1] !== nextTag) html += `</li></${listTags.pop()}>`;
+    if (listTags.length < level) {
+      html += `<${nextTag}>`;
+      listTags.push(nextTag);
+    } else html += '</li>';
     html += renderBlock(block, headingIds);
   }
-  if (listTag) html += `</${listTag}>`;
+  while (listTags.length) html += `</li></${listTags.pop()}>`;
   return html;
 }
 export function tableOfContents(blocks: PortableBlock[] = []) {

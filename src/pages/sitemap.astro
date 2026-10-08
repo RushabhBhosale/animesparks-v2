@@ -1,0 +1,13 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { getBuildData } from '../lib/content/build-data';
+import { SITE, homeImage } from '../lib/content/seo';
+export const prerender = true;
+const { categories, sitemapArticles: articles } = await getBuildData();
+const core = [['Home', '/'], ['Blogs', '/blogs'], ['Spanish Blogs', '/blogs/es'], ['My Anime List', '/my-anime-list'], ['Categories', '/categories'], ['Trending', '/trending'], ['About', '/about'], ['Contact', '/contact'], ['Privacy', '/privacy']];
+const english = articles.filter(article => article.language === 'en');
+const spanish = articles.filter(article => article.language === 'es');
+---
+<SiteLayout title="Sitemap | AnimeSparks" socialTitle="Sitemap" description="A complete sitemap of AnimeSparks to help users and search engines navigate all pages and anime content easily." canonical={`${SITE}/sitemap`} image={homeImage}>
+  <main><header class="page-hero"><div class="shell"><p class="kicker red">Sitemap</p><h1>Site Index<span class="red">.</span></h1><p>A clean map of published posts and core sections.</p></div></header><div class="shell sitemap-page"><section><h2>Main Pages</h2><div class="sitemap-grid">{core.map(([label, href]) => <a href={href}>{label} →</a>)}</div></section><section><h2>Categories</h2><div class="sitemap-grid">{categories.map(category => <a href={`/categories/${category.slug}`}>{category.title} →</a>)}</div></section><section><h2>Published Posts</h2><div class="sitemap-grid">{english.map(article => <a href={`/blog/${article.slug}`}>{article.title}</a>)}</div></section><section><h2>Spanish Posts</h2><div class="sitemap-grid">{spanish.map(article => <a href={`/es/blog/${article.slug}`}>{article.title}</a>)}</div></section></div></main>
+</SiteLayout>

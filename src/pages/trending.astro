@@ -1,0 +1,31 @@
+---
+import ListingPage from '../components/ListingPage.astro';
+import { getBuildData } from '../lib/content/build-data';
+import { getPage, listingHref, paginate, sortArticles } from '../lib/content/listing';
+import { SITE } from '../lib/content/seo';
+const sort = Astro.url.searchParams.get('sort') || 'popular';
+const range = Astro.url.searchParams.get('range') || 'month';
+const page = getPage(Astro.url.searchParams.get('page'));
+if (!page) return new Response('Page not found', { status: 404 });
+export const prerender = true;
+const { english: articles, categories } = await getBuildData();
+const days = range === 'week' ? 7 : range === 'year' ? 365 : 30;
+const cutoff = Date.now() - days * 86400000;
+const scoped = articles.filter(article => Date.parse(article.publishedAt || '') >= cutoff);
+const pool = scoped.length ? scoped : articles;
+const sorted = sort === 'visual' ? pool.filter(article => article.categories.some(category => /visual|art/i.test(category.title))) : sort === 'recent' ? pool : sortArticles(pool, 'popular');
+const result = paginate(sorted.length ? sorted : pool, page);
+if (!result.valid) return new Response('Page not found', { status: 404 });
+const canonical = SITE + listingHref('/trending', { sort: sort !== 'popular' ? sort : undefined, range: range !== 'month' ? range : undefined }, page);
+const jsonLd = [
+  { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+    { '@type': 'ListItem', position: 2, name: 'Trending', item: `${SITE}/trending` },
+  ] },
+  { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: result.items.map((article, index) => ({
+    '@type': 'ListItem', position: (page - 1) * 12 + index + 1,
+    item: { '@type': 'BlogPosting', headline: article.title, datePublished: article.publishedAt, url: `${SITE}/blog/${article.slug}`, description: article.excerpt, author: { '@type': 'Person', name: article.author?.name || 'AnimeSparks' } },
+  })) },
+];
+---
+<ListingPage eyebrow="In focus" heading="The stories drawing attention" description="Explore the articles readers are spending time with." metaDescription="Discover the most read and talked-about anime articles on AnimeSparks, updated with what fans are engaging with right now." title={`Trending Anime Articles Right Now${page > 1 ? ` · Page ${page}` : ''} | AnimeSparks`} canonical={canonical} posts={result.items} categories={categories} path="/trending" sort={sort} range={range} page={page} pageCount={result.pageCount} total={result.total} showRange jsonLd={jsonLd} />

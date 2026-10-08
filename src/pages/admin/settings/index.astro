@@ -1,0 +1,134 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { env } from 'cloudflare:workers';
+import { withDatabase } from '../../../lib/content/mongodb';
+import { roundTripTest } from '../../../lib/admin/portable-text-adapter';
+import { isWritesEnabled } from '../../../lib/admin/write-guard';
+import type { ArticleDocument } from '../../../lib/content/types';
+
+const writesEnabled = isWritesEnabled(env);
+const r2Bound = Boolean(env.IMAGES_BUCKET && typeof env.IMAGES_BUCKET.list === 'function');
+
+// Run round-trip tests on a sample of real MongoDB articles with bodies
+const roundTripResults = await withDatabase(env.MONGODB_URI, async db => {
+  const articles = await db.collection<ArticleDocument>('articles')
+    .find({ body: { $exists: true, $ne: [] } }, { projection: { _id: 0, sanityId: 1, slug: 1, title: 1, body: 1 } })
+    .limit(10)
+    .toArray();
+
+  return articles.map(a => {
+    const test = roundTripTest(a.body || []);
+    return {
+      slug: a.slug,
+      title: a.title,
+      blockCount: (a.body || []).length,
+      ok: test.ok,
+      issues: test.issues,
+    };
+  });
+});
+
+const allPassed = roundTripResults.every(r => r.ok);
+---
+
+<AdminLayout title="System & Safety" activeNav="settings">
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-header__title">System Status & Safety Controls</h1>
+      <p class="admin-header__desc">
+        Runtime environment configuration, mutation locks, and data integrity verifications.
+      </p>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
+    <!-- Safety Controls Card -->
+    <div class="admin-card">
+      <h2 class="admin-card__title">Write Protection Status</h2>
+
+      <div style="margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-size: 13px; font-weight: 600;">Production Writes:</span>
+          {writesEnabled ? (
+            <span class="badge badge--published">ENABLED</span>
+          ) : (
+            <span class="badge badge--draft">LOCKED (DISABLED)</span>
+          )}
+        </div>
+        <p style="font-size: 12px; color: var(--admin-text-muted); margin: 0; line-height: 1.5;">
+          Controlled by <code>ADMIN_WRITES_ENABLED</code> in <code>wrangler.jsonc</code>.
+          When disabled, all write, publish, update, and upload endpoints reject mutations with HTTP 403 Forbidden.
+        </p>
+      </div>
+
+      <div style="margin-bottom: 16px; border-top: 1px solid var(--admin-border-subtle); padding-top: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-size: 13px; font-weight: 600;">Authentication Boundary:</span>
+          <span class="badge badge--published">JWT HS256 (Web Crypto)</span>
+        </div>
+        <p style="font-size: 12px; color: var(--admin-text-muted); margin: 0; line-height: 1.5;">
+          Admin session cookies are HttpOnly, Secure, and SameSite=Strict. Credentials are never exposed to browser JavaScript or client templates.
+        </p>
+      </div>
+
+      <div style="border-top: 1px solid var(--admin-border-subtle); padding-top: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-size: 13px; font-weight: 600;">Cloudflare R2 Binding:</span>
+          <span class="badge badge--neutral">
+            {r2Bound ? 'animesparks-staging (Active)' : 'animesparks-staging'}
+          </span>
+        </div>
+        <p style="font-size: 12px; color: var(--admin-text-muted); margin: 0; line-height: 1.5;">
+          Bucket bound natively as <code>IMAGES_BUCKET</code>. Image assets served publicly via <code>https://images.animesparks.blog/</code>.
+        </p>
+      </div>
+    </div>
+
+    <!-- Portable Text Integrity Verification Card -->
+    <div class="admin-card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <h2 class="admin-card__title" style="margin: 0; border: 0; padding: 0;">Portable Text Adapter Integrity</h2>
+        {allPassed ? (
+          <span class="badge badge--published">100% Round-Trip Passed</span>
+        ) : (
+          <span class="badge badge--danger">Issues Detected</span>
+        )}
+      </div>
+
+      <p style="font-size: 12px; color: var(--admin-text-muted); margin-bottom: 16px; line-height: 1.5;">
+        Automated verification testing conversion of real MongoDB articles from Portable Text → TipTap representation → Portable Text to guarantee zero content corruption:
+      </p>
+
+      <div class="table-container" style="border: 0; margin: 0;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Article Slug</th>
+              <th>Blocks</th>
+              <th style="text-align: right;">Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {roundTripResults.map(r => (
+              <tr>
+                <td>
+                  <div style="font-weight: 600; font-size: 12px;">{r.slug}</div>
+                </td>
+                <td style="color: var(--admin-text-muted); font-size: 12px;">
+                  {r.blockCount} blocks
+                </td>
+                <td style="text-align: right;">
+                  {r.ok ? (
+                    <span class="badge badge--published">Verified</span>
+                  ) : (
+                    <span class="badge badge--danger" title={r.issues.join(', ')}>Failed</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

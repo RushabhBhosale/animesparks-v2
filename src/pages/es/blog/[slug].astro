@@ -1,0 +1,12 @@
+---
+import ArticleDetail from '../../../components/ArticleDetail.astro';
+import { getBuildData } from '../../../lib/content/build-data';
+export const prerender = true;
+export async function getStaticPaths() {
+  const data = await getBuildData();
+  return data.articlePages.filter(article => article.language === 'es')
+    .map(article => ({ params: { slug: article.slug }, props: { article, related: data.related(article) } }));
+}
+const { article, related } = Astro.props;
+---
+<ArticleDetail article={article} related={related} />

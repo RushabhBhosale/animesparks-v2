@@ -1,0 +1,583 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { env } from 'cloudflare:workers';
+import { withDatabase } from '../../../lib/content/mongodb';
+import { getAdminArticleById } from '../../../lib/admin/db';
+import { portableTextToTiptap } from '../../../lib/admin/portable-text-adapter';
+import { isWritesEnabled } from '../../../lib/admin/write-guard';
+import { r2ImageUrl } from '../../../lib/content/images';
+
+const id = Astro.params.id || '';
+
+const result = await withDatabase(env.MONGODB_URI, db => getAdminArticleById(db, id));
+if (!result || !result.article) {
+  return Astro.redirect('/admin/articles');
+}
+
+const { article, translationDoc, allCategories, allAuthors } = result;
+const initialTiptap = portableTextToTiptap(article.body || []);
+const heroUrl = r2ImageUrl(article.mainImage);
+const writesEnabled = isWritesEnabled(env);
+
+const previewUrl = article.language === 'es' ? `/es/blog/${article.slug}` : `/blog/${article.slug}`;
+---
+
+<AdminLayout title={`Edit: ${article.title}`} activeNav="articles">
+  <div class="admin-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+        <a href="/admin/articles" style="font-size: 12px; color: var(--admin-text-muted); text-decoration: none;">
+          ← Back to Articles
+        </a>
+        <span style="color: var(--admin-text-faint);">/</span>
+        <span class:list={['badge', article.language === 'es' ? 'badge--es' : 'badge--en']}>
+          {article.language.toUpperCase()}
+        </span>
+        <span class:list={['badge', article.publicationState === 'published' ? 'badge--published' : 'badge--draft']}>
+          {article.publicationState}
+        </span>
+      </div>
+      <h1 class="admin-header__title" style="font-size: 22px;">{article.title}</h1>
+    </div>
+
+    <div class="admin-header__actions">
+      <a href={previewUrl} target="_blank" rel="noopener noreferrer" class="btn btn--secondary">
+        Preview Public ↗
+      </a>
+      <button
+        type="button"
+        id="save-article-btn"
+        class="btn btn--primary"
+        disabled={!writesEnabled}
+        title={!writesEnabled ? 'Writes disabled by safety guard' : 'Save article'}
+      >
+        {writesEnabled ? 'Save Changes' : 'Save (Disabled by Guard)'}
+      </button>
+    </div>
+  </div>
+  <p class="admin-form-status" id="article-save-status" role="status" aria-live="polite"></p>
+
+  <form id="article-editor-form" class="admin-form-layout">
+    <!-- Hidden input containing the TipTap JSON -->
+    <input type="hidden" id="editor-tiptap-data" value={JSON.stringify(initialTiptap)} />
+    <input type="hidden" name="sanityId" value={article.sanityId} />
+    <input type="hidden" name="language" value={article.language} />
+
+    <!-- Left Column: Main Content & Body Editor -->
+    <div>
+      <div class="admin-card">
+        <h2 class="admin-card__title">Article Content</h2>
+
+        <div class="form-group">
+          <label class="form-label" for="article-title">Headline / Title</label>
+          <input
+            type="text"
+            id="article-title"
+            name="title"
+            class="form-input"
+            value={article.title}
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-excerpt">Excerpt / Deck</label>
+          <textarea
+            id="article-excerpt"
+            name="excerpt"
+            class="form-textarea"
+            rows="3"
+            placeholder="Short summary for cards and search engines..."
+          >{article.excerpt || ''}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Body Text (Visual Editor)</label>
+          <div class="editor-container">
+            <!-- Toolbar -->
+            <div class="editor-toolbar" id="editor-toolbar">
+              <button type="button" class="editor-btn" data-command="bold"><strong>B</strong></button>
+              <button type="button" class="editor-btn" data-command="italic"><em>I</em></button>
+              <span style="color: var(--admin-border); margin: 0 4px;">|</span>
+              <button type="button" class="editor-btn" data-command="heading" data-level="2">H2</button>
+              <button type="button" class="editor-btn" data-command="heading" data-level="3">H3</button>
+              <button type="button" class="editor-btn" data-command="paragraph">P</button>
+              <span style="color: var(--admin-border); margin: 0 4px;">|</span>
+              <button type="button" class="editor-btn" data-command="bulletList">• List</button>
+              <button type="button" class="editor-btn" data-command="orderedList">1. List</button>
+              <button type="button" class="editor-btn" data-command="blockquote">“ Quote</button>
+              <span style="color: var(--admin-border); margin: 0 4px;">|</span>
+              <button type="button" class="editor-btn" data-command="link">🔗 Link</button>
+              <button type="button" class="editor-btn" id="insert-image-btn">📷 Image</button>
+              <input type="file" id="content-image-file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" hidden />
+            </div>
+
+            <!-- Content Area -->
+            <div id="tiptap-editor-el" class="editor-content"></div>
+          </div>
+          <div class="form-hint">
+            <span>Editor automatically converts to/from AnimeSparks Portable Text format.</span>
+            <span id="content-image-status" role="status" aria-live="polite">Paste an image into the editor or use the Image button.</span>
+            <span id="word-count">0 words</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEO & Social Sharing Panel -->
+      <div class="admin-card">
+        <h2 class="admin-card__title">Search Engine Optimization (SEO)</h2>
+
+        <div class="form-group">
+          <label class="form-label" for="article-meta-title">SEO Title</label>
+          <input
+            type="text"
+            id="article-meta-title"
+            name="metaTitle"
+            class="form-input"
+            value={article.metaTitle || article.title}
+          />
+          <div class="form-hint">
+            <span>Displayed in browser tabs and search results.</span>
+            <span id="meta-title-count">{(article.metaTitle || article.title).length}/60 chars</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-meta-desc">Meta Description</label>
+          <textarea
+            id="article-meta-desc"
+            name="metaDescription"
+            class="form-textarea"
+            rows="2"
+          >{article.metaDescription || article.excerpt || ''}</textarea>
+          <div class="form-hint">
+            <span>Recommended: 140–160 characters.</span>
+            <span id="meta-desc-count">{(article.metaDescription || article.excerpt || '').length}/160 chars</span>
+          </div>
+        </div>
+
+        <!-- Google SERP Snippet Preview -->
+        <div style="background: var(--admin-bg); border: 1px solid var(--admin-border); border-radius: 6px; padding: 14px; margin-top: 14px;">
+          <div style="font-size: 11px; color: var(--admin-text-faint); margin-bottom: 6px; text-transform: uppercase; font-weight: 600;">
+            Search Snippet Preview
+          </div>
+          <div style="font-size: 12px; color: #8ab4f8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            https://www.animesparks.blog{previewUrl}
+          </div>
+          <div id="serp-title-preview" style="font-size: 16px; color: #8ab4f8; margin: 2px 0 4px; font-weight: 500;">
+            {article.metaTitle || article.title}
+          </div>
+          <div id="serp-desc-preview" style="font-size: 13px; color: #bdc1c6; line-height: 1.4;">
+            {article.metaDescription || article.excerpt || 'No description provided.'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Settings & Taxonomy -->
+    <div>
+      <!-- Publishing & Status -->
+      <div class="admin-card">
+        <h2 class="admin-card__title">Publishing</h2>
+
+        <div class="form-group">
+          <label class="form-label" for="article-status">Status</label>
+          <select id="article-status" name="publicationState" class="form-input">
+            <option value="published" selected={article.publicationState === 'published'}>Published</option>
+            <option value="draft" selected={article.publicationState === 'draft'}>Draft</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-slug">URL Slug</label>
+          <input
+            type="text"
+            id="article-slug"
+            name="slug"
+            class="form-input"
+            value={article.slug}
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-published-at">Published Date</label>
+          <input
+            type="datetime-local"
+            id="article-published-at"
+            name="publishedAt"
+            class="form-input"
+            value={article.publishedAt ? new Date(article.publishedAt).toISOString().slice(0, 16) : ''}
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="article-author">Author</label>
+          <select id="article-author" name="authorSanityId" class="form-input">
+            <option value="">None / Editorial</option>
+            {allAuthors.map(auth => (
+              <option value={auth.sanityId} selected={article.authorSanityId === auth.sanityId}>
+                {auth.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <!-- Categories & Series -->
+      <div class="admin-card">
+        <h2 class="admin-card__title">Taxonomy</h2>
+
+        <div class="form-group">
+          <label class="form-label">Categories</label>
+          <div style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+            {allCategories.map(cat => {
+              const isChecked = (article.categorySanityIds || []).includes(cat.sanityId);
+              return (
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+                  <input
+                    type="checkbox"
+                    name="categorySanityIds"
+                    value={cat.sanityId}
+                    checked={isChecked}
+                  />
+                  <span>{cat.title}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 14px;">
+          <label class="form-label" for="article-anime-name">Anime Series Name</label>
+          <input
+            type="text"
+            id="article-anime-name"
+            name="animeName"
+            class="form-input"
+            value={article.animeName || ''}
+            placeholder="e.g. One Piece, Jujutsu Kaisen"
+          />
+        </div>
+      </div>
+
+      <!-- Hero Image -->
+      <div class="admin-card">
+        <h2 class="admin-card__title">Hero Image</h2>
+
+        <div class="hero-image-preview" id="hero-image-preview">
+          {heroUrl ? (
+            <img id="hero-image-preview-img" src={heroUrl} alt={article.mainImage?.alt || ''} />
+          ) : (
+            <div class="hero-image-empty" id="hero-image-empty">No hero image configured</div>
+          )}
+        </div>
+        <div class="hero-image-dropzone" id="hero-image-dropzone" tabindex="0" role="region" aria-label="Hero image paste and drop area">
+          <strong>Paste an image here with ⌘V or Ctrl+V</strong>
+          <span>Or drag an image here · JPG, PNG, WebP, AVIF or GIF · up to 10 MB</span>
+          <button type="button" class="btn btn--secondary btn--sm" id="hero-image-choose">Choose image</button>
+        </div>
+        <input type="file" id="hero-image-file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" hidden />
+        <p class="image-upload-status" id="hero-image-status" role="status" aria-live="polite"></p>
+
+        <div class="form-group">
+          <label class="form-label" for="hero-r2-key">R2 Storage Key</label>
+          <input
+            type="text"
+            id="hero-r2-key"
+            name="mainImageKey"
+            class="form-input"
+            value={article.mainImage?.asset?.r2Key || ''}
+            readonly
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="hero-alt">Alt Text</label>
+          <input
+            type="text"
+            id="hero-alt"
+            name="mainImageAlt"
+            class="form-input"
+            value={article.mainImage?.alt || ''}
+            placeholder="Descriptive image text"
+          />
+        </div>
+      </div>
+
+      <!-- Language & Translations -->
+      <div class="admin-card">
+        <h2 class="admin-card__title">Language & Translations</h2>
+
+        <div style="margin-bottom: 12px;">
+          <span style="font-size: 12px; color: var(--admin-text-muted);">Current Edition:</span>
+          <strong style="margin-left: 4px; color: var(--admin-text);">
+            {article.language === 'en' ? 'English (en)' : 'Spanish (es)'}
+          </strong>
+        </div>
+
+        {translationDoc ? (
+          <div style="background: var(--admin-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--admin-border); font-size: 12px;">
+            <div style="color: var(--admin-text-muted); margin-bottom: 4px;">
+              Linked {translationDoc.language.toUpperCase()} Version:
+            </div>
+            <a href={`/admin/articles/${translationDoc.sanityId}`} style="color: var(--admin-primary); font-weight: 600;">
+              {translationDoc.title} ↗
+            </a>
+          </div>
+        ) : (
+          <div style="font-size: 12px; color: var(--admin-text-faint);">
+            No linked translation document found for this article.
+          </div>
+        )}
+      </div>
+    </div>
+  </form>
+
+  <!-- Client-side TipTap Editor Script -->
+  <script>
+    import { Editor } from '@tiptap/core';
+    import StarterKit from '@tiptap/starter-kit';
+    import Link from '@tiptap/extension-link';
+    import { tiptapToPortableText } from '../../../lib/admin/portable-text-adapter';
+    import { PortableTextImage } from '../../../lib/admin/portable-text-image-extension';
+    import { clipboardHasImage, uploadAdminImage, uploadClipboardImage } from '../../../lib/admin/image-upload-client';
+
+    const dataEl = document.getElementById('editor-tiptap-data') as HTMLInputElement | null;
+    const editorEl = document.getElementById('tiptap-editor-el');
+    const wordCountEl = document.getElementById('word-count');
+
+    if (dataEl && editorEl) {
+      let initialJson = { type: 'doc', content: [{ type: 'paragraph' }] };
+      try {
+        initialJson = JSON.parse(dataEl.value);
+      } catch (e) {
+        console.error('Error parsing initial TipTap data', e);
+      }
+
+      const editor = new Editor({
+        element: editorEl,
+        extensions: [
+          StarterKit.configure({
+            heading: { levels: [2, 3, 4] },
+          }),
+          Link.configure({
+            openOnClick: false,
+            HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
+          }),
+          PortableTextImage,
+        ],
+        content: initialJson,
+        onUpdate({ editor }) {
+          dataEl.value = JSON.stringify(editor.getJSON());
+          if (wordCountEl) {
+            const text = editor.getText();
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            wordCountEl.textContent = `${words} words`;
+          }
+        },
+      });
+
+      // Bind toolbar actions
+      const toolbar = document.getElementById('editor-toolbar');
+      const contentImageInput = document.getElementById('content-image-file') as HTMLInputElement | null;
+      const contentImageStatus = document.getElementById('content-image-status');
+      const insertUploadedImage = (key: string, publicUrl: string, position?: number) => {
+        const imageNode = {
+          type: 'ptImage',
+          attrs: { r2Key: key, publicUrl, sanityId: null, alt: '', caption: '', _key: null, extraFields: null },
+        };
+        const chain = editor.chain();
+        if (typeof position === 'number') chain.insertContentAt(position, imageNode).focus().run();
+        else chain.focus().insertContent(imageNode).run();
+      };
+      const uploadContentImage = async (file: File, position?: number) => {
+        if (contentImageStatus) contentImageStatus.textContent = `Uploading ${file.name || 'image'} to R2…`;
+        try {
+          const uploaded = await uploadAdminImage(file);
+          insertUploadedImage(uploaded.key, uploaded.publicUrl, position);
+          if (contentImageStatus) contentImageStatus.textContent = 'Image uploaded to R2 and added to the article.';
+        } catch (error) {
+          if (contentImageStatus) contentImageStatus.textContent = error instanceof Error ? error.message : 'Image upload failed.';
+        }
+      };
+
+      if (toolbar) {
+        toolbar.querySelectorAll<HTMLButtonElement>('[data-command]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const cmd = btn.dataset.command;
+            const level = btn.dataset.level ? parseInt(btn.dataset.level, 10) : undefined;
+
+            if (cmd === 'bold') editor.chain().focus().toggleBold().run();
+            else if (cmd === 'italic') editor.chain().focus().toggleItalic().run();
+            else if (cmd === 'heading' && level) editor.chain().focus().toggleHeading({ level: level as 2 | 3 | 4 }).run();
+            else if (cmd === 'paragraph') editor.chain().focus().setParagraph().run();
+            else if (cmd === 'bulletList') editor.chain().focus().toggleBulletList().run();
+            else if (cmd === 'orderedList') editor.chain().focus().toggleOrderedList().run();
+            else if (cmd === 'blockquote') editor.chain().focus().toggleBlockquote().run();
+            else if (cmd === 'link') {
+              const url = prompt('Enter link URL:');
+              if (url) editor.chain().focus().setLink({ href: url }).run();
+              else editor.chain().focus().unsetLink().run();
+            }
+          });
+        });
+
+        const imgBtn = document.getElementById('insert-image-btn');
+        imgBtn?.addEventListener('click', () => {
+          if (!contentImageInput) return;
+          contentImageInput.dataset.insertPosition = String(editor.state.selection.from);
+          contentImageInput.click();
+        });
+      }
+
+      contentImageInput?.addEventListener('change', () => {
+        const file = contentImageInput.files?.[0];
+        if (!file) return;
+        const position = Number(contentImageInput.dataset.insertPosition);
+        void uploadContentImage(file, Number.isFinite(position) ? position : undefined);
+        contentImageInput.value = '';
+      });
+
+      editorEl.addEventListener('paste', async event => {
+        const clipboard = (event as ClipboardEvent).clipboardData;
+        if (!clipboardHasImage(clipboard)) return;
+        event.preventDefault();
+        const position = editor.state.selection.from;
+        if (contentImageStatus) contentImageStatus.textContent = 'Uploading pasted image to R2…';
+        try {
+          const uploaded = await uploadClipboardImage(clipboard);
+          if (uploaded) {
+            insertUploadedImage(uploaded.key, uploaded.publicUrl, position);
+            if (contentImageStatus) contentImageStatus.textContent = 'Image uploaded to R2 and added to the article.';
+          }
+        } catch (error) {
+          if (contentImageStatus) contentImageStatus.textContent = error instanceof Error ? error.message : 'Image upload failed.';
+        }
+      });
+
+      const heroDropzone = document.getElementById('hero-image-dropzone') as HTMLDivElement | null;
+      const heroFileInput = document.getElementById('hero-image-file') as HTMLInputElement | null;
+      const heroKeyInput = document.getElementById('hero-r2-key') as HTMLInputElement | null;
+      const heroAltInput = document.getElementById('hero-alt') as HTMLInputElement | null;
+      const heroPreview = document.getElementById('hero-image-preview');
+      const heroStatus = document.getElementById('hero-image-status');
+      const setHeroPreview = (publicUrl: string, key: string, alt: string) => {
+        if (heroKeyInput) heroKeyInput.value = key;
+        if (!heroPreview) return;
+        const image = document.createElement('img');
+        image.id = 'hero-image-preview-img';
+        image.src = publicUrl;
+        image.alt = alt;
+        image.onload = () => { if (heroStatus) heroStatus.textContent = 'Image uploaded to R2 and ready to save.'; };
+        image.onerror = () => { if (heroStatus) heroStatus.textContent = 'Uploaded, but the image preview could not be loaded yet.'; };
+        heroPreview.replaceChildren(image);
+      };
+      const uploadHeroImage = async (file: File) => {
+        if (heroStatus) heroStatus.textContent = `Uploading ${file.name || 'image'} to R2…`;
+        try {
+          const uploaded = await uploadAdminImage(file);
+          setHeroPreview(uploaded.publicUrl, uploaded.key, heroAltInput?.value || '');
+        } catch (error) {
+          if (heroStatus) heroStatus.textContent = error instanceof Error ? error.message : 'Image upload failed.';
+        }
+      };
+
+      document.getElementById('hero-image-choose')?.addEventListener('click', () => heroFileInput?.click());
+      heroDropzone?.addEventListener('paste', async event => {
+        const clipboard = (event as ClipboardEvent).clipboardData;
+        if (!clipboardHasImage(clipboard)) return;
+        event.preventDefault();
+        if (heroStatus) heroStatus.textContent = 'Uploading pasted image to R2…';
+        try {
+          const uploaded = await uploadClipboardImage(clipboard);
+          if (uploaded) setHeroPreview(uploaded.publicUrl, uploaded.key, heroAltInput?.value || '');
+        } catch (error) {
+          if (heroStatus) heroStatus.textContent = error instanceof Error ? error.message : 'Image upload failed.';
+        }
+      });
+      heroDropzone?.addEventListener('dragover', event => { event.preventDefault(); heroDropzone.classList.add('is-dragging'); });
+      heroDropzone?.addEventListener('dragleave', () => heroDropzone.classList.remove('is-dragging'));
+      heroDropzone?.addEventListener('drop', event => {
+        event.preventDefault();
+        heroDropzone.classList.remove('is-dragging');
+        const file = (event as DragEvent).dataTransfer?.files[0];
+        if (file) void uploadHeroImage(file);
+      });
+      heroFileInput?.addEventListener('change', () => {
+        const file = heroFileInput.files?.[0];
+        if (file) void uploadHeroImage(file);
+        heroFileInput.value = '';
+      });
+
+      const saveButton = document.getElementById('save-article-btn') as HTMLButtonElement | null;
+      const saveStatus = document.getElementById('article-save-status');
+      const form = document.getElementById('article-editor-form') as HTMLFormElement | null;
+      saveButton?.addEventListener('click', async () => {
+        if (!form) return;
+        const values = new FormData(form);
+        const publishedAt = String(values.get('publishedAt') || '');
+        const key = heroKeyInput?.value.trim() || '';
+        const payload = {
+          sanityId: String(values.get('sanityId') || ''),
+          title: String(values.get('title') || '').trim(),
+          slug: String(values.get('slug') || '').trim(),
+          excerpt: String(values.get('excerpt') || ''),
+          metaTitle: String(values.get('metaTitle') || ''),
+          metaDescription: String(values.get('metaDescription') || ''),
+          publicationState: String(values.get('publicationState') || 'draft'),
+          publishedAt: publishedAt ? new Date(publishedAt).toISOString() : '',
+          authorSanityId: String(values.get('authorSanityId') || '') || null,
+          categorySanityIds: values.getAll('categorySanityIds').map(String),
+          animeName: String(values.get('animeName') || ''),
+          mainImage: key ? { _type: 'image', alt: heroAltInput?.value || '', asset: { r2Key: key } } : null,
+          body: tiptapToPortableText(editor.getJSON()),
+        };
+
+        saveButton.disabled = true;
+        if (saveStatus) saveStatus.textContent = 'Saving article…';
+        try {
+          const response = await fetch('/api/admin/articles/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload),
+          });
+          const result = await response.json() as { success?: boolean; matchedCount?: number; error?: string };
+          if (!response.ok || !result.success || !result.matchedCount) throw new Error(result.error || 'Article could not be saved.');
+          if (saveStatus) saveStatus.textContent = 'Article changes saved.';
+        } catch (error) {
+          if (saveStatus) saveStatus.textContent = error instanceof Error ? error.message : 'Article could not be saved.';
+        } finally {
+          saveButton.disabled = false;
+        }
+      });
+
+      // Initial word count
+      const initialText = editor.getText();
+      const initialWords = initialText.trim() ? initialText.trim().split(/\s+/).length : 0;
+      if (wordCountEl) wordCountEl.textContent = `${initialWords} words`;
+    }
+
+    // Dynamic SEO character counters
+    const titleInput = document.getElementById('article-meta-title') as HTMLInputElement | null;
+    const titleCount = document.getElementById('meta-title-count');
+    const serpTitle = document.getElementById('serp-title-preview');
+    if (titleInput && titleCount && serpTitle) {
+      titleInput.addEventListener('input', () => {
+        titleCount.textContent = `${titleInput.value.length}/60 chars`;
+        serpTitle.textContent = titleInput.value || 'Untitled';
+      });
+    }
+
+    const descInput = document.getElementById('article-meta-desc') as HTMLTextAreaElement | null;
+    const descCount = document.getElementById('meta-desc-count');
+    const serpDesc = document.getElementById('serp-desc-preview');
+    if (descInput && descCount && serpDesc) {
+      descInput.addEventListener('input', () => {
+        descCount.textContent = `${descInput.value.length}/160 chars`;
+        serpDesc.textContent = descInput.value || 'No description provided.';
+      });
+    }
+  </script>
+</AdminLayout>

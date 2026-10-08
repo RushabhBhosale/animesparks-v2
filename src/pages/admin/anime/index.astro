@@ -1,0 +1,110 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { env } from 'cloudflare:workers';
+import { withDatabase } from '../../../lib/content/mongodb';
+import { getAdminAnimeEntries } from '../../../lib/admin/db';
+import { isWritesEnabled } from '../../../lib/admin/write-guard';
+
+const query = Astro.url.searchParams.get('q') || '';
+const animeList = await withDatabase(env.MONGODB_URI, db => getAdminAnimeEntries(db, query));
+const writesEnabled = isWritesEnabled(env);
+---
+
+<AdminLayout title="Anime Database" activeNav="anime">
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-header__title">Anime Database Management</h1>
+      <p class="admin-header__desc">
+        Browse and manage {animeList.length} indexed anime franchise entries.
+      </p>
+    </div>
+
+    <div class="admin-header__actions">
+      <button
+        type="button"
+        class="btn btn--primary"
+        disabled={!writesEnabled}
+        title={!writesEnabled ? 'Writes disabled by safety guard' : 'New Anime Entry'}
+      >
+        + Add Anime Entry
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Filter -->
+  <form method="GET" action="/admin/anime" class="admin-filters">
+    <div class="admin-filters__search">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input
+        type="search"
+        name="q"
+        value={query}
+        placeholder="Search series by title..."
+      />
+    </div>
+    <button type="submit" class="btn btn--secondary btn--sm">Search</button>
+    {query && <a href="/admin/anime" class="btn btn--secondary btn--sm">Clear</a>}
+  </form>
+
+  <!-- Table -->
+  <div class="table-container">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Cover</th>
+          <th>Title & ID</th>
+          <th>Score</th>
+          <th>Year</th>
+          <th>Genres</th>
+          <th>Status</th>
+          <th style="text-align: right;">Public Search</th>
+        </tr>
+      </thead>
+      <tbody>
+        {animeList.map(item => (
+          <tr>
+            <td style="width: 50px;">
+              <div style="width: 40px; height: 56px; border-radius: 3px; overflow: hidden; background: var(--admin-surface-2);">
+                {item.coverImage ? (
+                  <img src={item.coverImage} alt={item.title} style="width: 100%; height: 100%; object-fit: cover;" loading="lazy" />
+                ) : (
+                  <div style="display: grid; place-items: center; height: 100%; font-size: 10px; color: var(--admin-text-faint);">None</div>
+                )}
+              </div>
+            </td>
+            <td>
+              <div style="font-weight: 600; color: var(--admin-text);">{item.title}</div>
+              <div style="font-size: 11px; color: var(--admin-text-faint); font-family: var(--admin-font-mono);">{item.sanityId}</div>
+            </td>
+            <td>
+              <span style="font-weight: 700; color: #fbbf24;">★ {item.score ?? '—'}</span>
+            </td>
+            <td style="color: var(--admin-text-muted);">{item.year ?? '—'}</td>
+            <td>
+              <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                {(item.genres || []).slice(0, 3).map(g => (
+                  <span class="badge badge--neutral">{g}</span>
+                ))}
+              </div>
+            </td>
+            <td>
+              <span class="badge badge--published">{item.publicationState || 'published'}</span>
+            </td>
+            <td style="text-align: right;">
+              <a
+                href={`/search?q=${encodeURIComponent(item.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn--secondary btn--sm"
+              >
+                Find Articles ↗
+              </a>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>

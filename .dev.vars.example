@@ -1,2 +1,11 @@
 # Keep the real URI in .dev.vars and in a Wrangler secret, never in source control.
 MONGODB_URI=""
+
+# Admin authentication — set these via `wrangler secret put` for production.
+# For local dev, add real values to .dev.vars (never commit them).
+# ADMIN_USER: the username for the CMS admin login (e.g., "admin").
+# ADMIN_PASS_HASH: SHA-256 hex of the password (generate with: node -e "crypto.createHash('sha256').update('yourpassword').digest('hex')")
+# ADMIN_JWT_SECRET: a random 32+ character string for signing session JWTs.
+ADMIN_USER="admin"
+ADMIN_PASS_HASH=""
+ADMIN_JWT_SECRET=""

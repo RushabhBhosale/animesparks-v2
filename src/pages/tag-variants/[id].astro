@@ -1,0 +1,25 @@
+---
+import ListingPage from '../../components/ListingPage.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { getPage, listingHref, paginate } from '../../lib/content/listing';
+import { SITE, tagSeo } from '../../lib/content/seo';
+import { isTagIndexable } from '../../lib/content/tag-seo';
+export const prerender = true;
+export async function getStaticPaths() {
+  const data = await getBuildData();
+  return data.tagVariants.map(({ id, tag }) => ({ params: { id }, props: { tag } }));
+}
+const tag = Astro.props.tag as string;
+const page = getPage(Astro.url.searchParams.get('page'));
+if (!page || !tag) return new Response('Tag not found', { status: 404 });
+const snapshot = await getBuildData();
+const posts = [...snapshot.english, ...snapshot.spanish].filter(article => article.tags?.some(value => value.toLowerCase() === tag.toLowerCase()));
+const categories = snapshot.categories;
+if (!posts.length) return new Response('Tag not found', { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow' } });
+const result = paginate(posts, page);
+if (!result.valid) return new Response('Page not found', { status: 404 });
+const path = `/tags/${encodeURIComponent(tag)}`;
+const canonical = SITE + listingHref(path, {}, page);
+const seo = tagSeo(tag, page);
+---
+<ListingPage eyebrow="Topic index" heading={tag} description={seo.description} title={seo.title} socialTitle={seo.socialTitle} canonical={canonical} posts={result.items} categories={categories} path={path} page={page} pageCount={result.pageCount} total={result.total} robotsNoindex={!isTagIndexable(tag, snapshot.primaryTags, [...snapshot.english, ...snapshot.spanish])} />

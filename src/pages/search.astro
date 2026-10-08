@@ -1,0 +1,19 @@
+---
+import { env } from 'cloudflare:workers';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { loadSearchEntries, searchEntries } from '../lib/content/search-index';
+import { getPage, listingHref, paginate } from '../lib/content/listing';
+import { SITE, homeImage } from '../lib/content/seo';
+const query = (Astro.url.searchParams.get('q') || '').trim();
+const page = getPage(Astro.url.searchParams.get('page'));
+if (!page) return new Response('Page not found', { status: 404 });
+const results = query.length >= 2 ? searchEntries(await loadSearchEntries(env.ASSETS, Astro.request.url), query) : [];
+const result = paginate(results, page);
+if (!result.valid) return new Response('Page not found', { status: 404 });
+const canonical = SITE + listingHref('/search', { q: query || undefined }, page);
+const title = query ? `Search results for "${query}" | AnimeSparks` : 'Search the archive | AnimeSparks';
+const description = query ? `Live results for "${query}" across AnimeSparks anime blogs, reviews, and breakdowns.` : 'Search the AnimeSparks collection of anime blogs, reviews, and character studies.';
+---
+<SiteLayout title={title} socialTitle={title.replace(/ \| AnimeSparks$/, '')} description={description} canonical={canonical} image={homeImage} robotsNoindex>
+  <main class="shell search-page"><p class="kicker red">Search Brief</p><h1>Scan the AnimeSparks archive</h1><p>Search our latest anime blogs, reviews, lore breakdowns, and character studies.</p><form class="search-form" action="/search" method="get"><label for="search-query">Search articles</label><div><input id="search-query" type="search" name="q" value={query} placeholder="Search a topic or series" required /><button type="submit">Search ↗</button></div></form><section class="search-results" aria-live="polite"><p class="kicker">{query.length >= 2 ? `${results.length} files matched` : 'Type 2+ characters to run a scan'}</p>{result.items.length ? result.items.map(article => <a class="search-result" href={`/blog/${article.slug}`}><span>{article.categories[0]?.title || 'Article'} · {article.publishedAt && new Date(article.publishedAt).toLocaleDateString('en-US')}</span><h2>{article.title}</h2><p>{article.metaDescription || article.excerpt}</p></a>) : query.length >= 2 && <p>No matching articles found.</p>}</section>{result.pageCount > 1 && <nav class="pagination" aria-label="Pagination">{page > 1 && <a href={listingHref('/search', { q: query }, page - 1)}>← Previous</a>}<span>{page} / {result.pageCount}</span>{page < result.pageCount && <a href={listingHref('/search', { q: query }, page + 1)}>Next →</a>}</nav>}</main>
+</SiteLayout>

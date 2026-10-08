@@ -1,0 +1,19 @@
+---
+import ListingPage from '../../components/ListingPage.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { getPage, listingHref, paginate, sortArticles } from '../../lib/content/listing';
+import { SITE } from '../../lib/content/seo';
+const query = (Astro.url.searchParams.get('q') || '').trim();
+const sort = Astro.url.searchParams.get('sort') || '';
+const page = getPage(Astro.url.searchParams.get('page'));
+if (!page) return new Response('Page not found', { status: 404 });
+export const prerender = true;
+const { english: articles, categories } = await getBuildData();
+const normalized = query.toLowerCase();
+const filtered = normalized ? articles.filter(article => [article.title, article.metaDescription, article.excerpt].some(value => value?.toLowerCase().includes(normalized))) : articles;
+const tags = [...new Set(filtered.flatMap(article => article.tags || []))].slice(0, 16);
+const result = paginate(sortArticles(filtered, sort), page);
+if (!result.valid) return new Response('Page not found', { status: 404 });
+const canonical = SITE + listingHref('/blogs', { q: query || undefined, sort: sort || undefined }, page);
+---
+<ListingPage eyebrow="The editorial archive" heading="Blogs" description="Analysis, character studies, and the ideas behind the anime." metaDescription="Browse all anime articles on AnimeSparks — reviews, breakdowns, opinions, and deep dives into storytelling, characters, and themes." title={`Anime Blogs & Analysis${page > 1 ? ` · Page ${page}` : ''} | AnimeSparks`} canonical={canonical} posts={result.items} categories={categories} tags={tags} path="/blogs" query={query} sort={sort} page={page} pageCount={result.pageCount} total={result.total} showSearch showExcerpt={false} />

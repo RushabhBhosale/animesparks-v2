@@ -12,7 +12,12 @@ export default defineConfig({
       name: 'prebundle-mongodb-for-workerd',
       configEnvironment(environment) {
         if (environment === 'client') return;
-        return { optimizeDeps: { include: ['mongodb', 'mongodb-connection-string-url', 'whatwg-url', 'tr46', 'punycode'] } };
+        return {
+          optimizeDeps: {
+            include: ['mongodb', 'mongodb-connection-string-url', 'whatwg-url', 'tr46', 'punycode'],
+            exclude: ['fuse.js'],
+          },
+        };
       },
     }],
   },

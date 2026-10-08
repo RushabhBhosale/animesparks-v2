@@ -1,0 +1,30 @@
+---
+import ListingPage from '../../components/ListingPage.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { getPage, listingHref, paginate, sortArticles } from '../../lib/content/listing';
+import { SITE } from '../../lib/content/seo';
+export const prerender = true;
+export async function getStaticPaths() {
+  const data = await getBuildData();
+  return data.categories.map(category => ({ params: { slug: category.slug }, props: { category } }));
+}
+const slug = Astro.params.slug || '';
+const page = getPage(Astro.url.searchParams.get('page'));
+const sort = Astro.url.searchParams.get('sort') || '';
+if (!page) return new Response('Page not found', { status: 404 });
+const snapshot = await getBuildData();
+const category = Astro.props.category;
+const data = { category, articles: snapshot.english.filter(article => article.categorySanityIds?.includes(category.sanityId)) };
+const categories = snapshot.categories;
+if (!data) return new Response('Category not found', { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow' } });
+const result = paginate(sortArticles(data.articles, sort), page);
+if (!result.valid) return new Response('Page not found', { status: 404 });
+const presets: Record<string, [string, string]> = {
+  'anime-reviews': ['Anime Reviews — Honest Takes on Popular & Underrated Series', 'In-depth anime reviews focused on story, characters, themes, and execution — covering both mainstream hits and overlooked series.'],
+  'anime-opinions': ['Anime Opinions & Hot Takes That Go Deeper', 'Thought-provoking anime opinions exploring themes, character choices, power systems, and storytelling decisions across popular series.'],
+  'anime-lists': ['Anime Lists — Recommendations, Rankings & Hidden Gems', 'Curated anime lists featuring recommendations, rankings, underrated picks, and must-watch series across multiple genres.'],
+};
+const [title, description] = presets[slug] || [`Category: ${data.category.title}`, data.category.description?.trim() || `Posts in ${data.category.title} on AnimeSparks.`];
+const canonical = SITE + listingHref(`/categories/${slug}`, { sort: sort || undefined }, page);
+---
+<ListingPage eyebrow="Editorial section" heading={data.category.title} description={description} title={`${title}${page > 1 ? ` · Page ${page}` : ''} | AnimeSparks`} canonical={canonical} posts={result.items} categories={categories} path={`/categories/${slug}`} sort={sort} page={page} pageCount={result.pageCount} total={result.total} />

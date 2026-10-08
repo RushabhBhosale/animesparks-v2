@@ -1,0 +1,15 @@
+---
+export const prerender = true;
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { SITE, homeImage } from '../lib/content/seo';
+const sections = [
+  ['Information We Collect', 'If you subscribe to updates, we store the email address you provide. Our servers may also log basic technical data such as IP address, user agent, and request timing for security and performance.'],
+  ['How We Use Data', 'Data is used to deliver requested updates, maintain site reliability, and understand broad readership trends. We do not sell personal data.'],
+  ['Cookies & Analytics', 'We may use lightweight analytics to understand page usage. If cookies are used, they are limited to essential functionality and basic measurement.'],
+  ['Your Choices', 'You can opt out of emails at any time using unsubscribe links. You may also contact us to request removal of your email from our records.'],
+  ['Advertising Cookies (Google AdSense)', 'Third-party vendors, including Google, may use cookies to serve ads based on a user’s prior visits to this website or other websites. Google’s use of advertising cookies enables it and its partners to serve ads based on your visit to AnimeSparks and/or other sites on the internet. Users may opt out of personalized advertising by visiting Google’s Ads Settings.'],
+];
+---
+<SiteLayout title="Privacy Policy | AnimeSparks" socialTitle="Privacy Policy" description="Read AnimeSparks’ privacy policy explaining how data is handled, stored, and protected when you browse the website." canonical={`${SITE}/privacy`} image={homeImage}>
+  <main><header class="page-hero"><div class="shell"><p class="kicker red">Privacy</p><h1>Privacy Policy<span class="red">.</span></h1><p>Clear, minimal data practices designed for readers first.</p></div></header><div class="shell prose-page">{sections.map(([heading, text]) => <section><h2>{heading}</h2><p>{text}</p></section>)}</div></main>
+</SiteLayout>
