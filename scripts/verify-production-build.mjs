@@ -22,6 +22,9 @@ for (const url of urls) {
 assert.doesNotMatch(sitemap, /workers\.dev|draft/i, 'sitemap contains staging or draft markers');
 
 const listingData = JSON.parse(read('listing-data.json'));
+const contentManifest = JSON.parse(read('content-manifest.json'));
+assert.equal(contentManifest.schema, 1, 'content manifest schema is unsupported');
+assert.match(contentManifest.fingerprint, /^[a-f0-9]{64}$/, 'content manifest fingerprint is invalid');
 const allCards = [...listingData.english, ...listingData.spanish];
 const routeInventory = JSON.parse(read('route-inventory.json'));
 const variantRoutes = JSON.parse(read('tag-route-map.json'));

@@ -46,6 +46,13 @@ declare module 'cloudflare:workers' {
     ADMIN_PASS_HASH?: string;
     ADMIN_JWT_SECRET?: string;
     ADMIN_WRITES_ENABLED?: string;
+    PUBLISHING_API_KEY?: string;
+    DEPLOYMENT_CALLBACK_KEY?: string;
+    PUBLISHING_WRITES_ENABLED?: string;
+    GITHUB_REPOSITORY?: string;
+    GITHUB_REF?: string;
+    GITHUB_ACTIONS_TOKEN?: string;
+    PUBLISHING_ALLOWED_ORIGIN?: string;
     IMAGES_BUCKET?: R2Bucket;
     ASSETS?: { fetch(request: Request | string): Promise<Response> };
     GA_PROPERTY_ID?: string;

@@ -26,6 +26,11 @@ const result = spawnSync(process.execPath, ['node_modules/astro/bin/astro.mjs', 
 console.log(`[stage3] Full build: ${((Date.now() - started) / 1000).toFixed(1)}s`);
 if (result.status !== 0) process.exit(result.status ?? 1);
 if (production) {
+  const fingerprintManifest = spawnSync(process.execPath, ['scripts/content-fingerprint.mjs', '--write-manifest', 'dist/client/content-manifest.json'], {
+    env: environment,
+    stdio: 'inherit',
+  });
+  if (fingerprintManifest.status !== 0) process.exit(fingerprintManifest.status ?? 1);
   // Wrangler's prerender environment may leave the local .dev.vars file in
   // the server output. It is only a build input and must never ship.
   rmSync('dist/server/.dev.vars', { force: true });

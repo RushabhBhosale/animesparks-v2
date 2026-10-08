@@ -12,7 +12,8 @@
   "vars": {
     "MONGODB_DB_NAME": "animesparks",
     // Keep all admin database and R2 mutations disabled during pre-production.
-    "ADMIN_WRITES_ENABLED": "true",
+    "ADMIN_WRITES_ENABLED": "false",
+    "PUBLISHING_WRITES_ENABLED": "false",
   },
   // Native R2 bucket binding — images.animesparks.blog is a custom domain on this bucket.
   // The bucket name is confirmed as "animesparks-staging".

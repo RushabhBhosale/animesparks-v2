@@ -1,0 +1,106 @@
+name: AnimeSparks MongoDB rebuild
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      deploy_production:
+        description: Deploy a changed production build to the existing Worker
+        required: true
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+
+concurrency:
+  group: animesparks-production-rebuild
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      changed: ${{ steps.compare.outputs.changed }}
+      fingerprint: ${{ steps.fingerprint.outputs.fingerprint }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Fingerprint published MongoDB content
+        id: fingerprint
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB_NAME: animesparks
+        run: node scripts/content-fingerprint.mjs --github-output
+      - name: Compare with the production manifest
+        id: compare
+        env:
+          CONTENT_FINGERPRINT: ${{ steps.fingerprint.outputs.fingerprint }}
+        run: node scripts/compare-content-fingerprint.mjs
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.changed == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build and verify production assets
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB_NAME: animesparks
+          CONTENT_FINGERPRINT: ${{ needs.detect.outputs.fingerprint }}
+          ADMIN_WRITES_ENABLED: ${{ vars.ADMIN_WRITES_ENABLED }}
+          PUBLIC_DEPLOY_TARGET: production
+        run: npm run build:production
+      - name: Check the generated fingerprint manifest
+        env:
+          EXPECTED_FINGERPRINT: ${{ needs.detect.outputs.fingerprint }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const manifest = JSON.parse(readFileSync('dist/client/content-manifest.json', 'utf8'));
+          if (manifest.schema !== 1 || manifest.fingerprint !== process.env.EXPECTED_FINGERPRINT) {
+            throw new Error('Build manifest does not match the content detector fingerprint.');
+          }
+          NODE
+      - name: Deploy existing animesparks-v2 Worker
+        if: >-
+          (github.event_name == 'workflow_dispatch' && inputs.deploy_production == true && needs.detect.outputs.changed == 'true') ||
+          (vars.ANIMESPARKS_AUTO_DEPLOY_APPROVED == 'true' &&
+          ((github.event_name == 'schedule' && needs.detect.outputs.changed == 'true') || github.event_name == 'push'))
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config dist/server/wrangler.json --name animesparks-v2
+      - name: Verify production deployment
+        if: steps.deploy.outcome == 'success'
+        id: verify
+        env:
+          EXPECTED_FINGERPRINT: ${{ needs.detect.outputs.fingerprint }}
+        run: node scripts/verify-production-deployment.mjs
+      - name: Roll back failed deployment verification
+        if: steps.verify.outcome == 'failure'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler rollback --name animesparks-v2 --message "AnimeSparks production verification failed"
