@@ -36,7 +36,7 @@ export default {
     const listingPath = url.pathname === '/blogs' || url.pathname === '/blogs/es' || url.pathname === '/trending' ||
       url.pathname.startsWith('/categories/') || url.pathname.startsWith('/tags/');
     const variantQuery = ['q', 'sort', 'range', 'page'].some(key => url.searchParams.has(key));
-    if (listingPath && variantQuery) {
+    if (listingPath && (variantQuery || url.pathname === '/trending')) {
       const rewrite = new URL('/listing-variant', url);
       rewrite.searchParams.set('target', url.pathname);
       for (const [key, value] of url.searchParams) rewrite.searchParams.append(key, value);
@@ -54,6 +54,12 @@ export default {
     let guardedResponse = new Response(response.body, { status: response.status, statusText: response.statusText, headers });
     if ((headers.get('content-type') || '').toLowerCase().includes('text/html')) {
       guardedResponse = new HTMLRewriter()
+        .on('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]', { element(element) {
+          element.remove();
+        } })
+        .on('.ad-placement', { element(element) {
+          element.remove();
+        } })
         .on('meta[name="robots"]', { element(element) {
           element.setAttribute('content', 'noindex, nofollow');
         } })

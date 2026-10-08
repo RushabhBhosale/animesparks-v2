@@ -1,6 +1,7 @@
 ---
 import type { ArticleCard } from '../lib/content/types';
 import { r2ImageUrl } from '../lib/content/images';
+import { categoryLabel, getUiCopy } from '../lib/content/locales';
 
 export interface Props {
   article: ArticleCard;
@@ -8,6 +9,7 @@ export interface Props {
   layout?: 'grid' | 'row'; // for backwards compatibility
   locale?: 'en' | 'es';
   showExcerpt?: boolean;
+  homepageSelection?: boolean;
 }
 
 const {
@@ -16,6 +18,7 @@ const {
   layout,
   locale = article.language,
   showExcerpt = true,
+  homepageSelection = false,
 } = Astro.props;
 
 // Map legacy layout prop to variant
@@ -33,6 +36,7 @@ const date = article.publishedAt
 const href = `${locale === 'es' ? '/es' : ''}/blog/${article.slug}`;
 const primaryCategory = article.categories?.[0];
 const categoryHref = primaryCategory ? `/categories/${primaryCategory.slug}` : undefined;
+const copy = getUiCopy(locale);
 ---
 
 <article class:list={[
@@ -41,8 +45,8 @@ const categoryHref = primaryCategory ? `/categories/${primaryCategory.slug}` : u
   variant === 'horizontal' && 'card--row',
   variant === 'compact' && 'card--compact',
   variant === 'featured' && 'card--featured',
-]}>
-  <a class="card__image-link" href={href} aria-label={`Read ${article.title}`}>
+]} data-homepage-article={homepageSelection ? (article.translationOfSanityId || article.sanityId) : undefined}>
+  <a class="card__image-link" href={href} aria-label={`${copy.readMore}: ${article.title}`}>
     {image ? (
       <img
         src={image}
@@ -59,7 +63,7 @@ const categoryHref = primaryCategory ? `/categories/${primaryCategory.slug}` : u
     <div class="card__meta">
       {primaryCategory && (
         <a class="card__category" href={categoryHref}>
-          {primaryCategory.title}
+          {categoryLabel(primaryCategory.title, locale)}
         </a>
       )}
       {date && (
@@ -77,7 +81,7 @@ const categoryHref = primaryCategory ? `/categories/${primaryCategory.slug}` : u
 
     {variant !== 'compact' && (
       <span class="card__author">
-        {article.author?.name || 'AnimeSparks Editorial'}
+        {article.author?.name || (locale === 'es' ? 'Redacción de AnimeSparks' : 'AnimeSparks Editorial')}
       </span>
     )}
   </div>

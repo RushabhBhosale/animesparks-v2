@@ -4,4 +4,4 @@ import SiteLayout from '../layouts/SiteLayout.astro';
 import { SITE } from '../lib/content/seo';
 Astro.response.status = 404;
 ---
-<SiteLayout title="Page not found | AnimeSparks" description="This page could not be found." canonical={`${SITE}/404`} image={`${SITE}/anime-poster.jpg`} robotsNoindex><main class="shell not-found"><p class="kicker">Case not found</p><h1>404</h1><p>This page could not be found.</p><a href="/">Return to the cover →</a></main></SiteLayout>
+<SiteLayout title="Page not found | AnimeSparks" description="This page could not be found." canonical={`${SITE}/404`} image={`${SITE}/anime-poster.jpg`} robotsNoindex adsDisabled><main class="shell not-found"><p class="kicker">Case not found</p><h1>404</h1><p>This page could not be found.</p><a href="/">Return to the cover →</a></main></SiteLayout>

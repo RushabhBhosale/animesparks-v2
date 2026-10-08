@@ -1,18 +1,41 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
+import AdUnit from '../../components/AdUnit.astro';
 import { getBuildData } from '../../lib/content/build-data';
 import { r2ImageUrl } from '../../lib/content/images';
 import { SITE, homeImage } from '../../lib/content/seo';
 export const prerender = true;
 const categories = (await getBuildData()).categorySummaries;
+const midpoint = Math.ceil(categories.length / 2);
 ---
-<SiteLayout title="Anime Categories & Topics | AnimeSparks" socialTitle="Anime Categories & Topics" description="Explore anime by category — reviews, opinions, lists, and news covering shonen, psychological anime, isekai, and more." canonical={`${SITE}/categories`} image={homeImage}>
-  <main><header class="page-hero"><div class="shell"><p class="kicker red">Find your next read</p><h1>Editorial sections<span class="red">.</span></h1><p>Explore anime through its stories, characters, and ideas.</p></div></header><div class="shell editorial-section"><div class="category-grid">{categories.map((category, index) => {
-    const image = category.cover?.mainImage ? r2ImageUrl(category.cover.mainImage) : undefined;
-    return <a class="category-card" href={`/categories/${category.slug}`}>
-      {image && <img src={image} alt="" loading="lazy" decoding="async" />}
-      <span class="category-card__number">{String(index + 1).padStart(2, '0')}</span>
-      <div class="category-card__content"><h2>{category.title}</h2><p>{category.count} {category.count === 1 ? 'post' : 'posts'} ↗</p></div>
-    </a>;
-  })}</div><a class="outline-button category-archive-link" href="/blogs">Browse all articles ↗</a></div></main>
+<SiteLayout title="Anime Categories & Topics | AnimeSparks" socialTitle="Anime Categories & Topics" description="Explore anime by category — reviews, opinions, lists, and news covering shonen, psychological anime, isekai, and more." canonical={`${SITE}/categories`} image={homeImage} showFooterAd>
+  <main>
+    <header class="page-hero"><div class="shell"><p class="kicker red">Find your next read</p><h1>Editorial sections<span class="red">.</span></h1><p>Explore anime through its stories, characters, and ideas.</p></div></header>
+    <div class="shell editorial-section">
+      <div class="category-grid">
+        {categories.slice(0, midpoint).map((category, index) => {
+          const image = category.cover?.mainImage ? r2ImageUrl(category.cover.mainImage) : undefined;
+          return <a class="category-card" href={`/categories/${category.slug}`}>
+            {image && <img src={image} alt="" loading="lazy" decoding="async" />}
+            <span class="category-card__number">{String(index + 1).padStart(2, '0')}</span>
+            <div class="category-card__content"><h2>{category.title}</h2><p>{category.count} {category.count === 1 ? 'post' : 'posts'} ↗</p></div>
+          </a>;
+        })}
+      </div>
+      <AdUnit slot="cate1" />
+      <div class="category-grid">
+        {categories.slice(midpoint).map((category, index) => {
+          const categoryIndex = index + midpoint;
+          const image = category.cover?.mainImage ? r2ImageUrl(category.cover.mainImage) : undefined;
+          return <a class="category-card" href={`/categories/${category.slug}`}>
+            {image && <img src={image} alt="" loading="lazy" decoding="async" />}
+            <span class="category-card__number">{String(categoryIndex + 1).padStart(2, '0')}</span>
+            <div class="category-card__content"><h2>{category.title}</h2><p>{category.count} {category.count === 1 ? 'post' : 'posts'} ↗</p></div>
+          </a>;
+        })}
+      </div>
+      <AdUnit slot="cate2" />
+      <a class="outline-button category-archive-link" href="/blogs">Browse all articles ↗</a>
+    </div>
+  </main>
 </SiteLayout>

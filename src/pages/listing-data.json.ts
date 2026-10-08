@@ -5,7 +5,7 @@ export const prerender = true;
 export const GET: APIRoute = async () => {
   const { english, spanish, categories } = await getBuildData();
   const compact = (articles: typeof english) => articles.map(article => ({
-    sanityId: article.sanityId, language: article.language, slug: article.slug,
+    sanityId: article.sanityId, translationOfSanityId: article.translationOfSanityId, language: article.language, slug: article.slug,
     title: article.title, metaDescription: article.metaDescription, excerpt: article.excerpt,
     publishedAt: article.publishedAt, mainImage: article.mainImage, author: article.author,
     categories: article.categories, categorySanityIds: article.categorySanityIds,

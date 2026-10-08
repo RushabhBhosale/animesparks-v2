@@ -48,5 +48,8 @@ declare module 'cloudflare:workers' {
     ADMIN_WRITES_ENABLED?: string;
     IMAGES_BUCKET?: R2Bucket;
     ASSETS?: { fetch(request: Request | string): Promise<Response> };
+    GA_PROPERTY_ID?: string;
+    GA_CLIENT_EMAIL?: string;
+    GA_PRIVATE_KEY?: string;
   };
 }

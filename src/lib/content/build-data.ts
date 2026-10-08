@@ -3,6 +3,7 @@ import { getHomepage } from './homepage';
 import { getPublishedArticles, hydrateCards, isLive } from './articles';
 import { getAnimeEntries, getCategories, getCategoriesWithArticles, getSitemapArticles } from './public';
 import type { ArticleCard, ArticleDocument, ArticlePageData } from './types';
+import { applyFreshnessOverride } from './freshness-overrides';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -33,7 +34,7 @@ async function loadBuildData() {
       const sourceEdit = sourceDocument?.updatedAt;
       const sourceLag = Date.parse(article.sourceUpdatedAt || '') - Date.parse(publishedAt || '');
       const offsetPublication = /[+-]\d{2}:\d{2}$/.test(sourceDocument?.publishedAt || '');
-      return {
+      return applyFreshnessOverride({
         ...article,
         publishedAt,
         // Keep explicit editorial dates. For imported records without one,
@@ -42,12 +43,14 @@ async function loadBuildData() {
           ? sourceEdit || (sourceLag < -1000 || (offsetPublication && sourceLag < 2 * 60 * 60 * 1000)
             ? publishedAt : article.sourceUpdatedAt)
           : article.updatedAt,
-      };
+      });
     }).filter(article => article.slug && isLive(article));
     const normalizedById = new Map(liveDocuments.map(article => [article.sanityId, article]));
     const normalizeCard = (card: ArticleCard) => {
       const normalized = normalizedById.get(card.sanityId);
-      return normalized ? { ...card, publishedAt: normalized.publishedAt, updatedAt: normalized.updatedAt } : card;
+      return applyFreshnessOverride(normalized
+        ? { ...card, publishedAt: normalized.publishedAt, updatedAt: normalized.updatedAt }
+        : card);
     };
     const english = rawEnglish.map(normalizeCard).filter(isLive).sort((a, b) => Date.parse(b.publishedAt || '') - Date.parse(a.publishedAt || ''));
     const spanish = rawSpanish.map(normalizeCard).filter(isLive).sort((a, b) => Date.parse(b.publishedAt || '') - Date.parse(a.publishedAt || ''));
@@ -68,13 +71,13 @@ async function loadBuildData() {
     const spanishBySourceId = new Map(hydrated.filter(a => a.language === 'es').map(a => [a.translationOfSanityId, a]));
     const articlePages: ArticlePageData[] = hydrated.map(article => {
       const original = article.language === 'es' ? englishById.get(article.translationOfSanityId || '') : undefined;
-      return {
+      return applyFreshnessOverride({
         ...article,
         sources: article.sources?.length ? article.sources : original?.sources,
         alternateSlug: article.language === 'en'
           ? spanishBySourceId.get(article.sanityId)?.slug
           : original?.slug,
-      };
+      });
     });
     const related = (article: ArticleCard): ArticleCard[] => {
       const cards = article.language === 'es' ? spanish : english;

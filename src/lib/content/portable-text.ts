@@ -53,26 +53,28 @@ const renderBlock = (block: PortableBlock, headingIds: Map<string, number>) => {
   if (style !== 'normal') throw new Error(`Unsupported Portable Text style: ${style}`);
   return `<p>${content}</p>`;
 };
-export function renderPortableText(blocks: PortableBlock[] = []): string {
+export function renderPortableText(blocks: PortableBlock[] = [], adMarkersAfterBlock: Map<number, string> = new Map()): string {
   const headingIds = new Map<string, number>();
   const listTags: string[] = [];
   let html = '';
-  for (const block of blocks) {
+  for (const [index, block] of blocks.entries()) {
     const nextTag = block.listItem ? (block.listItem === 'number' ? 'ol' : 'ul') : '';
     if (block.listItem && !['bullet', 'number'].includes(block.listItem)) throw new Error(`Unsupported Portable Text list: ${block.listItem}`);
     if (!nextTag) {
       while (listTags.length) html += `</li></${listTags.pop()}>`;
       html += renderBlock(block, headingIds);
-      continue;
+    } else {
+      const level = Math.max(1, Math.min(block.level || 1, listTags.length + 1));
+      while (listTags.length > level) html += `</li></${listTags.pop()}>`;
+      if (listTags.length === level && listTags[level - 1] !== nextTag) html += `</li></${listTags.pop()}>`;
+      if (listTags.length < level) {
+        html += `<${nextTag}>`;
+        listTags.push(nextTag);
+      } else html += '</li>';
+      html += renderBlock(block, headingIds);
     }
-    const level = Math.max(1, Math.min(block.level || 1, listTags.length + 1));
-    while (listTags.length > level) html += `</li></${listTags.pop()}>`;
-    if (listTags.length === level && listTags[level - 1] !== nextTag) html += `</li></${listTags.pop()}>`;
-    if (listTags.length < level) {
-      html += `<${nextTag}>`;
-      listTags.push(nextTag);
-    } else html += '</li>';
-    html += renderBlock(block, headingIds);
+    const adSlot = adMarkersAfterBlock.get(index);
+    if (adSlot) html += `<!--AS_AD_SLOT:${adSlot}-->`;
   }
   while (listTags.length) html += `</li></${listTags.pop()}>`;
   return html;

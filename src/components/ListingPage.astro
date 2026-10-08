@@ -1,9 +1,11 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Card from './Card.astro';
+import AdUnit from './AdUnit.astro';
 import type { ArticleCard, CategoryDocument } from '../lib/content/types';
 import { homeImage } from '../lib/content/seo';
 import { listingHref } from '../lib/content/listing';
+import { categoryLabel, getUiCopy } from '../lib/content/locales';
 
 export interface Props {
   eyebrow: string;
@@ -58,6 +60,10 @@ const {
 } = Astro.props;
 
 const es = locale === 'es';
+const copy = getUiCopy(locale);
+const isBlogArchive = path === '/blogs' || path === '/blogs/es';
+const isCategoryDetail = path.startsWith('/categories/');
+const isTrending = path === '/trending';
 const filters = { q: query || undefined, sort: sort || undefined, range: range || undefined };
 ---
 
@@ -70,6 +76,7 @@ const filters = { q: query || undefined, sort: sort || undefined, range: range |
   lang={locale}
   robotsNoindex={robotsNoindex}
   jsonLd={jsonLd}
+  showFooterAd={isBlogArchive || isCategoryDetail || isTrending}
 >
   <main class="listing-page" lang={locale}>
     <header class="page-hero">
@@ -84,44 +91,44 @@ const filters = { q: query || undefined, sort: sort || undefined, range: range |
       <section class="listing-main" aria-label={heading}>
         {showSearch && (
           <form class="search-form" action={path} method="get">
-            <label for="listing-query">{es ? 'Buscar artículos' : 'Search articles'}</label>
+            <label for="listing-query">{copy.searchArticles}</label>
             <div>
               <input
                 id="listing-query"
                 type="search"
                 name="q"
                 value={query}
-                placeholder={es ? 'Busca un tema o serie' : 'Search a topic or series'}
+                placeholder={copy.searchTopic}
               />
-              <button type="submit">{es ? 'Buscar' : 'Search'} ↗</button>
+              <button type="submit">{copy.search} ↗</button>
             </div>
           </form>
         )}
 
-        <nav class="listing-filters" aria-label={es ? 'Orden de artículos' : 'Article order'}>
+        <nav class="listing-filters" aria-label={copy.articleOrder}>
           <a
             href={listingHref(path, { q: query || undefined, range: range || undefined }, 1)}
             aria-current={!sort ? 'page' : undefined}
           >
-            {es ? 'Todos los artículos' : 'All blogs'}
+            {copy.allArticlesFilter}
           </a>
           <a
             href={listingHref(path, { q: query || undefined, sort: 'recent', range: range || undefined }, 1)}
             aria-current={sort === 'recent' ? 'page' : undefined}
           >
-            {es ? 'Más recientes' : 'Newest first'}
+            {copy.newest}
           </a>
           <a
             href={listingHref(path, { q: query || undefined, sort: 'popular', range: range || undefined }, 1)}
             aria-current={sort === 'popular' ? 'page' : undefined}
           >
-            {es ? 'Populares' : 'Popular'}
+            {copy.popular}
           </a>
-          <span>{total} {es ? 'artículos' : 'blogs'}</span>
+          <span>{total} {copy.articles}</span>
         </nav>
 
         {showRange && (
-          <nav class="listing-filters" aria-label="Time range">
+          <nav class="listing-filters" aria-label={copy.timeRange}>
             {(['week', 'month', 'year'] as const).map(value => (
               <a
                 href={listingHref(path, { sort: sort || undefined, range: value }, 1)}
@@ -130,34 +137,41 @@ const filters = { q: query || undefined, sort: sort || undefined, range: range |
                 {value}
               </a>
             ))}
-            <a href={listingHref(path, { sort: 'discussed', range }, 1)}>Discussed</a>
-            <a href={listingHref(path, { sort: 'visual', range }, 1)}>Visual</a>
+            <a href={listingHref(path, { sort: 'discussed', range }, 1)}>{copy.discussed}</a>
+            <a href={listingHref(path, { sort: 'visual', range }, 1)}>{copy.visual}</a>
           </nav>
         )}
 
         {posts.length > 0 ? (
           <div class="story-list">
-            {posts.map(post => (
-              <Card article={post} locale={post.language} variant="horizontal" showExcerpt={showExcerpt} />
+            {posts.map((post, index) => (
+              <>
+                <Card article={post} locale={post.language} variant="horizontal" showExcerpt={showExcerpt} />
+                {isBlogArchive && index === 4 && <AdUnit slot="blogs2" />}
+                {isCategoryDetail && index === 3 && <AdUnit slot="catedet1" />}
+                {isCategoryDetail && index === 8 && <AdUnit slot="catedet2" />}
+                {isTrending && index === 3 && <AdUnit slot="trend1" />}
+                {isTrending && index === 8 && <AdUnit slot="trend2" />}
+              </>
             ))}
           </div>
         ) : (
           <p class="empty-state">
-            {es ? 'No se encontraron artículos.' : 'No articles found matching your criteria.'}
+            {copy.noArticles}
           </p>
         )}
 
         {pageCount > 1 && (
-          <nav class="pagination" aria-label="Pagination">
+          <nav class="pagination" aria-label={copy.pagination}>
             {page > 1 && (
               <a href={listingHref(path, filters, page - 1)}>
-                ← {es ? 'Anterior' : 'Previous'}
+                ← {copy.previous}
               </a>
             )}
             <span>{page} / {pageCount}</span>
             {page < pageCount && (
               <a href={listingHref(path, filters, page + 1)}>
-                {es ? 'Siguiente' : 'Next'} →
+                {copy.next} →
               </a>
             )}
           </nav>
@@ -172,7 +186,7 @@ const filters = { q: query || undefined, sort: sort || undefined, range: range |
             <div class="side-links">
               {categories.map(category => (
                 <a class="side-link" href={`/categories/${category.slug}`}>
-                  <span>{category.title}</span>
+                  <span>{categoryLabel(category.title, locale)}</span>
                   <span aria-hidden="true">→</span>
                 </a>
               ))}
@@ -182,8 +196,8 @@ const filters = { q: query || undefined, sort: sort || undefined, range: range |
 
         {tags.length > 0 && (
           <section class="side-panel">
-            <p class="side-panel__label">Further reading</p>
-            <h2>Explore a topic</h2>
+            <p class="side-panel__label">{copy.furtherReading}</p>
+            <h2>{copy.exploreTopic}</h2>
             <div class="tag-cloud">
               {tags.map(tag => (
                 <a href={`/tags/${encodeURIComponent(tag)}`}>#{tag}</a>
@@ -192,12 +206,14 @@ const filters = { q: query || undefined, sort: sort || undefined, range: range |
           </section>
         )}
 
+        {isBlogArchive && <AdUnit slot="blogsSidebar" />}
+
         <section class="side-panel panel-highlight">
-          <p class="side-panel__label">Editions</p>
-          <h2>{es ? 'Elige tu idioma' : 'Read in your language'}</h2>
+          <p class="side-panel__label">{copy.editions}</p>
+          <h2>{copy.chooseLanguage}</h2>
           <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-            <a href="/blogs" hreflang="en" style="color: #fff; font-weight: 700;">English Edition ↗</a>
-            <a href="/blogs/es" hreflang="es" style="color: #fff; font-weight: 700;">Edición en Español ↗</a>
+            <a href="/blogs" hreflang="en" style="color: #fff; font-weight: 700;">{copy.englishEdition} ↗</a>
+            <a href="/blogs/es" hreflang="es" style="color: #fff; font-weight: 700;">{copy.spanishEditionLabel} ↗</a>
           </div>
         </section>
       </aside>

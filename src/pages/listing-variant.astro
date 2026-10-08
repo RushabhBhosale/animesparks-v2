@@ -1,5 +1,6 @@
 ---
 import { env } from 'cloudflare:workers';
+import { getGa4PageViews, sortByGaViews } from '../lib/content/ga4-rankings';
 import ListingPage from '../components/ListingPage.astro';
 import { getPage, listingHref, paginate, sortArticles } from '../lib/content/listing';
 import { SITE, tagSeo } from '../lib/content/seo';
@@ -18,13 +19,18 @@ const { english, spanish, categories } = await response.json() as {
 const query = (Astro.url.searchParams.get('q') || '').trim();
 const sort = Astro.url.searchParams.get('sort') || '';
 const range = Astro.url.searchParams.get('range') || 'month';
+const views = sort === 'popular' || (target === '/trending' && !sort)
+  ? await getGa4PageViews(env, range === 'week' ? 'week' : range === 'year' ? 'year' : 'month')
+  : null;
+const orderArticles = (items: ArticleCard[]) =>
+  sort === 'popular' ? sortByGaViews(items, views) : sortArticles(items, sort);
 let listing: any;
 if (target === '/blogs' || target === '/blogs/es') {
   const es = target === '/blogs/es';
   const normalized = query.toLowerCase();
   const articles = es ? spanish : english;
   const filtered = normalized ? articles.filter(article => [article.title, article.metaDescription, article.excerpt].some(value => value?.toLowerCase().includes(normalized))) : articles;
-  const result = paginate(sortArticles(filtered, sort), page);
+  const result = paginate(orderArticles(filtered), page);
   if (!result.valid) return new Response('Page not found', { status: 404 });
   const tags = es ? [] : [...new Set(filtered.flatMap(article => article.tags || []))].slice(0, 16);
   listing = {
@@ -39,11 +45,8 @@ if (target === '/blogs' || target === '/blogs/es') {
   };
 } else if (target === '/trending') {
   const activeSort = sort || 'popular';
-  const days = range === 'week' ? 7 : range === 'year' ? 365 : 30;
-  const cutoff = Date.now() - days * 86400000;
-  const scoped = english.filter(article => Date.parse(article.publishedAt || '') >= cutoff);
-  const pool = scoped.length ? scoped : english;
-  const sorted = activeSort === 'visual' ? pool.filter(article => article.categories.some(category => /visual|art/i.test(category.title))) : activeSort === 'recent' ? pool : sortArticles(pool, 'popular');
+  const pool = english;
+  const sorted = activeSort === 'visual' ? pool.filter(article => article.categories.some(category => /visual|art/i.test(category.title))) : activeSort === 'recent' ? [...pool].sort((a, b) => Date.parse(b.publishedAt || '') - Date.parse(a.publishedAt || '')) : sortByGaViews(pool, views);
   const result = paginate(sorted.length ? sorted : pool, page);
   if (!result.valid) return new Response('Page not found', { status: 404 });
   const jsonLd = [
@@ -70,7 +73,7 @@ if (target === '/blogs' || target === '/blogs/es') {
   const category = categories.find(item => item.slug === slug);
   if (!category) return new Response('Category not found', { status: 404 });
   const articles = english.filter(article => article.categorySanityIds?.includes(category.sanityId));
-  const result = paginate(sortArticles(articles, sort), page);
+  const result = paginate(orderArticles(articles), page);
   if (!result.valid) return new Response('Page not found', { status: 404 });
   const presets: Record<string, [string, string]> = {
     'anime-reviews': ['Anime Reviews — Honest Takes on Popular & Underrated Series', 'In-depth anime reviews focused on story, characters, themes, and execution — covering both mainstream hits and overlooked series.'],

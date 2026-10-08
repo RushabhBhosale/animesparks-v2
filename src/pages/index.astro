@@ -1,6 +1,7 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Card from '../components/Card.astro';
+import AdUnit from '../components/AdUnit.astro';
 import { getBuildData } from '../lib/content/build-data';
 import { r2ImageUrl } from '../lib/content/images';
 import { SITE, homeDescription, homeImage, homeTitle } from '../lib/content/seo';
@@ -11,7 +12,7 @@ const featured = data.featured;
 const hero = r2ImageUrl(featured?.mainImage);
 ---
 
-<SiteLayout title={homeTitle} description={homeDescription} canonical={SITE} image={homeImage}>
+<SiteLayout title={homeTitle} description={homeDescription} canonical={SITE} image={homeImage} showFooterAd>
   <main class="home-page">
     <div class="shell">
       <!-- Edition Header Strip -->
@@ -26,7 +27,7 @@ const hero = r2ImageUrl(featured?.mainImage);
 
       <!-- Featured Story / Cover Story -->
       {featured && (
-        <section class="cover-story" aria-labelledby="cover-title">
+        <section class="cover-story" aria-labelledby="cover-title" data-homepage-article={featured.translationOfSanityId || featured.sanityId}>
           <div class="cover-story__copy">
             <div class="cover-story__eyebrow">
               <span class="kicker red">Cover Story</span>
@@ -91,11 +92,13 @@ const hero = r2ImageUrl(featured?.mainImage);
           </div>
           <div class="card-grid card-grid--3">
             {data.editorsPicks.map(article => (
-              <Card article={article} variant="large" />
+              <Card article={article} variant="large" homepageSelection />
             ))}
           </div>
         </section>
       )}
+
+      <AdUnit slot="horizontal1" />
 
       <!-- Latest Stories + Editorial Sidebar -->
       <div class="home-columns editorial-section">
@@ -110,7 +113,7 @@ const hero = r2ImageUrl(featured?.mainImage);
 
           <div class="story-list">
             {data.latest.map(article => (
-              <Card article={article} variant="horizontal" />
+              <Card article={article} variant="horizontal" homepageSelection />
             ))}
           </div>
 
@@ -121,20 +124,11 @@ const hero = r2ImageUrl(featured?.mainImage);
 
         <!-- Sidebar -->
         <aside class="home-sidebar">
-          {data.popular.length > 0 && (
-            <section class="side-panel" aria-labelledby="popular-heading">
+            <section class="side-panel" aria-labelledby="popular-heading" data-ga-ranking-panel="popular" hidden>
               <p class="side-panel__label">The Reading List</p>
               <h2 id="popular-heading">Popular this week</h2>
-              <ol>
-                {data.popular.map((article, index) => (
-                  <li>
-                    <span class="side-panel__num">{String(index + 1).padStart(2, '0')}</span>
-                    <a href={`/blog/${article.slug}`}>{article.title}</a>
-                  </li>
-                ))}
-              </ol>
+              <ol data-ga-rankings="popular"></ol>
             </section>
-          )}
 
           {data.sections.length > 0 && (
             <section class="side-panel" aria-labelledby="sections-heading">
@@ -151,6 +145,8 @@ const hero = r2ImageUrl(featured?.mainImage);
             </section>
           )}
 
+          <AdUnit slot="sidebar" />
+
           <section class="side-panel panel-highlight" aria-labelledby="rss-heading">
             <p class="side-panel__label">Stay Updated</p>
             <h2 id="rss-heading">A closer look at anime.</h2>
@@ -161,6 +157,8 @@ const hero = r2ImageUrl(featured?.mainImage);
           </section>
         </aside>
       </div>
+
+      <AdUnit slot="horizontal2" />
 
       <!-- Anime Series In Focus (Clusters) -->
       {data.animeClusters.length > 0 && (
@@ -192,8 +190,7 @@ const hero = r2ImageUrl(featured?.mainImage);
       )}
 
       <!-- Trending Section -->
-      {data.trending.length > 0 && (
-        <section class="editorial-section" aria-labelledby="trending-heading">
+        <section class="editorial-section" aria-labelledby="trending-heading" data-ga-ranking-panel="trending" hidden>
           <div class="section-header">
             <div>
               <p class="kicker">In Focus</p>
@@ -201,13 +198,8 @@ const hero = r2ImageUrl(featured?.mainImage);
             </div>
             <a class="section-header__link" href="/trending">All trending ↗</a>
           </div>
-          <div class="card-grid card-grid--3">
-            {data.trending.slice(0, 6).map(article => (
-              <Card article={article} variant="standard" />
-            ))}
-          </div>
+          <div class="card-grid card-grid--3" data-ga-rankings="trending"></div>
         </section>
-      )}
 
       <!-- Spanish Content Section (if available) -->
       {data.spanish.length > 0 && (
@@ -221,7 +213,7 @@ const hero = r2ImageUrl(featured?.mainImage);
           </div>
           <div class="card-grid card-grid--3">
             {data.spanish.map(article => (
-              <Card article={article} variant="standard" locale="es" />
+              <Card article={article} variant="standard" locale="es" homepageSelection />
             ))}
           </div>
         </section>
@@ -229,3 +221,95 @@ const hero = r2ImageUrl(featured?.mainImage);
     </div>
   </main>
 </SiteLayout>
+
+<script>
+  function createRankedCard(article: {
+    title: string; href: string; image?: string; alt?: string; publishedAt?: string;
+    category?: string; categoryHref?: string; author?: string;
+  }) {
+    const card = document.createElement('article');
+    card.className = 'card';
+    const imageLink = document.createElement('a');
+    imageLink.className = 'card__image-link';
+    imageLink.href = article.href;
+    imageLink.setAttribute('aria-label', `Read ${article.title}`);
+    if (article.image) {
+      const image = document.createElement('img');
+      image.src = article.image;
+      image.alt = article.alt || article.title;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      imageLink.append(image);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'card__placeholder';
+      placeholder.setAttribute('aria-hidden', 'true');
+      imageLink.append(placeholder);
+    }
+    const body = document.createElement('div');
+    body.className = 'card__body';
+    const meta = document.createElement('div');
+    meta.className = 'card__meta';
+    if (article.category && article.categoryHref) {
+      const category = document.createElement('a');
+      category.className = 'card__category';
+      category.href = article.categoryHref;
+      category.textContent = article.category;
+      meta.append(category);
+    }
+    if (article.publishedAt) {
+      const date = document.createElement('time');
+      date.className = 'card__date';
+      date.dateTime = article.publishedAt;
+      date.textContent = new Date(article.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      meta.append(date);
+    }
+    const heading = document.createElement('h3');
+    heading.className = 'card__title';
+    const link = document.createElement('a');
+    link.href = article.href;
+    link.textContent = article.title;
+    heading.append(link);
+    const author = document.createElement('span');
+    author.className = 'card__author';
+    author.textContent = article.author || 'AnimeSparks Editorial';
+    body.append(meta, heading, author);
+    card.append(imageLink, body);
+    return card;
+  }
+
+  async function refreshGoogleAnalyticsRankings() {
+    try {
+      const selected = [...document.querySelectorAll<HTMLElement>('[data-homepage-article]')]
+        .map(element => element.dataset.homepageArticle).filter(Boolean);
+      const response = await fetch(`/api/ga-rankings.json?exclude=${encodeURIComponent(selected.join(','))}`, { headers: { Accept: 'application/json' } });
+      if (!response.ok) return;
+      const rankings = await response.json() as { popular: Array<{ title: string; href: string }>; trending: Array<Parameters<typeof createRankedCard>[0]>; source: string };
+      if (rankings.source !== 'ga4') return;
+      const popular = document.querySelector<HTMLOListElement>('[data-ga-rankings="popular"]');
+      if (popular && rankings.popular.length) {
+        popular.replaceChildren(...rankings.popular.map((article, index) => {
+          const item = document.createElement('li');
+          const number = document.createElement('span');
+          number.className = 'side-panel__num';
+          number.textContent = String(index + 1).padStart(2, '0');
+          const link = document.createElement('a');
+          link.href = article.href;
+          link.textContent = article.title;
+          item.append(number, link);
+          return item;
+        }));
+        document.querySelector<HTMLElement>('[data-ga-ranking-panel="popular"]')?.removeAttribute('hidden');
+      }
+      const trending = document.querySelector<HTMLElement>('[data-ga-rankings="trending"]');
+      if (trending && rankings.trending.length) {
+        trending.replaceChildren(...rankings.trending.map(createRankedCard));
+        document.querySelector<HTMLElement>('[data-ga-ranking-panel="trending"]')?.removeAttribute('hidden');
+      }
+    } catch {
+      // These sections remain hidden until real GA4 rankings are available.
+    }
+  }
+
+  void refreshGoogleAnalyticsRankings();
+</script>

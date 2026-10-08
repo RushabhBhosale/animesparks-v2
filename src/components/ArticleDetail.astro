@@ -1,10 +1,12 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Card from './Card.astro';
+import AdUnit from './AdUnit.astro';
 import type { ArticleCard, ArticlePageData } from '../lib/content/types';
 import { r2ImageUrl } from '../lib/content/images';
 import { articleSeo, SITE } from '../lib/content/seo';
-import { renderPortableText, tableOfContents } from '../lib/content/portable-text';
+import { blockText, renderPortableText, tableOfContents } from '../lib/content/portable-text';
+import { articleTypeLabel, categoryLabel, getUiCopy } from '../lib/content/locales';
 
 export interface Props {
   article: ArticlePageData;
@@ -16,7 +18,30 @@ const es = article.language === 'es';
 const seo = articleSeo(article);
 const hero = r2ImageUrl(article.mainImage);
 const authorImage = r2ImageUrl(article.author?.image);
-const toc = tableOfContents(article.body);
+const bodyBlocks = article.body || [];
+const toc = tableOfContents(bodyBlocks);
+const bodyWordCount = bodyBlocks
+  .flatMap(block => block.children || [])
+  .map(span => span.text || '')
+  .join(' ')
+  .trim()
+  .split(/\s+/)
+  .filter(Boolean)
+  .length;
+const paragraphBlockIndexes = bodyBlocks
+  .map((block, index) => ({ block, index }))
+  .filter(({ block }) => block._type === 'block' && (block.style || 'normal') === 'normal' && !block.listItem && Boolean(blockText(block).trim()))
+  .map(({ index }) => index);
+const requestedInlineSlots = bodyWordCount >= 1200 ? ['inblog', 'inbetween', 'inblog2'] : ['inblog', 'inblog2'];
+const inlineSlots = requestedInlineSlots.slice(0, Math.max(0, paragraphBlockIndexes.length - 1));
+const adMarkersAfterBlock = new Map<number, string>();
+inlineSlots.forEach((slot, index) => {
+  const paragraphOffset = Math.max(0, Math.round(((index + 1) * paragraphBlockIndexes.length) / (inlineSlots.length + 1)) - 1);
+  const blockIndex = paragraphBlockIndexes[paragraphOffset];
+  if (blockIndex !== undefined) adMarkersAfterBlock.set(blockIndex, slot);
+});
+const renderedBody = renderPortableText(bodyBlocks, adMarkersAfterBlock);
+const bodyParts = renderedBody.split(/<!--AS_AD_SLOT:(inblog|inbetween|inblog2)-->/);
 const faq = (article.faq || []).filter(item => item.question && item.answer);
 const sources = (article.sources || []).filter(item => item.name || item.url);
 const dateLocale = es ? 'es-ES' : 'en-US';
@@ -29,7 +54,7 @@ const published = formatDate(article.publishedAt);
 const readTime = Math.max(
   1,
   Math.ceil(
-    (article.body || [])
+    bodyBlocks
       .flatMap(block => block.children || [])
       .map(span => span.text || '')
       .join(' ')
@@ -41,33 +66,7 @@ const archive = es ? '/blogs/es' : '/blogs';
 const englishPath = es ? article.alternateSlug && `/blog/${article.alternateSlug}` : `/blog/${article.slug}`;
 const spanishPath = es ? `/es/blog/${article.slug}` : article.alternateSlug && `/es/blog/${article.alternateSlug}`;
 
-const locale = es
-  ? {
-      home: 'Inicio',
-      share: 'Compartir',
-      copy: 'Copiar enlace',
-      copied: 'Copiado',
-      contents: 'En este artículo',
-      author: 'Sobre el autor',
-      tags: 'Archivado en',
-      faq: 'Preguntas frecuentes',
-      sources: 'Fuentes y referencias',
-      related: 'Artículos relacionados',
-      read: 'min de lectura',
-    }
-  : {
-      home: 'Home',
-      share: 'Share',
-      copy: 'Copy link',
-      copied: 'Copied',
-      contents: 'In this article',
-      author: 'About the author',
-      tags: 'Filed under',
-      faq: 'Frequently asked questions',
-      sources: 'Sources & references',
-      related: 'Related Articles',
-      read: 'min read',
-    };
+const locale = getUiCopy(article.language);
 ---
 
 <SiteLayout
@@ -81,25 +80,26 @@ const locale = es
   spanishAlternate={spanishPath ? `${SITE}${spanishPath}` : undefined}
   type="article"
   jsonLd={seo.jsonLd}
+  showFooterAd
 >
   <main class="article-page" lang={article.language}>
     <!-- Breadcrumb & Language Switcher -->
     <div class="shell article-utility">
-      <nav class="article-breadcrumb" aria-label="Breadcrumb">
+      <nav class="article-breadcrumb" aria-label={locale.breadcrumb}>
         <a href="/">{locale.home}</a>
         <span aria-hidden="true">/</span>
-        <a href={archive}>Blogs</a>
+        <a href={archive}>{locale.blogs}</a>
         {article.categories[0] && (
           <>
             <span aria-hidden="true">/</span>
             <a href={`/categories/${article.categories[0].slug}`}>
-              {article.categories[0].title}
+              {categoryLabel(article.categories[0].title, article.language)}
             </a>
           </>
         )}
       </nav>
 
-      <nav class="article-lang" aria-label="Language editions">
+      <nav class="article-lang" aria-label={locale.languageEditions}>
         {englishPath && (
           <a href={englishPath} hreflang="en" aria-current={!es ? 'page' : undefined}>
             EN
@@ -127,10 +127,10 @@ const locale = es
       <div class="shell article-hero__inner">
         <div class="article-classification">
           {article.categories.slice(0, 2).map(cat => (
-            <a href={`/categories/${cat.slug}`}>{cat.title}</a>
+            <a href={`/categories/${cat.slug}`}>{categoryLabel(cat.title, article.language)}</a>
           ))}
           {article.articleType && (
-            <span>{article.articleType.replaceAll('-', ' ')}</span>
+            <span>{articleTypeLabel(article.articleType, article.language)}</span>
           )}
         </div>
 
@@ -195,7 +195,11 @@ const locale = es
     <div class="shell reading-grid">
       <article class="article-content">
         <!-- Rendered Portable Text Body -->
-        <div class="portable-text" set:html={renderPortableText(article.body)} />
+        <div class="portable-text">
+          {bodyParts.map((part, index) => index % 2 === 0
+            ? <Fragment set:html={part} />
+            : <AdUnit slot={part as 'inblog' | 'inblog2' | 'inbetween'} />)}
+        </div>
 
         <!-- Tags -->
         {article.tags && article.tags.length > 0 && (
@@ -212,7 +216,7 @@ const locale = es
         <!-- FAQ Section -->
         {faq.length > 0 && (
           <section class="reference-panel" aria-labelledby="faq-heading">
-            <p class="kicker red">FAQ</p>
+            <p class="kicker red">{locale.faq}</p>
             <h2 id="faq-heading">{locale.faq}</h2>
             {faq.map(item => (
               <details>
@@ -229,7 +233,7 @@ const locale = es
             <details>
               <summary>
                 <span>{locale.sources}</span>
-                <span>{sources.length} sources</span>
+                <span>{sources.length} {es ? 'fuentes' : 'sources'}</span>
               </summary>
               <ol>
                 {sources.map(source => (
@@ -279,6 +283,9 @@ const locale = es
             <div class="author-bio" set:html={renderPortableText(article.author.bio)} />
           )}
         </section>
+
+        <AdUnit slot="blogSidebar" />
+        <AdUnit slot="vertical" />
       </aside>
     </div>
 
@@ -290,7 +297,7 @@ const locale = es
             <p class="kicker">{article.animeName || 'AnimeSparks'}</p>
             <h2 id="related-heading">{locale.related}<span class="text-accent">.</span></h2>
           </div>
-          <a class="section-header__link" href={archive}>Blogs ↗</a>
+          <a class="section-header__link" href={archive}>{locale.blogs} ↗</a>
         </div>
         <div class="card-grid card-grid--3">
           {related.slice(0, 6).map(item => (
