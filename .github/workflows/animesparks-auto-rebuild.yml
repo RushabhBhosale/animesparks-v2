@@ -100,7 +100,10 @@ jobs:
           EXPECTED_FINGERPRINT: ${{ needs.detect.outputs.fingerprint }}
         run: node scripts/verify-production-deployment.mjs
       - name: Roll back failed deployment verification
-        if: steps.verify.outcome == 'failure'
+        if: >-
+          failure() &&
+          steps.deploy.outcome == 'success' &&
+          steps.verify.outcome == 'failure'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

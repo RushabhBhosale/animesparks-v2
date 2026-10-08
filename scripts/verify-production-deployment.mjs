@@ -1,21 +1,39 @@
 import assert from 'node:assert/strict';
+import { fetchTextWithRetry } from './fetch-with-retry.mjs';
 
 const origin = 'https://www.animesparks.blog';
-const fetchPage = async path => {
-  const response = await fetch(new URL(path, origin), { redirect: 'manual', signal: AbortSignal.timeout(20000) });
-  assert.equal(response.status, 200, `${path} returned HTTP ${response.status}`);
-  return { response, body: await response.text() };
+const reportRetry = path => ({ attempt, totalAttempts, delayMs, reason }) => {
+  console.log(`[verification] ${path}: ${reason} (attempt ${attempt}/${totalAttempts}); retrying in ${delayMs}ms`);
 };
+const fetchPage = async (path, options = {}) => fetchTextWithRetry(new URL(path, origin), {
+  label: path,
+  onRetry: reportRetry(path),
+  ...options,
+});
 
-const { body: manifestText } = await fetchPage('/content-manifest.json');
+const expectedFingerprint = process.env.EXPECTED_FINGERPRINT || '';
+assert.match(expectedFingerprint, /^[a-f0-9]{64}$/, 'EXPECTED_FINGERPRINT must be a SHA-256 hex value.');
+const { body: manifestText } = await fetchPage('/content-manifest.json', {
+  label: '/content-manifest.json with the generated fingerprint',
+  validateBody(text) {
+    let manifest;
+    try { manifest = JSON.parse(text); } catch { return 'invalid JSON'; }
+    if (manifest.schema !== 1) return 'unsupported manifest schema';
+    if (manifest.fingerprint !== expectedFingerprint) return 'deployed fingerprint does not match the generated fingerprint';
+    return true;
+  },
+});
 const manifest = JSON.parse(manifestText);
 assert.equal(manifest.schema, 1, 'production manifest schema is unsupported');
-assert.equal(manifest.fingerprint, process.env.EXPECTED_FINGERPRINT, 'production fingerprint does not match the build');
+assert.equal(manifest.fingerprint, expectedFingerprint, 'production fingerprint does not match the build');
 
 const { body: home } = await fetchPage('/');
 assert.match(home, /<meta name="robots" content="index, follow"/);
 assert.match(home, /pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js/);
-assert.match(home, /<link rel="canonical" href="https:\/\/www\.animesparks\.blog\//);
+const homeCanonical = home.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
+assert.ok(homeCanonical, 'homepage has no canonical URL');
+assert.equal(new URL(homeCanonical).origin, origin, 'homepage canonical has the wrong production origin');
+assert.equal(new URL(homeCanonical).pathname, '/', 'homepage canonical does not point to the root path');
 
 const { body: inventoryText } = await fetchPage('/route-inventory.json');
 const inventory = JSON.parse(inventoryText);
