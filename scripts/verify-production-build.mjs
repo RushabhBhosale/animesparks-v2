@@ -1,10 +1,19 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tagIndexability } from '../src/lib/content/tag-seo.ts';
 
 const root = 'dist/client';
 const read = path => readFileSync(join(root, path), 'utf8');
+const htmlFiles = [];
+function collectHtml(directory = '') {
+  for (const entry of readdirSync(join(root, directory), { withFileTypes: true })) {
+    const relative = join(directory, entry.name);
+    if (entry.isDirectory()) collectHtml(relative);
+    else if (entry.isFile() && entry.name.endsWith('.html')) htmlFiles.push(relative);
+  }
+}
+collectHtml();
 // robots.txt is a host-aware Astro route, so verify its production branch.
 const robotsRoute = readFileSync('src/pages/robots.txt.ts', 'utf8');
 assert.ok(robotsRoute.includes("User-agent: *\\nAllow: /\\n"), 'production robots route must allow crawling');
@@ -69,3 +78,34 @@ for (const path of ['/index.html', '/blogs/index.html', '/categories/index.html'
 }
 assert.ok(canonicalRoutes.size === publicArticlePaths.length, 'article canonicals are not unique');
 console.log(`[production-safety] Passed indexability, canonical, sitemap, robots, H1 and JSON-LD checks for ${publicArticlePaths.length} published article routes and ${expectedSitemapTags.size} indexable tags.`);
+
+let checkedImages = 0;
+for (const file of htmlFiles) {
+  const html = read(file);
+  for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
+    const image = match[0];
+    assert.match(image, /\bwidth=["']\d+["']/i, `${file} has an image without intrinsic width`);
+    assert.match(image, /\bheight=["']\d+["']/i, `${file} has an image without intrinsic height`);
+    const refs = [image.match(/\bsrc=["']([^"']+)/i)?.[1] || ''];
+    const srcset = image.match(/\bsrcset=["']([^"']+)/i)?.[1] || '';
+    refs.push(...srcset.split(',').map(candidate => candidate.trim().split(/\s+/)[0]));
+    for (const ref of refs) {
+      if (!ref.startsWith('/_astro/')) continue;
+      assert.ok(existsSync(join(root, decodeURIComponent(ref.slice(1)))), `${file} references missing optimized image ${ref}`);
+    }
+    checkedImages++;
+  }
+}
+assert.ok(checkedImages > 0, 'production output contains no images to verify');
+const homepage = read('index.html');
+if (!homepage.includes('class="cover-story__image-wrap"')) {
+  assert.match(homepage, /cover-story--text-only/, 'image-free featured article must use full-width text layout');
+  assert.doesNotMatch(homepage, /cover-story__image-wrap/, 'image-free featured article must not render an empty image container');
+} else {
+  const cover = homepage.match(/<div class="cover-story__image-wrap">([\s\S]*?)<\/div>/)?.[1] || '';
+  const coverImage = cover.match(/<img\b[^>]*>/)?.[0] || '';
+  assert.ok(coverImage, 'homepage cover image is missing');
+  assert.match(coverImage, /\bfetchpriority=["']high["']/i, 'homepage cover image must have high fetch priority');
+  assert.match(coverImage, /\bloading=["']eager["']/i, 'homepage cover image must load eagerly');
+}
+console.log(`[image-safety] Passed intrinsic dimensions and optimized image references for ${checkedImages} rendered image tags.`);

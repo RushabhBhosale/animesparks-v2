@@ -81,7 +81,10 @@ export const POST: APIRoute = async ({ request }) => {
 
     const arrayBuffer = await file.arrayBuffer();
     await env.IMAGES_BUCKET.put(key, arrayBuffer, {
-      httpMetadata: { contentType: file.type },
+      httpMetadata: {
+        contentType: file.type,
+        cacheControl: 'public, max-age=31536000, immutable',
+      },
       customMetadata: { uploadedBy: user },
     });
 

@@ -1,5 +1,31 @@
 import type { PortableBlock, PortableSpan } from './types';
-import { r2ImageUrl } from './images';
+import { r2ImageDimensions, r2ImageUrl } from './images';
+import { inferRemoteSize } from 'astro/assets/utils';
+
+interface ImageDimensions { width: number; height: number }
+const remoteDimensions = new Map<string, Promise<ImageDimensions>>();
+
+async function dimensionsForImage(src: string, block: PortableBlock): Promise<ImageDimensions> {
+  const known = r2ImageDimensions(block);
+  if (known) return known;
+
+  const url = new URL(src);
+  if (url.hostname !== 'images.animesparks.blog') throw new Error(`Unexpected article image host: ${url.hostname}`);
+  let dimensions = remoteDimensions.get(src);
+  if (!dimensions) {
+    dimensions = inferRemoteSize(src).then(({ width, height }) => {
+      if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+        throw new Error('Remote image returned invalid intrinsic dimensions.');
+      }
+      return { width, height };
+    }).catch(error => {
+      remoteDimensions.delete(src);
+      throw new Error(`Could not determine dimensions for article image ${src}: ${String(error)}`);
+    });
+    remoteDimensions.set(src, dimensions);
+  }
+  return dimensions;
+}
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]!));
 const safeHref = (href?: string) => {
@@ -30,13 +56,15 @@ const renderSpan = (span: PortableSpan, block: PortableBlock) => {
   }
   return html;
 };
-const renderBlock = (block: PortableBlock, headingIds: Map<string, number>) => {
+const renderBlock = (block: PortableBlock, headingIds: Map<string, number>, imageSizes: Map<string, ImageDimensions>) => {
   if (block._type === 'image') {
     const src = r2ImageUrl(block);
     if (!src) return '';
+    const dimensions = imageSizes.get(src);
+    if (!dimensions) throw new Error(`Missing intrinsic dimensions for article image ${src}`);
     const alt = escapeHtml(block.alt || '');
     const caption = escapeHtml(block.caption || block.alt || '');
-    return `<figure><img src="${escapeHtml(src)}" alt="${alt}" loading="lazy" decoding="async">${caption ? `<figcaption>${caption}</figcaption>` : ''}</figure>`;
+    return `<figure><img src="${escapeHtml(src)}" alt="${alt}" width="${dimensions.width}" height="${dimensions.height}" loading="lazy" decoding="async">${caption ? `<figcaption>${caption}</figcaption>` : ''}</figure>`;
   }
   if (block._type !== 'block') throw new Error(`Unsupported Portable Text block: ${block._type}`);
   const content = (block.children || []).map(child => renderSpan(child, block)).join('');
@@ -53,7 +81,12 @@ const renderBlock = (block: PortableBlock, headingIds: Map<string, number>) => {
   if (style !== 'normal') throw new Error(`Unsupported Portable Text style: ${style}`);
   return `<p>${content}</p>`;
 };
-export function renderPortableText(blocks: PortableBlock[] = [], adMarkersAfterBlock: Map<number, string> = new Map()): string {
+export async function renderPortableText(blocks: PortableBlock[] = [], adMarkersAfterBlock: Map<number, string> = new Map()): Promise<string> {
+  const imageSizes = new Map<string, ImageDimensions>();
+  await Promise.all(blocks.filter(block => block._type === 'image').map(async block => {
+    const src = r2ImageUrl(block);
+    if (src && !imageSizes.has(src)) imageSizes.set(src, await dimensionsForImage(src, block));
+  }));
   const headingIds = new Map<string, number>();
   const listTags: string[] = [];
   let html = '';
@@ -62,7 +95,7 @@ export function renderPortableText(blocks: PortableBlock[] = [], adMarkersAfterB
     if (block.listItem && !['bullet', 'number'].includes(block.listItem)) throw new Error(`Unsupported Portable Text list: ${block.listItem}`);
     if (!nextTag) {
       while (listTags.length) html += `</li></${listTags.pop()}>`;
-      html += renderBlock(block, headingIds);
+      html += renderBlock(block, headingIds, imageSizes);
     } else {
       const level = Math.max(1, Math.min(block.level || 1, listTags.length + 1));
       while (listTags.length > level) html += `</li></${listTags.pop()}>`;
@@ -71,7 +104,7 @@ export function renderPortableText(blocks: PortableBlock[] = [], adMarkersAfterB
         html += `<${nextTag}>`;
         listTags.push(nextTag);
       } else html += '</li>';
-      html += renderBlock(block, headingIds);
+      html += renderBlock(block, headingIds, imageSizes);
     }
     const adSlot = adMarkersAfterBlock.get(index);
     if (adSlot) html += `<!--AS_AD_SLOT:${adSlot}-->`;

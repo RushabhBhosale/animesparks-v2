@@ -1,6 +1,7 @@
 ---
+import { Image } from 'astro:assets';
 import type { ArticleCard } from '../lib/content/types';
-import { r2ImageUrl } from '../lib/content/images';
+import { r2ImageDimensions, r2ImageUrl } from '../lib/content/images';
 import { categoryLabel, getUiCopy } from '../lib/content/locales';
 
 export interface Props {
@@ -25,6 +26,7 @@ const {
 const variant = propVariant || (layout === 'row' ? 'horizontal' : 'standard');
 
 const image = r2ImageUrl(article.mainImage);
+const imageDimensions = r2ImageDimensions(article.mainImage);
 const date = article.publishedAt
   ? new Date(article.publishedAt).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', {
       year: 'numeric',
@@ -37,6 +39,16 @@ const href = `${locale === 'es' ? '/es' : ''}/blog/${article.slug}`;
 const primaryCategory = article.categories?.[0];
 const categoryHref = primaryCategory ? `/categories/${primaryCategory.slug}` : undefined;
 const copy = getUiCopy(locale);
+const imageSizes = variant === 'horizontal'
+  ? '(max-width: 700px) 104px, 160px'
+  : variant === 'compact'
+    ? '72px'
+    : '(max-width: 700px) calc(100vw - 32px), (max-width: 1100px) 46vw, 33vw';
+const imageWidths = variant === 'horizontal'
+  ? [320, 480]
+  : variant === 'compact'
+    ? [160, 240]
+    : [320, 640, 960];
 ---
 
 <article class:list={[
@@ -48,9 +60,14 @@ const copy = getUiCopy(locale);
 ]} data-homepage-article={homepageSelection ? (article.translationOfSanityId || article.sanityId) : undefined}>
   <a class="card__image-link" href={href} aria-label={`${copy.readMore}: ${article.title}`}>
     {image ? (
-      <img
+      <Image
         src={image}
         alt={article.mainImage?.alt || article.title}
+        widths={imageWidths}
+        sizes={imageSizes}
+        format="webp"
+        quality={80}
+        {...(imageDimensions ? { width: imageDimensions.width, height: imageDimensions.height } : { inferSize: true })}
         loading="lazy"
         decoding="async"
       />

@@ -63,6 +63,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Restore Astro image transform cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.astro/assets
+          key: ${{ runner.os }}-astro-assets-${{ hashFiles('package-lock.json') }}-${{ hashFiles('astro.config.mjs', 'src/components/Card.astro', 'src/components/ArticleDetail.astro', 'src/pages/index.astro', 'src/pages/categories/index.astro', 'src/lib/content/images.ts', 'src/lib/content/portable-text.ts') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-astro-assets-${{ hashFiles('package-lock.json') }}-${{ hashFiles('astro.config.mjs', 'src/components/Card.astro', 'src/components/ArticleDetail.astro', 'src/pages/index.astro', 'src/pages/categories/index.astro', 'src/lib/content/images.ts', 'src/lib/content/portable-text.ts') }}-
       - name: Build and verify production assets
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}

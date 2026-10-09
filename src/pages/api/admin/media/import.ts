@@ -59,7 +59,10 @@ export const POST: APIRoute = async ({ request }) => {
       .slice(-70) || 'pasted-image';
     const key = `uploads/${Date.now()}-${crypto.randomUUID()}-${leafName}.${EXTENSIONS[contentType]}`;
     await env.IMAGES_BUCKET.put(key, bytes, {
-      httpMetadata: { contentType },
+      httpMetadata: {
+        contentType,
+        cacheControl: 'public, max-age=31536000, immutable',
+      },
       customMetadata: { uploadedBy: user, sourceHost: host },
     });
 

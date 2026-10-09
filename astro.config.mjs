@@ -6,6 +6,9 @@ export default defineConfig({
   session: false,
   site: 'https://www.animesparks.blog',
   adapter: cloudflare({ imageService: 'compile' }),
+  image: {
+    remotePatterns: [{ protocol: 'https', hostname: 'images.animesparks.blog' }],
+  },
   vite: {
     ssr: { noExternal: ['mongodb', 'mongodb-connection-string-url', 'whatwg-url', 'tr46', 'punycode'] },
     plugins: [{

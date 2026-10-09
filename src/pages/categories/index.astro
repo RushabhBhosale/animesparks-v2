@@ -1,8 +1,9 @@
 ---
+import { Image } from 'astro:assets';
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import AdUnit from '../../components/AdUnit.astro';
 import { getBuildData } from '../../lib/content/build-data';
-import { r2ImageUrl } from '../../lib/content/images';
+import { r2ImageDimensions, r2ImageUrl } from '../../lib/content/images';
 import { SITE, homeImage } from '../../lib/content/seo';
 export const prerender = true;
 const categories = (await getBuildData()).categorySummaries;
@@ -15,8 +16,9 @@ const midpoint = Math.ceil(categories.length / 2);
       <div class="category-grid">
         {categories.slice(0, midpoint).map((category, index) => {
           const image = category.cover?.mainImage ? r2ImageUrl(category.cover.mainImage) : undefined;
+          const dimensions = r2ImageDimensions(category.cover?.mainImage);
           return <a class="category-card" href={`/categories/${category.slug}`}>
-            {image && <img src={image} alt="" loading="lazy" decoding="async" />}
+            {image && <Image src={image} alt="" widths={[480, 800, 1200]} sizes="(max-width: 700px) calc(100vw - 32px), (max-width: 1100px) 46vw, 33vw" format="webp" quality={80} {...(dimensions ? { width: dimensions.width, height: dimensions.height } : { inferSize: true })} loading="lazy" decoding="async" />}
             <span class="category-card__number">{String(index + 1).padStart(2, '0')}</span>
             <div class="category-card__content"><h2>{category.title}</h2><p>{category.count} {category.count === 1 ? 'post' : 'posts'} ↗</p></div>
           </a>;
@@ -27,8 +29,9 @@ const midpoint = Math.ceil(categories.length / 2);
         {categories.slice(midpoint).map((category, index) => {
           const categoryIndex = index + midpoint;
           const image = category.cover?.mainImage ? r2ImageUrl(category.cover.mainImage) : undefined;
+          const dimensions = r2ImageDimensions(category.cover?.mainImage);
           return <a class="category-card" href={`/categories/${category.slug}`}>
-            {image && <img src={image} alt="" loading="lazy" decoding="async" />}
+            {image && <Image src={image} alt="" widths={[480, 800, 1200]} sizes="(max-width: 700px) calc(100vw - 32px), (max-width: 1100px) 46vw, 33vw" format="webp" quality={80} {...(dimensions ? { width: dimensions.width, height: dimensions.height } : { inferSize: true })} loading="lazy" decoding="async" />}
             <span class="category-card__number">{String(categoryIndex + 1).padStart(2, '0')}</span>
             <div class="category-card__content"><h2>{category.title}</h2><p>{category.count} {category.count === 1 ? 'post' : 'posts'} ↗</p></div>
           </a>;

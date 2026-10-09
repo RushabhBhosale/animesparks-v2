@@ -17,7 +17,11 @@ if (!environment.MONGODB_URI) {
 
 // Build target is explicit and injected into Astro so metadata is deterministic.
 const production = requestedTarget === 'production';
-writeFileSync('public/_headers', production ? '' : '/*\n  X-Robots-Tag: noindex, nofollow\n');
+const publicHeaders = [
+  '/_astro/*\n  Cache-Control: public, max-age=31536000, immutable',
+  ...(!production ? ['/*\n  X-Robots-Tag: noindex, nofollow'] : []),
+].join('\n\n');
+writeFileSync('public/_headers', `${publicHeaders}\n`);
 const started = Date.now();
 const result = spawnSync(process.execPath, ['node_modules/astro/bin/astro.mjs', 'build'], {
   env: environment,

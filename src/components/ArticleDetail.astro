@@ -1,9 +1,10 @@
 ---
+import { Image } from 'astro:assets';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Card from './Card.astro';
 import AdUnit from './AdUnit.astro';
 import type { ArticleCard, ArticlePageData } from '../lib/content/types';
-import { r2ImageUrl } from '../lib/content/images';
+import { r2ImageDimensions, r2ImageUrl } from '../lib/content/images';
 import { articleSeo, SITE } from '../lib/content/seo';
 import { blockText, renderPortableText, tableOfContents } from '../lib/content/portable-text';
 import { articleTypeLabel, categoryLabel, getUiCopy } from '../lib/content/locales';
@@ -17,6 +18,7 @@ const { article, related } = Astro.props;
 const es = article.language === 'es';
 const seo = articleSeo(article);
 const hero = r2ImageUrl(article.mainImage);
+const heroDimensions = r2ImageDimensions(article.mainImage);
 const authorImage = r2ImageUrl(article.author?.image);
 const bodyBlocks = article.body || [];
 const toc = tableOfContents(bodyBlocks);
@@ -40,7 +42,10 @@ inlineSlots.forEach((slot, index) => {
   const blockIndex = paragraphBlockIndexes[paragraphOffset];
   if (blockIndex !== undefined) adMarkersAfterBlock.set(blockIndex, slot);
 });
-const renderedBody = renderPortableText(bodyBlocks, adMarkersAfterBlock);
+const [renderedBody, renderedAuthorBio] = await Promise.all([
+  renderPortableText(bodyBlocks, adMarkersAfterBlock),
+  renderPortableText(article.author?.bio || []),
+]);
 const bodyParts = renderedBody.split(/<!--AS_AD_SLOT:(inblog|inbetween|inblog2)-->/);
 const faq = (article.faq || []).filter(item => item.question && item.answer);
 const sources = (article.sources || []).filter(item => item.name || item.url);
@@ -116,12 +121,18 @@ const locale = getUiCopy(article.language);
     <!-- Article Hero Banner -->
     <header class="article-hero">
       {hero && (
-        <img
+        <Image
           class="article-hero__bg"
           src={hero}
           alt={article.mainImage?.alt || article.title}
+          widths={[480, 800, 1200]}
+          sizes="100vw"
+          format="webp"
+          quality={80}
+          {...(heroDimensions ? { width: heroDimensions.width, height: heroDimensions.height } : { inferSize: true })}
           fetchpriority="high"
           loading="eager"
+          decoding="async"
         />
       )}
       <div class="shell article-hero__inner">
@@ -152,7 +163,7 @@ const locale = getUiCopy(article.language);
       <div class="byline">
         <div class="byline__avatar">
           {authorImage ? (
-            <img src={authorImage} alt={article.author?.name || ''} />
+            <img src={authorImage} alt={article.author?.name || ''} width="52" height="52" loading="lazy" decoding="async" />
           ) : (
             <span>{(article.author?.name || 'A')[0]}</span>
           )}
@@ -275,12 +286,12 @@ const locale = getUiCopy(article.language);
 
         <section aria-labelledby="article-author-heading">
           {authorImage && (
-            <img class="author-image" src={authorImage} alt={article.author?.name || ''} loading="lazy" />
+            <img class="author-image" src={authorImage} alt={article.author?.name || ''} width="52" height="52" loading="lazy" decoding="async" />
           )}
           <p class="kicker">{locale.author}</p>
           <h2 id="article-author-heading">{article.author?.name || 'AnimeSparks Editorial'}</h2>
           {article.author?.bio && (
-            <div class="author-bio" set:html={renderPortableText(article.author.bio)} />
+            <div class="author-bio" set:html={renderedAuthorBio} />
           )}
         </section>
 

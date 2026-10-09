@@ -1,15 +1,17 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
+import { Image } from 'astro:assets';
 import Card from '../components/Card.astro';
 import AdUnit from '../components/AdUnit.astro';
 import { getBuildData } from '../lib/content/build-data';
-import { r2ImageUrl } from '../lib/content/images';
+import { r2ImageDimensions, r2ImageUrl } from '../lib/content/images';
 import { SITE, homeDescription, homeImage, homeTitle } from '../lib/content/seo';
 
 export const prerender = true;
 const data = (await getBuildData()).home;
 const featured = data.featured;
 const hero = r2ImageUrl(featured?.mainImage);
+const heroDimensions = r2ImageDimensions(featured?.mainImage);
 ---
 
 <SiteLayout title={homeTitle} description={homeDescription} canonical={SITE} image={homeImage} showFooterAd>
@@ -27,7 +29,7 @@ const hero = r2ImageUrl(featured?.mainImage);
 
       <!-- Featured Story / Cover Story -->
       {featured && (
-        <section class="cover-story" aria-labelledby="cover-title" data-homepage-article={featured.translationOfSanityId || featured.sanityId}>
+        <section class:list={['cover-story', !hero && 'cover-story--text-only']} aria-labelledby="cover-title" data-homepage-article={featured.translationOfSanityId || featured.sanityId}>
           <div class="cover-story__copy">
             <div class="cover-story__eyebrow">
               <span class="kicker red">Cover Story</span>
@@ -68,11 +70,17 @@ const hero = r2ImageUrl(featured?.mainImage);
           {hero && (
             <div class="cover-story__image-wrap">
               <a href={`/blog/${featured.slug}`} aria-label={`Read ${featured.title}`}>
-                <img
+                <Image
                   src={hero}
                   alt={featured.mainImage?.alt || featured.title}
+                  widths={[480, 800, 1200]}
+                  sizes="(max-width: 700px) 100vw, 50vw"
+                  format="webp"
+                  quality={80}
+                  {...(heroDimensions ? { width: heroDimensions.width, height: heroDimensions.height } : { inferSize: true })}
                   fetchpriority="high"
                   loading="eager"
+                  decoding="async"
                 />
               </a>
             </div>
@@ -173,10 +181,23 @@ const hero = r2ImageUrl(featured?.mainImage);
           <div class="cluster-grid">
             {data.animeClusters.map(cluster => {
               const coverUrl = r2ImageUrl(cluster.cover);
+              const coverDimensions = r2ImageDimensions(cluster.cover);
               return (
                 <a class="cluster-card" href={`/search?q=${encodeURIComponent(cluster.name)}`}>
                   {coverUrl && (
-                    <img src={coverUrl} alt={cluster.name} loading="lazy" decoding="async" />
+                    <Image
+                      src={coverUrl}
+                      alt={cluster.name}
+                      widths={[320, 640, 960]}
+                      sizes="(max-width: 700px) calc(100vw - 32px), 33vw"
+                      format="webp"
+                      quality={80}
+                      {...(coverDimensions
+                        ? { width: coverDimensions.width, height: coverDimensions.height }
+                        : { inferSize: true })}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   )}
                   <div class="cluster-card__text">
                     <span>{cluster.name}</span>

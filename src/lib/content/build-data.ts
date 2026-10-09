@@ -4,6 +4,7 @@ import { getPublishedArticles, hydrateCards, isLive } from './articles';
 import { getAnimeEntries, getCategories, getCategoriesWithArticles, getSitemapArticles } from './public';
 import type { ArticleCard, ArticleDocument, ArticlePageData } from './types';
 import { applyFreshnessOverride } from './freshness-overrides';
+import { tagIndexability } from './tag-seo';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -112,8 +113,17 @@ async function loadBuildData() {
       if (firstTagForCase.has(folded)) tagVariants.push({ id: String(tagVariants.length), tag });
       else { firstTagForCase.add(folded); primaryTags.push(tag); }
     }
+    const tagPosts = new Map<string, ArticleCard[]>();
+    for (const article of allCards) {
+      for (const key of new Set((article.tags || []).map(tag => tag.toLowerCase()))) {
+        const posts = tagPosts.get(key) || [];
+        posts.push(article);
+        tagPosts.set(key, posts);
+      }
+    }
+    const tagStatus = tagIndexability(primaryTags, allCards);
     console.log(`[stage3] Published: ${english.length} EN, ${spanish.length} ES; ${categories.length} categories; ${tags.length} tags; ${anime.length} anime`);
-    return { english, spanish, categories, categorySummaries, anime, home, sitemapArticles, articlePages, related, tags, primaryTags, tagVariants };
+    return { english, spanish, categories, categorySummaries, anime, home, sitemapArticles, articlePages, related, tags, primaryTags, tagVariants, tagPosts, tagStatus };
   });
 }
 
