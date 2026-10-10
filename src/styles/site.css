@@ -58,6 +58,10 @@
   --max-w-wide: 900px;
 }
 
+/* Hide confirmed empty manual and Auto ads, including their overflowing
+   iframe children. Keep filled and unfill-optimized ads visible. */
+ins.adsbygoogle[data-ad-status="unfilled"] { display: none !important; }
+
 /* ── Reset & base ──────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }

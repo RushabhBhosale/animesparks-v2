@@ -26,5 +26,6 @@ const unit = ADSENSE_SLOTS[slot];
   .ad-placement { min-width: 0; margin-block: 1.75rem; text-align: center; }
   .ad-placement__label { display: block; margin-bottom: .4rem; color: #8d8d8d; font-size: .625rem; letter-spacing: .16em; text-transform: uppercase; }
   .ad-placement.is-unfilled { display: none; }
+  .ad-placement:has(> .adsbygoogle[data-ad-status="unfilled"]) { display: none; }
   .ad-placement--in-feed { margin-block: 1rem; }
 </style>

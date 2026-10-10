@@ -159,23 +159,27 @@ const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003
 
   <script>
     type AdsByGoogleWindow = Window & { adsbygoogle?: Array<Record<string, unknown>> };
+    const observedAdUnits = new WeakSet<HTMLElement>();
     const initializeAdUnits = () => {
       const adsWindow = window as AdsByGoogleWindow;
-      for (const ad of document.querySelectorAll<HTMLElement>('ins.adsbygoogle')) {
+      for (const ad of document.querySelectorAll<HTMLElement>('.ad-placement > ins.adsbygoogle')) {
+        // Auto ads may process a manual unit before this script runs. Observe
+        // its fill status even when it does not need another ad request.
+        if (!observedAdUnits.has(ad)) {
+          const updateStatus = () => {
+            ad.closest('.ad-placement')?.classList.toggle('is-unfilled', ad.dataset.adStatus === 'unfilled');
+          };
+          updateStatus();
+          const observer = new MutationObserver(updateStatus);
+          observer.observe(ad, { attributes: true, attributeFilter: ['data-ad-status'] });
+          observedAdUnits.add(ad);
+        }
         if (ad.dataset.adInitialized || ad.dataset.adsbygoogleStatus) continue;
         ad.dataset.adInitialized = 'true';
-        const observer = new MutationObserver(() => {
-          if (ad.getAttribute('data-ad-status') === 'unfilled') {
-            ad.closest('.ad-placement')?.classList.add('is-unfilled');
-            observer.disconnect();
-          }
-        });
-        observer.observe(ad, { attributes: true, attributeFilter: ['data-ad-status'] });
         try {
           (adsWindow.adsbygoogle = adsWindow.adsbygoogle || []).push({});
         } catch {
           delete ad.dataset.adInitialized;
-          observer.disconnect();
         }
       }
     };
