@@ -120,7 +120,7 @@ const locale = getUiCopy(article.language);
 
     <!-- Article Hero Banner -->
     <header class="article-hero">
-      {hero && (
+      {hero && (heroDimensions ? (
         <Image
           class="article-hero__bg"
           src={hero}
@@ -129,12 +129,15 @@ const locale = getUiCopy(article.language);
           sizes="100vw"
           format="webp"
           quality={80}
-          {...(heroDimensions ? { width: heroDimensions.width, height: heroDimensions.height } : { inferSize: true })}
+          width={heroDimensions.width}
+          height={heroDimensions.height}
           fetchpriority="high"
           loading="eager"
           decoding="async"
         />
-      )}
+      ) : (
+        <img class="article-hero__bg" src={hero} alt={article.mainImage?.alt || article.title} width="1200" height="675" fetchpriority="high" loading="eager" decoding="async" />
+      ))}
       <div class="shell article-hero__inner">
         <div class="article-classification">
           {article.categories.slice(0, 2).map(cat => (
