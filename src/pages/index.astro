@@ -200,7 +200,7 @@ const heroDimensions = r2ImageDimensions(featured?.mainImage);
                     />
                   ) : (
                     <img src={coverUrl} alt={cluster.name} width="1200" height="675" loading="lazy" decoding="async" />
-                  )}
+                  ))}
                   <div class="cluster-card__text">
                     <span>{cluster.name}</span>
                     <small>{cluster.count} {cluster.count === 1 ? 'article' : 'articles'}</small>
