@@ -59,7 +59,7 @@ const imageWidths = variant === 'horizontal'
   variant === 'featured' && 'card--featured',
 ]} data-homepage-article={homepageSelection ? (article.translationOfSanityId || article.sanityId) : undefined}>
   <a class="card__image-link" href={href} aria-label={`${copy.readMore}: ${article.title}`}>
-    {image ? (
+    {image ? (imageDimensions ? (
       <Image
         src={image}
         alt={article.mainImage?.alt || article.title}
@@ -67,11 +67,14 @@ const imageWidths = variant === 'horizontal'
         sizes={imageSizes}
         format="webp"
         quality={80}
-        {...(imageDimensions ? { width: imageDimensions.width, height: imageDimensions.height } : { inferSize: true })}
+        width={imageDimensions.width}
+        height={imageDimensions.height}
         loading="lazy"
         decoding="async"
       />
     ) : (
+      <img src={image} alt={article.mainImage?.alt || article.title} width="1200" height="675" loading="lazy" decoding="async" />
+    )) : (
       <div class="card__placeholder" aria-hidden="true"></div>
     )}
   </a>
