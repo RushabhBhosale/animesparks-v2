@@ -71,17 +71,40 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-astro-assets-${{ hashFiles('package-lock.json') }}-${{ hashFiles('astro.config.mjs', 'src/components/Card.astro', 'src/components/ArticleDetail.astro', 'src/pages/index.astro', 'src/pages/categories/index.astro', 'src/lib/content/images.ts', 'src/lib/content/portable-text.ts') }}-
       - name: Build and verify production assets
+        id: build_assets
+        shell: bash
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           CLOUDFLARE_INCLUDE_PROCESS_ENV: "true"
           MONGODB_DB_NAME: animesparks
-          CONTENT_FINGERPRINT: ${{ needs.detect.outputs.fingerprint }}
           ADMIN_WRITES_ENABLED: ${{ vars.ADMIN_WRITES_ENABLED }}
           PUBLIC_DEPLOY_TARGET: production
-        run: npm run build:production
+        run: |
+          # A publisher may update MongoDB while Astro is building. Restart with
+          # a fresh fingerprint instead of disabling production integrity checks.
+          for attempt in 1 2 3; do
+            fingerprint="$(node scripts/content-fingerprint.mjs)"
+            echo "Production build attempt $attempt/3 using fingerprint $fingerprint"
+            if CONTENT_FINGERPRINT="$fingerprint" npm run build:production > build-attempt.log 2>&1; then
+              cat build-attempt.log
+              echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            tail -n 100 build-attempt.log
+            if ! grep -q 'MongoDB content changed during the production build' build-attempt.log; then
+              echo "::error::Production build failed for a reason other than concurrent MongoDB changes."
+              exit 1
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::MongoDB continued to change across three production builds."
+              exit 1
+            fi
+            echo "::warning::Published content changed mid-build; retrying with a fresh snapshot."
+            rm -rf dist
+          done
       - name: Check the generated fingerprint manifest
         env:
-          EXPECTED_FINGERPRINT: ${{ needs.detect.outputs.fingerprint }}
+          EXPECTED_FINGERPRINT: ${{ steps.build_assets.outputs.fingerprint }}
         run: |
           node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs';
@@ -104,7 +127,7 @@ jobs:
         if: steps.deploy.outcome == 'success'
         id: verify
         env:
-          EXPECTED_FINGERPRINT: ${{ needs.detect.outputs.fingerprint }}
+          EXPECTED_FINGERPRINT: ${{ steps.build_assets.outputs.fingerprint }}
         run: node scripts/verify-production-deployment.mjs
       - name: Roll back failed deployment verification
         if: >-
