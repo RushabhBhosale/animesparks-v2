@@ -70,18 +70,19 @@ const heroDimensions = r2ImageDimensions(featured?.mainImage);
           {hero && (
             <div class="cover-story__image-wrap">
               <a href={`/blog/${featured.slug}`} aria-label={`Read ${featured.title}`}>
-                <Image
+                {heroDimensions ? <Image
                   src={hero}
                   alt={featured.mainImage?.alt || featured.title}
                   widths={[480, 800, 1200]}
                   sizes="(max-width: 700px) 100vw, 50vw"
                   format="webp"
                   quality={80}
-                  {...(heroDimensions ? { width: heroDimensions.width, height: heroDimensions.height } : { inferSize: true })}
+                  width={heroDimensions.width}
+                  height={heroDimensions.height}
                   fetchpriority="high"
                   loading="eager"
                   decoding="async"
-                />
+                /> : <img src={hero} alt={featured.mainImage?.alt || featured.title} width="1200" height="675" fetchpriority="high" loading="eager" decoding="async" />}
               </a>
             </div>
           )}
@@ -184,7 +185,7 @@ const heroDimensions = r2ImageDimensions(featured?.mainImage);
               const coverDimensions = r2ImageDimensions(cluster.cover);
               return (
                 <a class="cluster-card" href={`/search?q=${encodeURIComponent(cluster.name)}`}>
-                  {coverUrl && (
+                  {coverUrl && (coverDimensions ? (
                     <Image
                       src={coverUrl}
                       alt={cluster.name}
@@ -192,12 +193,13 @@ const heroDimensions = r2ImageDimensions(featured?.mainImage);
                       sizes="(max-width: 700px) calc(100vw - 32px), 33vw"
                       format="webp"
                       quality={80}
-                      {...(coverDimensions
-                        ? { width: coverDimensions.width, height: coverDimensions.height }
-                        : { inferSize: true })}
+                      width={coverDimensions.width}
+                      height={coverDimensions.height}
                       loading="lazy"
                       decoding="async"
                     />
+                  ) : (
+                    <img src={coverUrl} alt={cluster.name} width="1200" height="675" loading="lazy" decoding="async" />
                   )}
                   <div class="cluster-card__text">
                     <span>{cluster.name}</span>

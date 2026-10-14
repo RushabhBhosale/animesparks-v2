@@ -61,10 +61,10 @@ const renderBlock = (block: PortableBlock, headingIds: Map<string, number>, imag
     const src = r2ImageUrl(block);
     if (!src) return '';
     const dimensions = imageSizes.get(src);
-    if (!dimensions) throw new Error(`Missing intrinsic dimensions for article image ${src}`);
+    // An unavailable remote image must not take the whole article offline.
     const alt = escapeHtml(block.alt || '');
     const caption = escapeHtml(block.caption || block.alt || '');
-    return `<figure><img src="${escapeHtml(src)}" alt="${alt}" width="${dimensions.width}" height="${dimensions.height}" loading="lazy" decoding="async">${caption ? `<figcaption>${caption}</figcaption>` : ''}</figure>`;
+    return `<figure><img src="${escapeHtml(src)}" alt="${alt}" ${dimensions ? `width="${dimensions.width}" height="${dimensions.height}"` : ''} loading="lazy" decoding="async">${caption ? `<figcaption>${caption}</figcaption>` : ''}</figure>`;
   }
   if (block._type !== 'block') throw new Error(`Unsupported Portable Text block: ${block._type}`);
   const content = (block.children || []).map(child => renderSpan(child, block)).join('');
@@ -85,7 +85,10 @@ export async function renderPortableText(blocks: PortableBlock[] = [], adMarkers
   const imageSizes = new Map<string, ImageDimensions>();
   await Promise.all(blocks.filter(block => block._type === 'image').map(async block => {
     const src = r2ImageUrl(block);
-    if (src && !imageSizes.has(src)) imageSizes.set(src, await dimensionsForImage(src, block));
+    if (src && !imageSizes.has(src)) {
+      try { imageSizes.set(src, await dimensionsForImage(src, block)); }
+      catch (error) { console.warn(`[images] Could not determine dimensions for ${src}; using unoptimized image: ${String(error)}`); }
+    }
   }));
   const headingIds = new Map<string, number>();
   const listTags: string[] = [];
