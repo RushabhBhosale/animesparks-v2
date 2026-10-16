@@ -3,6 +3,7 @@ import SiteLayout from '../layouts/SiteLayout.astro';
 import { Image } from 'astro:assets';
 import Card from '../components/Card.astro';
 import AdUnit from '../components/AdUnit.astro';
+import HomeTools from '../components/tools/HomeTools.astro';
 import { getBuildData } from '../lib/content/build-data';
 import { r2ImageDimensions, r2ImageUrl } from '../lib/content/images';
 import { SITE, homeDescription, homeImage, homeTitle } from '../lib/content/seo';
@@ -168,6 +169,9 @@ const heroDimensions = r2ImageDimensions(featured?.mainImage);
       </div>
 
       <AdUnit slot="horizontal2" />
+
+      <!-- Tools -->
+      <HomeTools />
 
       <!-- Anime Series In Focus (Clusters) -->
       {data.animeClusters.length > 0 && (

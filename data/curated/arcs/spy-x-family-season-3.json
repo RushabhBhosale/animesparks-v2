@@ -1,0 +1,38 @@
+{
+  "slug": "spy-x-family-season-3",
+  "arcs": [
+    {
+      "name": "Loid's Past Arc",
+      "episodeStart": 1,
+      "episodeEnd": 4
+    },
+    {
+      "name": "Friendship Schemes Arc",
+      "episodeStart": 5,
+      "episodeEnd": 6
+    },
+    {
+      "name": "Bus Hijacking Arc",
+      "episodeStart": 7,
+      "episodeEnd": 10
+    },
+    {
+      "name": "Wheeler Arc",
+      "episodeStart": 11,
+      "episodeEnd": 13
+    }
+  ],
+  "sources": [
+    {
+      "name": "Spy × Family Wiki on Fandom (CC BY-SA)",
+      "url": "https://spy-x-family.fandom.com/wiki/Episode_38"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Spy × Family Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

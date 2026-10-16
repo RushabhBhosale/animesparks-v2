@@ -1,0 +1,340 @@
+---
+import ToolPage from '../../components/tools/ToolPage.astro';
+import AnimePicker from '../../components/tools/AnimePicker.astro';
+
+export const prerender = true;
+const faq = [
+  { question: 'How do I move anime between tiers?', answer: 'Drag a poster onto a tier with a mouse, finger or stylus. Or tap a poster to select it, then tap a tier to move it there. That also works with a keyboard.' },
+  { question: 'Can I rename tiers or change their colours?', answer: 'Yes. Edit a tier’s name, pick any colour, reorder tiers with the arrows, add up to 10 tiers or remove ones you don’t need. Items from a removed tier go back to Unranked.' },
+  { question: 'How do I share my tier list?', answer: 'Use “Share image” to send a PNG through your device’s share sheet, or “Download PNG” to save it. Your list is also saved in this browser automatically.' },
+];
+---
+<ToolPage
+  path="/tools/anime-tier-list" title="Anime Tier List Maker — Rank Anime & Share as an Image | AnimeSparks" socialTitle="Anime Tier List Maker"
+  description="Make an anime tier list in seconds. Search and add anime, drag them into S–D tiers on desktop or mobile, customise tier names and colours, and export a PNG to share."
+  name="Anime Tier List Maker" crumb="Tier List" kicker="Create & play" heading="Anime Tier List Maker"
+  deck="Rank your favourites from S to D. Search and add anime, drag them into tiers on any device, rename and recolour tiers, then share your list as an image."
+  faq={faq} credit="Posters and titles"
+>
+  <div data-tierlist>
+    <section class="tool-panel" aria-labelledby="tl-setup">
+      <div class="tool-panel__head"><h2 id="tl-setup">Build your list</h2></div>
+      <div class="tool-panel__body tool-grid">
+        <label class="tool-field"><span>List title</span><input class="tool-input" data-title maxlength="80" /></label>
+        <AnimePicker id="tl-search" label="Add anime" placeholder="Search to add a poster…" />
+      </div>
+    </section>
+
+    <div class="order-toolbar" style="margin-top: var(--sp-5)">
+      <p class="tool-hero__deck" style="font-size: var(--text-sm)" data-hint>Drag posters into tiers, or tap a poster and then a tier.</p>
+      <div class="tool-results__actions">
+        <button type="button" class="tool-button" data-add-tier>Add tier</button>
+        <button type="button" class="tool-button" data-download>Download PNG</button>
+        <button type="button" class="tool-button tool-button--primary" data-share>Share image</button>
+        <button type="button" class="tool-button tool-button--quiet" data-reset>Start over</button>
+      </div>
+    </div>
+
+    <div class="tl-board" data-board></div>
+    <section class="tl-pool-wrap" aria-labelledby="tl-pool-title">
+      <h3 id="tl-pool-title" class="tool-legend">Unranked</h3>
+      <div class="tl-zone tl-pool" data-zone="pool"></div>
+    </section>
+    <p class="tool-note" data-flash hidden style="margin-top: var(--sp-3)"></p>
+  </div>
+
+  <Fragment slot="guide">
+    <h2>How to make an anime tier list</h2>
+    <p>Search for a series and its poster lands in <strong>Unranked</strong>. Drag each poster into a tier, from S for all-time greats down to D. On a phone, press and drag, or tap a poster and then tap the tier you want. Rename tiers (“Peak”, “Comfort shows”, “Dropped”), choose any colour and reorder them with the arrows.</p>
+    <p>When you’re happy, share the image straight to social apps or download it as a PNG. Your list saves automatically in this browser, so you can come back and tweak it later.</p>
+  </Fragment>
+</ToolPage>
+
+<style is:global>
+  .tl-board { border: 1px solid var(--line-2); background: var(--bg); }
+  .tl-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); border-top: 1px solid var(--line-2); min-height: 104px; }
+  .tl-row:first-child { border-top: 0; }
+  .tl-label { display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: var(--sp-2); color: #111; }
+  .tl-label input[type="text"] { width: 100%; border: 0; background: transparent; color: inherit; font: 800 22px/1.1 var(--font-ui); text-align: center; outline: none; }
+  .tl-label input[type="text"]:focus-visible { outline: 2px solid #111; }
+  .tl-tier-tools { display: flex; justify-content: center; gap: 2px; }
+  .tl-tier-tools button, .tl-tier-tools input[type="color"] { width: 24px; height: 24px; padding: 0; border: 1px solid rgba(0,0,0,.35); background: rgba(255,255,255,.35); color: #111; font-size: 12px; cursor: pointer; }
+  .tl-zone { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; min-height: 104px; padding: 7px; }
+  .tl-zone.is-target { background: color-mix(in srgb, var(--accent) 12%, transparent); outline: 2px dashed var(--accent); outline-offset: -4px; }
+  .tl-pool-wrap { margin-top: var(--sp-4); }
+  .tl-pool-wrap .tool-legend { display: block; margin-bottom: var(--sp-2); }
+  .tl-pool { border: 1px dashed var(--line-2); background: var(--surface); }
+  .tl-item { position: relative; width: 64px; height: 90px; padding: 0; border: 0; background: var(--surface2); touch-action: none; user-select: none; -webkit-user-select: none; }
+  .tl-item img { width: 64px; height: 90px; object-fit: cover; pointer-events: none; }
+  .tl-item span.tl-fallback { display: flex; align-items: center; justify-content: center; height: 100%; padding: 4px; color: var(--ink); font-size: 10px; line-height: 1.2; text-align: center; overflow: hidden; }
+  .tl-item[aria-pressed="true"] { outline: 3px solid var(--accent); outline-offset: 1px; }
+  .tl-item.is-dragging { opacity: .3; }
+  .tl-item .tl-remove { position: absolute; top: -6px; right: -6px; display: none; width: 20px; height: 20px; border: 0; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; line-height: 20px; }
+  .tl-item[aria-pressed="true"] .tl-remove { display: block; }
+  .tl-ghost { position: fixed; z-index: 1000; width: 64px; height: 90px; pointer-events: none; box-shadow: 0 10px 24px rgba(0,0,0,.5); transform: translate(-50%, -50%) rotate(3deg); }
+  .tl-ghost img { width: 100%; height: 100%; object-fit: cover; }
+  @media (max-width: 700px) {
+    .tl-row { grid-template-columns: 76px minmax(0, 1fr); min-height: 84px; }
+    .tl-label input[type="text"] { font-size: 18px; }
+    .tl-tier-tools { flex-wrap: wrap; }
+    .tl-tier-tools button, .tl-tier-tools input[type="color"] { width: 22px; height: 22px; }
+    .tl-zone { min-height: 84px; gap: 4px; padding: 5px; }
+    .tl-item, .tl-item img, .tl-ghost { width: 52px; height: 73px; }
+  }
+</style>
+
+<script>
+  import { addItem, addTier, moveItem, moveTier, newTierList, removeItem, removeTier, restoreTierList, type TierList } from '../../lib/tools/tierlist';
+  import { createPicker } from '../../scripts/tools/anime-picker';
+  import { readLocal, writeLocal } from '../../scripts/tools/storage';
+
+  const root = document.querySelector<HTMLElement>('[data-tierlist]')!;
+  const board = root.querySelector<HTMLElement>('[data-board]')!;
+  const pool = root.querySelector<HTMLElement>('[data-zone="pool"]')!;
+  const titleInput = root.querySelector<HTMLInputElement>('[data-title]')!;
+  const flash = root.querySelector<HTMLElement>('[data-flash]')!;
+  const now = () => new Date().toISOString();
+  let list: TierList = restoreTierList(readLocal<unknown>('tierlist', null), now());
+  let selected: string | null = null;
+  const commit = (next: TierList) => { list = next; writeLocal('tierlist', list); render(); };
+  const say = (text: string) => { flash.textContent = text; flash.hidden = false; window.setTimeout(() => { flash.hidden = true; }, 3000); };
+  // MAL thumbnails end in "t.jpg"; the full-size poster drops the "t".
+  const largePoster = (url?: string) => url?.replace(/t\.(jpg|webp)$/, '.$1');
+
+  function tile(slug: string) {
+    const item = list.items[slug];
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'tl-item';
+    button.dataset.slug = slug;
+    button.title = item.title;
+    button.setAttribute('aria-label', item.title);
+    button.setAttribute('aria-pressed', String(selected === slug));
+    if (item.poster) {
+      const image = document.createElement('img');
+      image.src = item.poster; image.alt = ''; image.width = 64; image.height = 90; image.crossOrigin = 'anonymous'; image.referrerPolicy = 'no-referrer'; image.draggable = false;
+      button.append(image);
+    } else {
+      const text = document.createElement('span'); text.className = 'tl-fallback'; text.textContent = item.title; button.append(text);
+    }
+    const remove = document.createElement('span');
+    remove.className = 'tl-remove'; remove.textContent = '✕'; remove.setAttribute('role', 'button'); remove.setAttribute('aria-label', `Remove ${item.title}`);
+    remove.addEventListener('pointerdown', event => event.stopPropagation());
+    remove.addEventListener('click', event => { event.stopPropagation(); selected = null; commit(removeItem(list, slug, now())); });
+    button.append(remove);
+    return button;
+  }
+
+  function render() {
+    titleInput.value = list.title;
+    board.replaceChildren(...list.tiers.map((tier, index) => {
+      const row = document.createElement('div');
+      row.className = 'tl-row';
+      const label = document.createElement('div');
+      label.className = 'tl-label';
+      label.style.background = tier.color;
+      const name = document.createElement('input');
+      name.type = 'text'; name.value = tier.name; name.maxLength = 24; name.setAttribute('aria-label', 'Tier name');
+      name.addEventListener('change', () => commit({ ...list, tiers: list.tiers.map(other => other.id === tier.id ? { ...other, name: name.value.trim() || '?' } : other), updatedAt: now() }));
+      const tools = document.createElement('div');
+      tools.className = 'tl-tier-tools';
+      const color = document.createElement('input');
+      color.type = 'color'; color.value = tier.color; color.setAttribute('aria-label', `${tier.name} tier colour`);
+      color.addEventListener('input', () => { label.style.background = color.value; });
+      color.addEventListener('change', () => commit({ ...list, tiers: list.tiers.map(other => other.id === tier.id ? { ...other, color: color.value } : other), updatedAt: now() }));
+      const button = (text: string, aria: string, action: () => void, disabled = false) => {
+        const element = document.createElement('button');
+        element.type = 'button'; element.textContent = text; element.setAttribute('aria-label', aria); element.disabled = disabled;
+        element.addEventListener('click', action);
+        return element;
+      };
+      tools.append(
+        color,
+        button('▲', `Move ${tier.name} up`, () => commit(moveTier(list, tier.id, -1, now())), index === 0),
+        button('▼', `Move ${tier.name} down`, () => commit(moveTier(list, tier.id, 1, now())), index === list.tiers.length - 1),
+        button('✕', `Remove ${tier.name} tier`, () => commit(removeTier(list, tier.id, now())), list.tiers.length <= 1),
+      );
+      label.append(name, tools);
+      const zone = document.createElement('div');
+      zone.className = 'tl-zone';
+      zone.dataset.zone = tier.id;
+      zone.setAttribute('aria-label', `${tier.name} tier`);
+      zone.append(...tier.items.map(tile));
+      row.append(label, zone);
+      return row;
+    }));
+    pool.replaceChildren(...list.pool.map(tile));
+    if (!Object.keys(list.items).length) {
+      const empty = document.createElement('p');
+      empty.style.cssText = 'margin:auto;color:var(--ink-3);font-size:var(--text-sm)';
+      empty.textContent = 'Search above to add anime. They appear here, ready to rank.';
+      pool.append(empty);
+    }
+  }
+
+  // ── Pointer drag (mouse, touch, pen) with a tap-to-move fallback ─────────
+  let drag: { slug: string; startX: number; startY: number; source: HTMLElement; ghost?: HTMLElement; target?: HTMLElement | null } | null = null;
+  const zoneAt = (x: number, y: number) => (document.elementFromPoint(x, y) as HTMLElement | null)?.closest<HTMLElement>('[data-zone]') || null;
+  const indexAt = (zone: HTMLElement, x: number, y: number) => {
+    const tiles = [...zone.querySelectorAll<HTMLElement>('.tl-item:not(.is-dragging)')];
+    const index = tiles.findIndex(item => {
+      const box = item.getBoundingClientRect();
+      return y < box.top || (y <= box.bottom && x < box.left + box.width / 2);
+    });
+    return index === -1 ? tiles.length : index;
+  };
+
+  root.addEventListener('pointerdown', event => {
+    const source = (event.target as HTMLElement).closest<HTMLElement>('.tl-item');
+    if (!source || event.button > 0) return;
+    drag = { slug: source.dataset.slug!, startX: event.clientX, startY: event.clientY, source };
+    source.setPointerCapture(event.pointerId);
+  });
+  root.addEventListener('pointermove', event => {
+    if (!drag) return;
+    if (!drag.ghost) {
+      if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 6) return;
+      drag.ghost = document.createElement('div');
+      drag.ghost.className = 'tl-ghost';
+      const image = drag.source.querySelector('img');
+      if (image) drag.ghost.append(image.cloneNode());
+      document.body.append(drag.ghost);
+      drag.source.classList.add('is-dragging');
+    }
+    drag.ghost.style.left = `${event.clientX}px`;
+    drag.ghost.style.top = `${event.clientY}px`;
+    const target = zoneAt(event.clientX, event.clientY);
+    if (target !== drag.target) {
+      drag.target?.classList.remove('is-target');
+      target?.classList.add('is-target');
+      drag.target = target;
+    }
+  });
+  const endDrag = (event: PointerEvent, cancelled = false) => {
+    if (!drag) return;
+    const current = drag;
+    drag = null;
+    current.target?.classList.remove('is-target');
+    current.ghost?.remove();
+    current.source.classList.remove('is-dragging');
+    if (!current.ghost) {
+      // A tap: toggle selection.
+      selected = selected === current.slug ? null : current.slug;
+      render();
+      return;
+    }
+    if (cancelled || !current.target) { render(); return; }
+    selected = null;
+    commit(moveItem(list, current.slug, current.target.dataset.zone!, indexAt(current.target, event.clientX, event.clientY), now()));
+  };
+  root.addEventListener('pointerup', event => endDrag(event));
+  root.addEventListener('pointercancel', event => endDrag(event, true));
+  // Tap-to-move: with a poster selected, tapping a zone moves it there.
+  root.addEventListener('click', event => {
+    if (!selected) return;
+    const target = event.target as HTMLElement;
+    if (target.closest('.tl-item') || target.closest('input, button:not(.tl-item)')) return;
+    const zone = target.closest<HTMLElement>('[data-zone]');
+    if (!zone) return;
+    const slug = selected;
+    selected = null;
+    commit(moveItem(list, slug, zone.dataset.zone!, undefined, now()));
+  });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && selected) { selected = null; render(); } });
+
+  // ── PNG export ─────────────────────────────────────────────────────────
+  const loadImage = (src: string) => new Promise<HTMLImageElement | null>(resolve => {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = src;
+  });
+  async function renderPng(): Promise<Blob | null> {
+    const width = 1200, labelWidth = 150, tileW = 80, tileH = 112, gap = 8, pad = 10, header = 84, footer = 40;
+    const perRow = Math.floor((width - labelWidth - pad * 2 + gap) / (tileW + gap));
+    const rowHeights = list.tiers.map(tier => Math.max(1, Math.ceil(tier.items.length / perRow)) * (tileH + gap) - gap + pad * 2);
+    const height = header + rowHeights.reduce((sum, value) => sum + value, 0) + footer;
+    const canvas = document.createElement('canvas');
+    const scale = 2;
+    canvas.width = width * scale; canvas.height = height * scale;
+    const context = canvas.getContext('2d')!;
+    context.scale(scale, scale);
+    context.fillStyle = '#0d0c0b'; context.fillRect(0, 0, width, height);
+    context.fillStyle = '#ede8e2'; context.font = '700 34px Georgia, serif'; context.textBaseline = 'middle';
+    context.fillText(list.title || 'My anime tier list', 24, header / 2);
+    const images = new Map(await Promise.all(Object.values(list.items).map(async item => [item.slug, item.poster ? await loadImage(item.poster) : null] as const)));
+    let y = header;
+    list.tiers.forEach((tier, index) => {
+      const rowHeight = rowHeights[index];
+      context.fillStyle = tier.color; context.fillRect(0, y, labelWidth, rowHeight);
+      context.fillStyle = '#111'; context.font = '800 30px system-ui, sans-serif'; context.textAlign = 'center';
+      context.fillText(tier.name.slice(0, 10), labelWidth / 2, y + rowHeight / 2);
+      context.textAlign = 'left';
+      context.fillStyle = '#141312'; context.fillRect(labelWidth, y, width - labelWidth, rowHeight);
+      tier.items.forEach((slug, position) => {
+        const x = labelWidth + pad + (position % perRow) * (tileW + gap);
+        const top = y + pad + Math.floor(position / perRow) * (tileH + gap);
+        const image = images.get(slug);
+        if (image) context.drawImage(image, x, top, tileW, tileH);
+        else {
+          context.fillStyle = '#2c2a27'; context.fillRect(x, top, tileW, tileH);
+          context.fillStyle = '#ede8e2'; context.font = '11px system-ui, sans-serif';
+          context.fillText(list.items[slug].title.slice(0, 12), x + 4, top + tileH / 2);
+        }
+      });
+      context.fillStyle = '#2c2a27'; context.fillRect(0, y + rowHeight - 1, width, 1);
+      y += rowHeight;
+    });
+    context.fillStyle = '#a09890'; context.font = '14px system-ui, sans-serif';
+    context.fillText('Made with the AnimeSparks Tier List Maker · animesparks.blog/tools/anime-tier-list', 24, height - footer / 2);
+    return new Promise(resolve => {
+      try { canvas.toBlob(blob => resolve(blob), 'image/png'); } catch { resolve(null); }
+    });
+  }
+  const fileName = () => `${(list.title || 'anime-tier-list').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'anime-tier-list'}.png`;
+  const download = (blob: Blob) => {
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName();
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  };
+  root.querySelector('[data-download]')!.addEventListener('click', async () => {
+    const blob = await renderPng();
+    if (blob) download(blob); else say('Couldn’t create the image in this browser.');
+  });
+  root.querySelector('[data-share]')!.addEventListener('click', async () => {
+    const blob = await renderPng();
+    if (!blob) { say('Couldn’t create the image in this browser.'); return; }
+    const file = new File([blob], fileName(), { type: 'image/png' });
+    if (navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: list.title, text: 'My anime tier list, made on AnimeSparks' }); return; }
+      catch (error) { if ((error as Error).name === 'AbortError') return; }
+    }
+    download(blob);
+    say('Sharing isn’t supported here, so the image was downloaded instead.');
+  });
+
+  // ── Toolbar ─────────────────────────────────────────────────────────────
+  titleInput.addEventListener('change', () => commit({ ...list, title: titleInput.value.trim().slice(0, 80) || 'My anime tier list', updatedAt: now() }));
+  root.querySelector('[data-add-tier]')!.addEventListener('click', () => {
+    const next = addTier(list, now());
+    if (next === list) say('You can have up to 10 tiers.'); else commit(next);
+  });
+  root.querySelector('[data-reset]')!.addEventListener('click', () => {
+    if (window.confirm('Clear this tier list and start over?')) { selected = null; commit(newTierList(now())); }
+  });
+  createPicker({
+    root: root.querySelector<HTMLElement>('[data-picker="tl-search"]')!,
+    endpoint: '/api/tools/anime-search',
+    onSelect: item => {
+      if (list.items[item.s]) { say(`${item.t} is already on your list.`); return; }
+      const next = addItem(list, { slug: item.s, title: item.t, poster: largePoster(item.p) }, now());
+      if (next === list) { say('Tier lists hold up to 100 anime.'); return; }
+      commit(next);
+      (root.querySelector('[data-picker="tl-search"] input') as HTMLInputElement).value = '';
+    },
+  });
+  render();
+</script>

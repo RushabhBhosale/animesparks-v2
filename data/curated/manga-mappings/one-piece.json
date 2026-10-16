@@ -1,0 +1,314 @@
+{
+  "slug": "one-piece",
+  "ranges": [
+    {
+      "episodeStart": 1,
+      "episodeEnd": 4,
+      "chapterStart": 1,
+      "chapterEnd": 7,
+      "note": "Romance Dawn Arc: arc-level range."
+    },
+    {
+      "episodeStart": 5,
+      "episodeEnd": 8,
+      "chapterStart": 8,
+      "chapterEnd": 21,
+      "note": "Orange Town Arc: arc-level range."
+    },
+    {
+      "episodeStart": 9,
+      "episodeEnd": 18,
+      "chapterStart": 22,
+      "chapterEnd": 41,
+      "note": "Syrup Village Arc: arc-level range."
+    },
+    {
+      "episodeStart": 19,
+      "episodeEnd": 30,
+      "chapterStart": 42,
+      "chapterEnd": 68,
+      "note": "Baratie Arc: arc-level range."
+    },
+    {
+      "episodeStart": 31,
+      "episodeEnd": 44,
+      "chapterStart": 69,
+      "chapterEnd": 95,
+      "note": "Arlong Park Arc: arc-level range."
+    },
+    {
+      "episodeStart": 45,
+      "episodeEnd": 45,
+      "chapterStart": 96,
+      "chapterEnd": 100,
+      "note": "Loguetown Arc: arc-level range."
+    },
+    {
+      "episodeStart": 48,
+      "episodeEnd": 53,
+      "chapterStart": 96,
+      "chapterEnd": 100,
+      "note": "Loguetown Arc: arc-level range."
+    },
+    {
+      "episodeStart": 62,
+      "episodeEnd": 63,
+      "chapterStart": 101,
+      "chapterEnd": 105,
+      "note": "Reverse Mountain Arc: arc-level range."
+    },
+    {
+      "episodeStart": 64,
+      "episodeEnd": 67,
+      "chapterStart": 106,
+      "chapterEnd": 114,
+      "note": "Whisky Peak Arc: arc-level range."
+    },
+    {
+      "episodeStart": 70,
+      "episodeEnd": 77,
+      "chapterStart": 115,
+      "chapterEnd": 129,
+      "note": "Little Garden Arc: arc-level range."
+    },
+    {
+      "episodeStart": 78,
+      "episodeEnd": 91,
+      "chapterStart": 130,
+      "chapterEnd": 154,
+      "note": "Drum Island Arc: arc-level range."
+    },
+    {
+      "episodeStart": 92,
+      "episodeEnd": 130,
+      "chapterStart": 155,
+      "chapterEnd": 217,
+      "note": "Arabasta Arc: arc-level range."
+    },
+    {
+      "episodeStart": 144,
+      "episodeEnd": 152,
+      "chapterStart": 218,
+      "chapterEnd": 236,
+      "note": "Jaya Arc: arc-level range."
+    },
+    {
+      "episodeStart": 153,
+      "episodeEnd": 195,
+      "chapterStart": 237,
+      "chapterEnd": 302,
+      "note": "Skypiea Arc: arc-level range."
+    },
+    {
+      "episodeStart": 207,
+      "episodeEnd": 219,
+      "chapterStart": 303,
+      "chapterEnd": 321,
+      "note": "Long Ring Long Land Arc: arc-level range."
+    },
+    {
+      "episodeStart": 229,
+      "episodeEnd": 263,
+      "chapterStart": 322,
+      "chapterEnd": 374,
+      "note": "Water 7 Arc: arc-level range."
+    },
+    {
+      "episodeStart": 264,
+      "episodeEnd": 290,
+      "chapterStart": 375,
+      "chapterEnd": 430,
+      "note": "Enies Lobby Arc: arc-level range."
+    },
+    {
+      "episodeStart": 293,
+      "episodeEnd": 302,
+      "chapterStart": 375,
+      "chapterEnd": 430,
+      "note": "Enies Lobby Arc: arc-level range."
+    },
+    {
+      "episodeStart": 304,
+      "episodeEnd": 312,
+      "chapterStart": 375,
+      "chapterEnd": 430,
+      "note": "Enies Lobby Arc: arc-level range."
+    },
+    {
+      "episodeStart": 313,
+      "episodeEnd": 325,
+      "chapterStart": 431,
+      "chapterEnd": 441,
+      "note": "Post-Enies Lobby Arc: arc-level range."
+    },
+    {
+      "episodeStart": 337,
+      "episodeEnd": 381,
+      "chapterStart": 442,
+      "chapterEnd": 489,
+      "note": "Thriller Bark Arc: arc-level range."
+    },
+    {
+      "episodeStart": 385,
+      "episodeEnd": 405,
+      "chapterStart": 490,
+      "chapterEnd": 513,
+      "note": "Sabaody Archipelago Arc: arc-level range."
+    },
+    {
+      "episodeStart": 408,
+      "episodeEnd": 421,
+      "chapterStart": 514,
+      "chapterEnd": 524,
+      "note": "Amazon Lily Arc: arc-level range."
+    },
+    {
+      "episodeStart": 422,
+      "episodeEnd": 425,
+      "chapterStart": 525,
+      "chapterEnd": 549,
+      "note": "Impel Down Arc: arc-level range."
+    },
+    {
+      "episodeStart": 430,
+      "episodeEnd": 452,
+      "chapterStart": 525,
+      "chapterEnd": 549,
+      "note": "Impel Down Arc: arc-level range."
+    },
+    {
+      "episodeStart": 457,
+      "episodeEnd": 489,
+      "chapterStart": 550,
+      "chapterEnd": 580,
+      "note": "Marineford Arc: arc-level range."
+    },
+    {
+      "episodeStart": 490,
+      "episodeEnd": 491,
+      "chapterStart": 581,
+      "chapterEnd": 597,
+      "note": "Post-War Arc: arc-level range."
+    },
+    {
+      "episodeStart": 493,
+      "episodeEnd": 516,
+      "chapterStart": 581,
+      "chapterEnd": 597,
+      "note": "Post-War Arc: arc-level range."
+    },
+    {
+      "episodeStart": 517,
+      "episodeEnd": 522,
+      "chapterStart": 598,
+      "chapterEnd": 602,
+      "note": "Return to Sabaody Arc: arc-level range."
+    },
+    {
+      "episodeStart": 523,
+      "episodeEnd": 541,
+      "chapterStart": 603,
+      "chapterEnd": 653,
+      "note": "Fish-Man Island Arc: arc-level range."
+    },
+    {
+      "episodeStart": 543,
+      "episodeEnd": 574,
+      "chapterStart": 603,
+      "chapterEnd": 653,
+      "note": "Fish-Man Island Arc: arc-level range."
+    },
+    {
+      "episodeStart": 579,
+      "episodeEnd": 589,
+      "chapterStart": 654,
+      "chapterEnd": 699,
+      "note": "Punk Hazard Arc: arc-level range."
+    },
+    {
+      "episodeStart": 591,
+      "episodeEnd": 625,
+      "chapterStart": 654,
+      "chapterEnd": 699,
+      "note": "Punk Hazard Arc: arc-level range."
+    },
+    {
+      "episodeStart": 629,
+      "episodeEnd": 746,
+      "chapterStart": 700,
+      "chapterEnd": 801,
+      "note": "Dressrosa Arc: arc-level range."
+    },
+    {
+      "episodeStart": 751,
+      "episodeEnd": 779,
+      "chapterStart": 802,
+      "chapterEnd": 824,
+      "note": "Zou Arc: arc-level range."
+    },
+    {
+      "episodeStart": 783,
+      "episodeEnd": 877,
+      "chapterStart": 825,
+      "chapterEnd": 902,
+      "note": "Whole Cake Island Arc: arc-level range."
+    },
+    {
+      "episodeStart": 878,
+      "episodeEnd": 889,
+      "chapterStart": 903,
+      "chapterEnd": 908,
+      "note": "Levely Arc: arc-level range."
+    },
+    {
+      "episodeStart": 890,
+      "episodeEnd": 894,
+      "chapterStart": 909,
+      "chapterEnd": 1057,
+      "note": "Wano Country Arc: arc-level range."
+    },
+    {
+      "episodeStart": 897,
+      "episodeEnd": 906,
+      "chapterStart": 909,
+      "chapterEnd": 1057,
+      "note": "Wano Country Arc: arc-level range."
+    },
+    {
+      "episodeStart": 908,
+      "episodeEnd": 1028,
+      "chapterStart": 909,
+      "chapterEnd": 1057,
+      "note": "Wano Country Arc: arc-level range."
+    },
+    {
+      "episodeStart": 1031,
+      "episodeEnd": 1085,
+      "chapterStart": 909,
+      "chapterEnd": 1057,
+      "note": "Wano Country Arc: arc-level range."
+    },
+    {
+      "episodeStart": 1086,
+      "episodeEnd": 1155,
+      "chapterStart": 1058,
+      "chapterEnd": 1125,
+      "note": "Egghead Arc: arc-level range."
+    }
+  ],
+  "continueFromChapter": 1126,
+  "continueNote": "This is the chapter after the last arc the anime has adapted.",
+  "sources": [
+    {
+      "name": "One Piece Wiki on Fandom (CC BY-SA)",
+      "url": "https://onepiece.fandom.com/wiki/Story_Arcs"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from One Piece Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

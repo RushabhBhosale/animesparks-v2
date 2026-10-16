@@ -1,0 +1,23 @@
+{
+  "slug": "demon-slayer-kimetsu-no-yaiba-swordsmith-village-arc",
+  "arcs": [
+    {
+      "name": "Swordsmith Village Arc",
+      "episodeStart": 1,
+      "episodeEnd": 10
+    }
+  ],
+  "sources": [
+    {
+      "name": "Kimetsu no Yaiba Wiki on Fandom (CC BY-SA)",
+      "url": "https://kimetsu-no-yaiba.fandom.com/wiki/Episode_45"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Kimetsu no Yaiba Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

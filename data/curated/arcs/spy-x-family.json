@@ -1,0 +1,43 @@
+{
+  "slug": "spy-x-family",
+  "arcs": [
+    {
+      "name": "Introduction Arc",
+      "episodeStart": 1,
+      "episodeEnd": 2
+    },
+    {
+      "name": "Admissions Interview Arc",
+      "episodeStart": 3,
+      "episodeEnd": 5
+    },
+    {
+      "name": "Eden Beginnings Arc",
+      "episodeStart": 6,
+      "episodeEnd": 7
+    },
+    {
+      "name": "Secret Police Arc",
+      "episodeStart": 8,
+      "episodeEnd": 9
+    },
+    {
+      "name": "Stella Star Arc",
+      "episodeStart": 10,
+      "episodeEnd": 12
+    }
+  ],
+  "sources": [
+    {
+      "name": "Spy × Family Wiki on Fandom (CC BY-SA)",
+      "url": "https://spy-x-family.fandom.com/wiki/Episode_1"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Spy × Family Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

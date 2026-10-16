@@ -1,0 +1,48 @@
+{
+  "slug": "jujutsu-kaisen-season-2",
+  "arcs": [
+    {
+      "name": "Gojo's Past",
+      "episodeStart": 1,
+      "episodeEnd": 5
+    },
+    {
+      "name": "Death Painting Arc Shibuya Incident Arc",
+      "episodeStart": 6,
+      "episodeEnd": 6
+    },
+    {
+      "name": "Shibuya Incident",
+      "episodeStart": 7,
+      "episodeEnd": 15
+    },
+    {
+      "name": "Shibuya Incident Arc",
+      "episodeStart": 16,
+      "episodeEnd": 16
+    },
+    {
+      "name": "Shibuya Incident",
+      "episodeStart": 17,
+      "episodeEnd": 22
+    },
+    {
+      "name": "Shibuya Incident Arc",
+      "episodeStart": 23,
+      "episodeEnd": 23
+    }
+  ],
+  "sources": [
+    {
+      "name": "Jujutsu Kaisen Wiki on Fandom (CC BY-SA)",
+      "url": "https://jujutsu-kaisen.fandom.com/wiki/Episode_25"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Jujutsu Kaisen Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

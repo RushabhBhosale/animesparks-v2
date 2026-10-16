@@ -1,0 +1,140 @@
+---
+import ToolPage from '../../components/tools/ToolPage.astro';
+import AnimePicker from '../../components/tools/AnimePicker.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { getToolsExtras } from '../../lib/tools/build-extras';
+
+export const prerender = true;
+const { english } = await getBuildData();
+const extras = await getToolsExtras(english);
+const covered = Object.values(extras.source).filter(entry => entry.arcs).map(entry => ({ slug: entry.slug, title: entry.title }));
+const faq = [
+  { question: 'Where do the arcs come from?', answer: 'From each series’ fan wiki on Fandom (licensed CC BY-SA), imported through the official wiki API, or from guides checked by AnimeSparks editors. Arc names and episode ranges are never generated or estimated.' },
+  { question: 'Does it spoil the story?', answer: 'It shows arc names and episode ranges only, with no plot summaries. Arc names can hint at what’s coming, so skim carefully if you’re avoiding spoilers.' },
+  { question: 'Why can’t I find my series?', answer: 'Arc guides are added one series at a time as they’re verified. Until then, the Filler Checker and Watch Order Guide cover most long-running series.' },
+];
+---
+<ToolPage
+  path="/tools/anime-arc-explorer" title="Anime Arc Explorer — Story Arcs & Episode Ranges | AnimeSparks" socialTitle="Anime Arc Explorer"
+  description="Explore anime story arcs in order with episode ranges, arc length and canon/filler labels. Covers One Piece, Naruto, Bleach, Jujutsu Kaisen, My Hero Academia and more."
+  name="Anime Arc Explorer" crumb="Arc Explorer" kicker="Watch smarter" heading="Anime Arc Explorer"
+  deck="Every story arc in order, with episode ranges, arc length and canon or filler labels where known. Tick off arcs as you finish them."
+  facts={[[String(covered.length), covered.length === 1 ? 'series with a verified arc guide' : 'series with verified arc guides']]}
+  faq={faq} robotsNoindex={covered.length === 0} credit="Episode data"
+>
+  <div class="tool-layout">
+    <div>
+      <section class="tool-panel" aria-labelledby="arc-pick">
+        <div class="tool-panel__head"><h2 id="arc-pick">Choose a series</h2></div>
+        <div class="tool-panel__body">
+          <AnimePicker id="arc-search" label="Search anime" placeholder="One Piece, Bleach, Hunter x Hunter…" />
+          {covered.length === 0 && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">No arc guides have been verified yet, so every search shows the “not verified” message for now. Arcs appear here once an editor has checked them against sources.</p>}
+        </div>
+      </section>
+      <section class="tool-results" style="margin-top: var(--sp-5)" aria-live="polite" aria-labelledby="arc-result-title">
+        <h2 class="sr-only" id="arc-result-title">Arcs</h2>
+        <p data-results-empty>Choose a series to see its story arcs.</p>
+        <div data-result hidden style="padding: var(--sp-6)"></div>
+      </section>
+    </div>
+    <aside class="tool-aside" aria-label="Covered series">
+      <div class="tool-aside-card">
+        <p class="kicker red">Series with arc guides</p>
+        {covered.length ? <ul>{covered.map(entry => <li>{entry.title}</li>)}</ul> : <p>None yet. Guides are published one series at a time after checking.</p>}
+      </div>
+      <div class="tool-aside-card">
+        <p class="kicker">Meanwhile</p>
+        <p>Use the <a href="/tools/anime-filler-checker">Filler Checker</a> to find which episodes you can skip.</p>
+      </div>
+    </aside>
+  </div>
+
+  <Fragment slot="guide">
+    <h2>Navigate long series by story arc</h2>
+    <p>Long-running anime are easier to follow arc by arc. The Arc Explorer lists each arc in story order with its episode range, length and whether it is canon, filler or mixed. Tick arcs off as you finish them and your progress is saved in this browser.</p>
+    <p>Arc names and episode ranges come from each series’ fan wiki on Fandom (licensed CC BY-SA), read through the wiki’s official API, or from guides checked by AnimeSparks editors. The source is shown under every list.</p>
+  </Fragment>
+</ToolPage>
+
+<script>
+  import { arcEpisodeCount } from '../../lib/tools/episodes';
+  import { createPicker, type PickerItem } from '../../scripts/tools/anime-picker';
+  import { readLocal, writeLocal } from '../../scripts/tools/storage';
+  import type { SourceEntry } from '../../lib/tools/build-extras';
+
+  const result = document.querySelector<HTMLElement>('[data-result]')!;
+  const empty = document.querySelector<HTMLElement>('[data-results-empty]')!;
+  const el = (tag: string, text?: string, className?: string) => {
+    const node = document.createElement(tag);
+    if (text) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  };
+
+  function render(item: PickerItem, entry: SourceEntry | null) {
+    result.replaceChildren();
+    const heading = el('h3', item.t);
+    heading.style.cssText = 'margin:0 0 var(--sp-4);font-family:var(--font-body);font-size:var(--text-2xl)';
+    result.append(heading);
+    if (!entry?.arcs) {
+      result.append(el('p', `An arc guide for ${item.t} hasn’t been verified yet. We only publish arcs checked against sources.`, 'tool-note tool-note--muted'));
+      const next = el('p');
+      next.style.cssText = 'margin-top:var(--sp-4);font-size:var(--text-sm)';
+      const link = el('a', `Check ${item.t} in the Filler Checker →`) as HTMLAnchorElement;
+      link.href = `/tools/anime-filler-checker/${item.s}`;
+      next.append(link);
+      result.append(next);
+      return;
+    }
+    const key = `arcs:${item.s}`;
+    const done = new Set(readLocal<string[]>(key, []));
+    const list = el('ol', undefined, 'order-list');
+    for (const arc of entry.arcs.arcs) {
+      const row = el('li', undefined, 'order-item');
+      row.style.gridTemplateColumns = '40px minmax(0,1fr) auto';
+      const body = el('div');
+      body.append(el('h4', arc.name, 'order-item__title'));
+      const meta = el('p', undefined, 'order-item__meta');
+      const count = arcEpisodeCount(arc);
+      meta.append(el('span', count === 1 ? `Episode ${arc.episodeStart}` : `Episodes ${arc.episodeStart}–${arc.episodeEnd}`), el('span', `${count} episode${count === 1 ? '' : 's'}`));
+      if (arc.classification) { const badge = el('span', arc.classification, 'type-badge'); badge.dataset.type = arc.classification; meta.append(badge); }
+      body.append(meta);
+      if (arc.summary) {
+        const details = el('details');
+        details.append(el('summary', 'Spoiler-safe summary'), el('p', arc.summary, 'order-item__note'));
+        body.append(details);
+      }
+      if (arc.articleSlug) { const link = el('a', 'Read our article →') as HTMLAnchorElement; link.href = `/blog/${arc.articleSlug}`; body.append(link); }
+      const label = el('label', undefined, 'order-done');
+      const box = el('input') as HTMLInputElement;
+      box.type = 'checkbox';
+      box.checked = done.has(arc.name);
+      box.setAttribute('aria-label', `${arc.name} finished`);
+      box.addEventListener('change', () => { if (box.checked) done.add(arc.name); else done.delete(arc.name); writeLocal(key, [...done]); row.classList.toggle('is-done', box.checked); });
+      row.classList.toggle('is-done', box.checked);
+      label.append(box, el('span', 'Done'));
+      row.append(body, label);
+      list.append(row);
+    }
+    result.append(list);
+    const sources = el('p', `${entry.arcs.imported ? 'Arc data from' : `Verified${entry.arcs.verifiedAt ? ` on ${entry.arcs.verifiedAt}` : ''}. Sources:`} ${entry.arcs.sources.map(source => source.name).join(', ')}${entry.arcs.imported ? `, imported ${entry.arcs.verifiedAt}` : ''}.`, 'order-sources');
+    result.append(sources);
+  }
+
+  createPicker({
+    root: document.querySelector<HTMLElement>('[data-picker="arc-search"]')!,
+    endpoint: '/api/tools/anime-search',
+    onSelect: async item => {
+      empty.hidden = true;
+      result.hidden = false;
+      result.textContent = 'Loading…';
+      try {
+        const response = await fetch(`/api/tools/source?slug=${encodeURIComponent(item.s)}`);
+        if (!response.ok) throw new Error(String(response.status));
+        render(item, ((await response.json()) as { result: SourceEntry | null }).result);
+      } catch {
+        result.replaceChildren(el('p', 'Arc data is unavailable right now. Please try again shortly.', 'tool-error'));
+      }
+    },
+  });
+</script>

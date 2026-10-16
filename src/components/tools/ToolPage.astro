@@ -1,0 +1,64 @@
+---
+// Shared frame for tool pages: SEO metadata, hero, the tool itself (default
+// slot), an ad below the tool, explanatory copy, FAQ, related reading and
+// data credits.
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import '../../styles/tools.css';
+import AdUnit from '../AdUnit.astro';
+import ToolHero from './ToolHero.astro';
+import ToolFaq from './ToolFaq.astro';
+import RelatedReading from './RelatedReading.astro';
+import { SITE } from '../../lib/content/seo';
+import type { ArticleCard } from '../../lib/content/types';
+import { faqPage, toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../lib/tools/seo';
+
+interface Props {
+  path: string;
+  title: string;
+  socialTitle: string;
+  description: string;
+  name: string;
+  crumb: string;
+  kicker: string;
+  heading: string;
+  deck: string;
+  faq: Array<{ question: string; answer: string }>;
+  related?: ArticleCard[];
+  relatedHeading?: string;
+  credit?: string;
+  facts?: Array<[string, string]>;
+  robotsNoindex?: boolean;
+  parent?: [string, string];
+  image?: string;
+  jsonLd?: unknown[];
+  application?: boolean;
+}
+const {
+  path, title, socialTitle, description, name, crumb, kicker, heading, deck, faq, related = [], relatedHeading, credit, facts,
+  robotsNoindex = false, parent, image = TOOLS_IMAGE, jsonLd = [], application = true,
+} = Astro.props;
+const crumbs: Array<[string, string?]> = [['Home', '/'], ['Tools', '/tools'], ...(parent ? [parent] : []), [crumb]];
+const structured = [
+  toolBreadcrumbs([...(parent ? [parent] : []), [name, path]]),
+  ...(application ? [toolApplication(name, description, path)] : []),
+  ...(faq.length ? [faqPage(faq)] : []),
+  ...jsonLd,
+];
+---
+<SiteLayout title={title} socialTitle={socialTitle} description={description} canonical={`${SITE}${path}`} image={image} jsonLd={structured} robotsNoindex={robotsNoindex} showFooterAd>
+  <main>
+    <ToolHero crumbs={crumbs} kicker={kicker} title={heading} deck={deck} facts={facts} />
+    <div class="shell tool-main">
+      <slot />
+      <div class="tool-ad-slot"><AdUnit slot="horizontal2" /></div>
+      <section class="tool-section tool-guide">
+        <slot name="guide" />
+      </section>
+      {faq.length > 0 && <ToolFaq faq={faq} />}
+      <RelatedReading articles={related} heading={relatedHeading} />
+      <p class="tool-credit">
+        {credit || 'Anime data'}: <a href="https://myanimelist.net" rel="nofollow noopener" target="_blank">MyAnimeList</a>, provided by the <a href="https://tenrai.org" rel="nofollow noopener" target="_blank">Tenrai API</a> and refreshed daily. AnimeSparks is not affiliated with MyAnimeList or Tenrai.
+      </p>
+    </div>
+  </main>
+</SiteLayout>

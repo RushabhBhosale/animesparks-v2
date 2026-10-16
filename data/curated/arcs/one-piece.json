@@ -1,0 +1,270 @@
+{
+  "slug": "one-piece",
+  "arcs": [
+    {
+      "name": "Romance Dawn Arc",
+      "episodeStart": 1,
+      "episodeEnd": 4,
+      "classification": "canon"
+    },
+    {
+      "name": "Orange Town Arc",
+      "episodeStart": 5,
+      "episodeEnd": 8,
+      "classification": "canon"
+    },
+    {
+      "name": "Syrup Village Arc",
+      "episodeStart": 9,
+      "episodeEnd": 18,
+      "classification": "canon"
+    },
+    {
+      "name": "Baratie Arc",
+      "episodeStart": 19,
+      "episodeEnd": 30,
+      "classification": "canon"
+    },
+    {
+      "name": "Arlong Park Arc",
+      "episodeStart": 31,
+      "episodeEnd": 44,
+      "classification": "canon"
+    },
+    {
+      "name": "Loguetown Arc",
+      "episodeStart": 45,
+      "episodeEnd": 45,
+      "classification": "canon"
+    },
+    {
+      "name": "Loguetown Arc",
+      "episodeStart": 48,
+      "episodeEnd": 53,
+      "classification": "canon"
+    },
+    {
+      "name": "Reverse Mountain Arc",
+      "episodeStart": 62,
+      "episodeEnd": 63,
+      "classification": "canon"
+    },
+    {
+      "name": "Whisky Peak Arc",
+      "episodeStart": 64,
+      "episodeEnd": 67,
+      "classification": "canon"
+    },
+    {
+      "name": "Little Garden Arc",
+      "episodeStart": 70,
+      "episodeEnd": 77,
+      "classification": "canon"
+    },
+    {
+      "name": "Drum Island Arc",
+      "episodeStart": 78,
+      "episodeEnd": 91,
+      "classification": "canon"
+    },
+    {
+      "name": "Arabasta Arc",
+      "episodeStart": 92,
+      "episodeEnd": 130,
+      "classification": "canon"
+    },
+    {
+      "name": "Jaya Arc",
+      "episodeStart": 144,
+      "episodeEnd": 152,
+      "classification": "canon"
+    },
+    {
+      "name": "Skypiea Arc",
+      "episodeStart": 153,
+      "episodeEnd": 195,
+      "classification": "canon"
+    },
+    {
+      "name": "Long Ring Long Land Arc",
+      "episodeStart": 207,
+      "episodeEnd": 219,
+      "classification": "canon"
+    },
+    {
+      "name": "Water 7 Arc",
+      "episodeStart": 229,
+      "episodeEnd": 263,
+      "classification": "canon"
+    },
+    {
+      "name": "Enies Lobby Arc",
+      "episodeStart": 264,
+      "episodeEnd": 290,
+      "classification": "canon"
+    },
+    {
+      "name": "Enies Lobby Arc",
+      "episodeStart": 293,
+      "episodeEnd": 302,
+      "classification": "canon"
+    },
+    {
+      "name": "Enies Lobby Arc",
+      "episodeStart": 304,
+      "episodeEnd": 312,
+      "classification": "canon"
+    },
+    {
+      "name": "Post-Enies Lobby Arc",
+      "episodeStart": 313,
+      "episodeEnd": 325,
+      "classification": "canon"
+    },
+    {
+      "name": "Thriller Bark Arc",
+      "episodeStart": 337,
+      "episodeEnd": 381,
+      "classification": "canon"
+    },
+    {
+      "name": "Sabaody Archipelago Arc",
+      "episodeStart": 385,
+      "episodeEnd": 405,
+      "classification": "canon"
+    },
+    {
+      "name": "Amazon Lily Arc",
+      "episodeStart": 408,
+      "episodeEnd": 421,
+      "classification": "canon"
+    },
+    {
+      "name": "Impel Down Arc",
+      "episodeStart": 422,
+      "episodeEnd": 425,
+      "classification": "canon"
+    },
+    {
+      "name": "Impel Down Arc",
+      "episodeStart": 430,
+      "episodeEnd": 452,
+      "classification": "canon"
+    },
+    {
+      "name": "Marineford Arc",
+      "episodeStart": 457,
+      "episodeEnd": 489,
+      "classification": "canon"
+    },
+    {
+      "name": "Post-War Arc",
+      "episodeStart": 490,
+      "episodeEnd": 491,
+      "classification": "canon"
+    },
+    {
+      "name": "Post-War Arc",
+      "episodeStart": 493,
+      "episodeEnd": 516,
+      "classification": "canon"
+    },
+    {
+      "name": "Return to Sabaody Arc",
+      "episodeStart": 517,
+      "episodeEnd": 522,
+      "classification": "canon"
+    },
+    {
+      "name": "Fish-Man Island Arc",
+      "episodeStart": 523,
+      "episodeEnd": 541,
+      "classification": "canon"
+    },
+    {
+      "name": "Fish-Man Island Arc",
+      "episodeStart": 543,
+      "episodeEnd": 574,
+      "classification": "canon"
+    },
+    {
+      "name": "Punk Hazard Arc",
+      "episodeStart": 579,
+      "episodeEnd": 589,
+      "classification": "canon"
+    },
+    {
+      "name": "Punk Hazard Arc",
+      "episodeStart": 591,
+      "episodeEnd": 625,
+      "classification": "canon"
+    },
+    {
+      "name": "Dressrosa Arc",
+      "episodeStart": 629,
+      "episodeEnd": 746,
+      "classification": "canon"
+    },
+    {
+      "name": "Zou Arc",
+      "episodeStart": 751,
+      "episodeEnd": 779,
+      "classification": "canon"
+    },
+    {
+      "name": "Whole Cake Island Arc",
+      "episodeStart": 783,
+      "episodeEnd": 877,
+      "classification": "canon"
+    },
+    {
+      "name": "Levely Arc",
+      "episodeStart": 878,
+      "episodeEnd": 889,
+      "classification": "canon"
+    },
+    {
+      "name": "Wano Country Arc",
+      "episodeStart": 890,
+      "episodeEnd": 894,
+      "classification": "canon"
+    },
+    {
+      "name": "Wano Country Arc",
+      "episodeStart": 897,
+      "episodeEnd": 906,
+      "classification": "canon"
+    },
+    {
+      "name": "Wano Country Arc",
+      "episodeStart": 908,
+      "episodeEnd": 1028,
+      "classification": "canon"
+    },
+    {
+      "name": "Wano Country Arc",
+      "episodeStart": 1031,
+      "episodeEnd": 1085,
+      "classification": "canon"
+    },
+    {
+      "name": "Egghead Arc",
+      "episodeStart": 1086,
+      "episodeEnd": 1155,
+      "classification": "canon"
+    }
+  ],
+  "sources": [
+    {
+      "name": "One Piece Wiki on Fandom (CC BY-SA)",
+      "url": "https://onepiece.fandom.com/wiki/Story_Arcs"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from One Piece Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

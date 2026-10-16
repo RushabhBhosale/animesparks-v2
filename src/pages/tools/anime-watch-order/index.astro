@@ -1,0 +1,103 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import '../../../styles/tools.css';
+import AdUnit from '../../../components/AdUnit.astro';
+import ToolHero from '../../../components/tools/ToolHero.astro';
+import ToolFaq from '../../../components/tools/ToolFaq.astro';
+import AnimePicker from '../../../components/tools/AnimePicker.astro';
+import RelatedReading from '../../../components/tools/RelatedReading.astro';
+import { getBuildData } from '../../../lib/content/build-data';
+import { SITE } from '../../../lib/content/seo';
+import { getToolsBuildData, relatedArticles } from '../../../lib/tools/build-data';
+import { faqPage, toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../../lib/tools/seo';
+
+export const prerender = true;
+const path = '/tools/anime-watch-order';
+const title = 'Anime Watch Order Guide — Seasons, Movies & OVAs in Order | AnimeSparks';
+const description = 'Find the right order to watch any anime franchise. See every season, movie, OVA and special in release order, with total watch time and progress tracking.';
+const [{ english }, tools] = await Promise.all([getBuildData(), getToolsBuildData()]);
+const featured = tools.franchises.slice(0, 24);
+const curatedCount = tools.franchises.filter(franchise => franchise.indexable).length;
+const featuredKeys = new Set(featured.flatMap(franchise => [...franchise.titleKeys]));
+const related = relatedArticles(english, featuredKeys, 6);
+
+const faq = [
+  { question: 'Should I watch anime in release order or chronological order?', answer: 'For a first watch, release order is usually the safest choice. It is the order the creators intended audiences to discover the story, reveals land as planned, and later entries assume you have seen earlier ones. Chronological order can be fun on a rewatch.' },
+  { question: 'How is the release order worked out?', answer: 'Every entry linked to a franchise on MyAnimeList as a sequel, prequel, side story or summary is collected, then sorted by its original premiere date. Movies, OVAs and specials appear where they were first released.' },
+  { question: 'What do “side story” and “recap” mean?', answer: 'They follow MyAnimeList’s relation labels. Side stories branch off the main storyline; recaps summarise episodes you have already seen. Turn on “Main story only” to hide both.' },
+  { question: 'Why don’t all franchises have a chronological or beginner order?', answer: 'Those orders are editorial choices. AnimeSparks only publishes one after an editor has checked it against cited sources, so some franchises show release order only for now.' },
+  { question: 'Is my progress saved?', answer: 'Yes, in this browser only. Tick an entry as watched and your progress and remaining time stay on this device.' },
+];
+const jsonLd = [
+  toolBreadcrumbs([['Watch Order Guide', path]]),
+  toolApplication('Anime Watch Order Guide', description, path),
+  faqPage(faq),
+];
+---
+<SiteLayout title={title} socialTitle="Anime Watch Order Guide" description={description} canonical={`${SITE}${path}`} image={TOOLS_IMAGE} jsonLd={jsonLd} showFooterAd>
+  <main>
+    <ToolHero
+      crumbs={[['Home', '/'], ['Tools', '/tools'], ['Watch Order']]}
+      kicker="Watch smarter"
+      title="Anime Watch Order Guide"
+      deck="Seasons, movies, OVAs and specials in the order they were released, with total watch time, a main-story filter and progress you can tick off."
+      facts={[[tools.franchises.length.toLocaleString('en-US'), 'franchises mapped'], ...(curatedCount ? [[String(curatedCount), 'editor-verified orders'] as [string, string]] : [])]}
+    />
+
+    <div class="shell tool-main">
+      <section class="tool-panel" aria-labelledby="order-find">
+        <div class="tool-panel__head"><h2 id="order-find">Find a franchise</h2></div>
+        <div class="tool-panel__body">
+          <AnimePicker id="order-search" label="Search by any season or movie title" placeholder="Monogatari, Attack on Titan, Fate/Zero…" />
+          {tools.franchises.length === 0 && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">Franchise data is being prepared. Please check back soon.</p>}
+        </div>
+      </section>
+
+      {featured.length > 0 && (
+        <section class="tool-section" aria-labelledby="order-popular">
+          <h2 id="order-popular">Popular franchises</h2>
+          <div class="franchise-grid">
+            {featured.map(franchise => (
+              <a class="franchise-tile" href={`${path}/${franchise.slug}`}>
+                {franchise.poster
+                  ? <img src={franchise.poster} alt="" width="46" height="64" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+                  : <span class="franchise-tile__thumb"></span>}
+                <div><strong>{franchise.title}</strong><span>{franchise.releaseOrder.length} entries</span></div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div class="tool-ad-slot"><AdUnit slot="horizontal1" /></div>
+
+      <section class="tool-section tool-guide" aria-labelledby="order-guide">
+        <h2 id="order-guide">How to choose a watch order</h2>
+        <p>Big franchises rarely stay one tidy series. Over the years they add sequels, prequel movies, OVAs and recap specials, and the titles don’t always say where each one belongs. This guide puts every entry on one timeline so you can see what comes next and how long the rest will take.</p>
+        <h3>Release order</h3>
+        <p>Every franchise page starts with <strong>release order</strong>: each entry sorted by its original premiere date. It is the order audiences first watched the story in, so twists and character introductions land as intended.</p>
+        <h3>Chronological and beginner orders</h3>
+        <p>Some series tell their story out of sequence, and for some a newcomer-friendly route makes sense. These orders are editorial calls, so we publish one only after an editor verifies it against official or well-documented sources. You’ll find them on the franchise page when they’re available.</p>
+        <h3>Main story, side stories and recaps</h3>
+        <p>Entries are labelled using MyAnimeList’s relation data. <strong>Main story</strong> entries are joined by sequel and prequel links. <strong>Side stories</strong> branch off them, and <strong>recaps</strong> summarise episodes you’ve already seen. Use “Main story only” for the shortest route.</p>
+      </section>
+
+      <ToolFaq faq={faq} />
+      <RelatedReading articles={related} />
+
+      <p class="tool-credit">
+        Franchise relations and air dates: <a href="https://myanimelist.net" rel="nofollow noopener" target="_blank">MyAnimeList</a>, provided by the <a href="https://tenrai.org" rel="nofollow noopener" target="_blank">Tenrai API</a>{tools.lastSyncedAt && <> · last refreshed {new Date(tools.lastSyncedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</>}.
+      </p>
+    </div>
+  </main>
+</SiteLayout>
+
+<script>
+  import { createPicker } from '../../../scripts/tools/anime-picker';
+  createPicker({
+    root: document.querySelector<HTMLElement>('[data-picker="order-search"]')!,
+    endpoint: '/api/tools/franchise-search',
+    describe: item => `${item.n} entries`,
+    onSelect: item => { window.location.href = `/tools/anime-watch-order/${encodeURIComponent(item.s)}`; },
+  });
+</script>

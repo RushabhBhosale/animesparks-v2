@@ -1,0 +1,37 @@
+---
+// Homepage strip promoting the tools. Text-only (no images), so it adds no
+// layout shift and almost no weight to the homepage.
+import { TOOLS, toolPath } from '../../lib/tools/registry';
+
+const featuredSlugs = ['anime-watch-order', 'anime-filler-checker', 'anime-binge-calculator', 'anime-release-calendar', 'daily-anime-game', 'anime-tier-list'];
+const featured = featuredSlugs.map(slug => TOOLS.find(tool => tool.slug === slug)).filter((tool): tool is NonNullable<typeof tool> => Boolean(tool && tool.live));
+---
+<section class="editorial-section home-tools" aria-labelledby="tools-heading">
+  <div class="section-header">
+    <div>
+      <p class="kicker red">AnimeSparks Tools</p>
+      <h2 id="tools-heading">Watch Smarter<span class="text-accent">.</span></h2>
+    </div>
+    <a class="section-header__link" href="/tools">All 10 tools ↗</a>
+  </div>
+  <div class="home-tools__grid">
+    {featured.map(tool => (
+      <a class="home-tools__card" href={toolPath(tool)}>
+        <span class="home-tools__glyph" aria-hidden="true">{tool.glyph}</span>
+        <strong>{tool.short}</strong>
+        <span>{tool.description}</span>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .home-tools__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+  .home-tools__card { display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: var(--sp-4); row-gap: 4px; align-items: start; padding: var(--sp-5); border: 1px solid var(--line); background: var(--surface); transition: background .15s, border-color .15s; }
+  .home-tools__card:hover { background: var(--surface2); border-color: var(--line-2); }
+  .home-tools__glyph { grid-row: span 2; display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line-2); color: var(--accent); font-size: 18px; }
+  .home-tools__card strong { font-family: var(--font-body); font-size: var(--text-xl); letter-spacing: -.02em; color: var(--ink); line-height: 1.2; }
+  .home-tools__card span:last-child { color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
+  @media (max-width: 960px) { .home-tools__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 700px) { .home-tools__grid { grid-template-columns: 1fr; } .home-tools__card { padding: var(--sp-4); } }
+</style>

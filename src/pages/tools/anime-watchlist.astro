@@ -1,0 +1,212 @@
+---
+import ToolPage from '../../components/tools/ToolPage.astro';
+import AnimePicker from '../../components/tools/AnimePicker.astro';
+import { WATCH_STATUSES, STATUS_LABELS } from '../../lib/tools/watchlist';
+
+export const prerender = true;
+const faq = [
+  { question: 'Where is my watchlist stored?', answer: 'In this browser, on this device. Nothing is sent to AnimeSparks. Use Export to keep a backup or move your list to another device, then Import it there.' },
+  { question: 'How is total watch time calculated?', answer: 'Watched episodes × each series’ listed episode length. Remaining time counts the episodes left in series you’re planning, watching or have on hold.' },
+  { question: 'Can I import my list from another site?', answer: 'Import accepts AnimeSparks watchlist exports. Merging keeps the most recently updated version of each series, so nothing is duplicated.' },
+];
+---
+<ToolPage
+  path="/tools/anime-watchlist" title="Anime Watchlist & Progress Tracker — Free, No Sign-up | AnimeSparks" socialTitle="Anime Watchlist & Tracker"
+  description="Track the anime you're watching: statuses, episode progress, completion percentage, total watch time and stats. Free, private, no sign-up, with JSON import and export."
+  name="Anime Watchlist & Progress Tracker" crumb="Watchlist" kicker="Track" heading="Anime Watchlist & Progress Tracker"
+  deck="Plan, track and finish your anime. Statuses, episode progress, completion and total watch time, saved privately in your browser with no account needed."
+  faq={faq} credit="Episode counts and runtimes"
+>
+  <div data-watchlist>
+    <section class="tool-panel" aria-labelledby="wl-add">
+      <div class="tool-panel__head"><h2 id="wl-add">Add anime</h2></div>
+      <div class="tool-panel__body">
+        <AnimePicker id="wl-search" label="Search anime" placeholder="Search to add a series…" />
+        <p class="tool-note" data-flash hidden style="margin-top: var(--sp-3)"></p>
+      </div>
+    </section>
+
+    <dl class="stat-row" style="margin-top: var(--sp-5)" data-stats>
+      <div><dt>Series</dt><dd data-stat="total">0</dd></div>
+      <div><dt>Completed</dt><dd data-stat="completed">0</dd></div>
+      <div><dt>Episodes watched</dt><dd data-stat="episodes">0</dd></div>
+      <div><dt>Time watched</dt><dd class="is-accent" data-stat="time">0 min</dd></div>
+    </dl>
+    <p class="tool-hero__deck" style="margin: var(--sp-3) 0 0; font-size: var(--text-sm)" data-stat="detail"></p>
+
+    <div class="order-toolbar" style="margin-top: var(--sp-6)">
+      <div class="tool-segment" role="group" aria-label="Filter by status" data-status-filter>
+        <button type="button" data-value="all" aria-pressed="true">All</button>
+        {WATCH_STATUSES.map(status => <button type="button" data-value={status} aria-pressed="false">{STATUS_LABELS[status]}</button>)}
+      </div>
+      <div class="tool-chips" style="align-items:center">
+        <label class="sr-only" for="wl-sort">Sort</label>
+        <select id="wl-sort" class="tool-select" style="min-height:36px;width:auto" data-sort>
+          <option value="updated">Recently updated</option>
+          <option value="added">Recently added</option>
+          <option value="title">Title A–Z</option>
+          <option value="progress">Progress</option>
+          <option value="score">Your score</option>
+        </select>
+        <button type="button" data-export>Export JSON</button>
+        <label class="tool-chips" style="margin:0"><span class="sr-only">Import JSON</span><input type="file" accept="application/json,.json" data-import hidden /><button type="button" data-import-trigger>Import JSON</button></label>
+      </div>
+    </div>
+    <ul class="order-list" data-list style="margin-top: var(--sp-3)"></ul>
+    <p class="cal-empty" data-empty>Your watchlist is empty. Search above to add your first series.</p>
+  </div>
+
+  <Fragment slot="guide">
+    <h2>A private anime tracker</h2>
+    <p>Add any series, set its status (planning, watching, completed, on hold or dropped) and count episodes with the + and − buttons. Completion and watch time update as you go, using each series’ episode count and runtime.</p>
+    <p>There’s no account to create. Your list lives in this browser. <strong>Export</strong> saves a JSON backup, and <strong>Import</strong> merges a backup back in, keeping the newer version of any series that appears in both.</p>
+  </Fragment>
+</ToolPage>
+
+<style is:global>
+  .wl-item { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: var(--sp-4); align-items: center; padding: var(--sp-4) var(--sp-5); border-top: 1px solid var(--line); background: var(--surface); }
+  .wl-item:first-child { border-top: 0; }
+  .wl-item img, .wl-item .order-item__thumb { width: 54px; height: 76px; object-fit: cover; background: var(--surface2); }
+  .wl-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-top: var(--sp-3); }
+  .wl-controls select, .wl-controls input { min-height: 34px; padding: 0 var(--sp-2); font-size: 14px; width: auto; }
+  .wl-step { width: 34px; min-height: 34px; padding: 0; }
+  .wl-progress { height: 4px; margin-top: var(--sp-3); background: var(--line); }
+  .wl-progress span { display: block; height: 100%; background: var(--accent); }
+  .cal-empty { padding: var(--sp-8); border: 1px dashed var(--line-2); color: var(--ink-2); text-align: center; }
+  .cal-empty[hidden] { display: none; }
+  @media (max-width: 700px) { .wl-item { grid-template-columns: 44px minmax(0, 1fr); padding: var(--sp-4); } .wl-item img, .wl-item .order-item__thumb { width: 44px; height: 62px; } .wl-item > button { grid-column: 2; justify-self: start; } }
+</style>
+
+<script>
+  import { formatDuration, formatLabel } from '../../lib/tools/normalize';
+  import {
+    STATUS_LABELS, WATCH_STATUSES, clampWatched, completion, exportFile, mergeEntries, parseImport, sortEntries, stats, withStatus,
+    type SortKey, type WatchStatus, type WatchlistEntry,
+  } from '../../lib/tools/watchlist';
+  import { createPicker } from '../../scripts/tools/anime-picker';
+  import { readLocal, writeLocal } from '../../scripts/tools/storage';
+
+  const root = document.querySelector<HTMLElement>('[data-watchlist]')!;
+  const list = root.querySelector<HTMLElement>('[data-list]')!;
+  const flash = root.querySelector<HTMLElement>('[data-flash]')!;
+  let entries = readLocal<WatchlistEntry[]>('watchlist', []);
+  let filter: WatchStatus | 'all' = 'all';
+  let sort: SortKey = readLocal<SortKey>('watchlist:sort', 'updated');
+  root.querySelector<HTMLSelectElement>('[data-sort]')!.value = sort;
+  const now = () => new Date().toISOString();
+  const save = () => writeLocal('watchlist', entries);
+  let flashTimer: number | undefined;
+  const say = (text: string) => { flash.textContent = text; flash.hidden = false; window.clearTimeout(flashTimer); flashTimer = window.setTimeout(() => { flash.hidden = true; }, 3500); };
+  const update = (slug: string, change: (entry: WatchlistEntry) => WatchlistEntry) => {
+    entries = entries.map(entry => entry.slug === slug ? change(entry) : entry);
+    save(); render();
+  };
+
+  function row(entry: WatchlistEntry) {
+    const item = document.createElement('li');
+    item.className = 'wl-item';
+    if (entry.poster) {
+      const image = document.createElement('img');
+      image.src = entry.poster; image.alt = ''; image.width = 54; image.height = 76; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer';
+      item.append(image);
+    } else { const thumb = document.createElement('span'); thumb.className = 'order-item__thumb'; item.append(thumb); }
+    const body = document.createElement('div');
+    const title = document.createElement('h3'); title.className = 'order-item__title'; title.textContent = entry.title;
+    const meta = document.createElement('p'); meta.className = 'order-item__meta';
+    const percent = completion(entry);
+    meta.textContent = [entry.format && formatLabel(entry.format), entry.year, `${entry.watched}${entry.episodes ? `/${entry.episodes}` : ''} episodes`, percent !== null ? `${percent}%` : null].filter(Boolean).join(' · ');
+    const controls = document.createElement('div'); controls.className = 'wl-controls';
+    const status = document.createElement('select'); status.className = 'tool-select'; status.setAttribute('aria-label', `Status of ${entry.title}`);
+    for (const value of WATCH_STATUSES) status.append(new Option(STATUS_LABELS[value], value, false, value === entry.status));
+    status.addEventListener('change', () => update(entry.slug, current => withStatus(current, status.value as WatchStatus, now())));
+    const minus = document.createElement('button'); minus.type = 'button'; minus.className = 'tool-button wl-step'; minus.textContent = '−'; minus.setAttribute('aria-label', 'One episode less');
+    const count = document.createElement('input'); count.className = 'tool-input'; count.type = 'number'; count.min = '0'; count.inputMode = 'numeric'; count.value = String(entry.watched); count.style.width = '72px'; count.setAttribute('aria-label', `Episodes watched of ${entry.title}`);
+    const plus = document.createElement('button'); plus.type = 'button'; plus.className = 'tool-button wl-step'; plus.textContent = '+'; plus.setAttribute('aria-label', 'One more episode');
+    const setWatched = (value: number) => update(entry.slug, current => {
+      const watched = clampWatched(current, value);
+      const done = current.episodes && watched >= current.episodes;
+      return { ...current, watched, status: done ? 'completed' : watched > 0 && current.status === 'planning' ? 'watching' : current.status, updatedAt: now() };
+    });
+    minus.addEventListener('click', () => setWatched(entry.watched - 1));
+    plus.addEventListener('click', () => setWatched(entry.watched + 1));
+    count.addEventListener('change', () => setWatched(Number(count.value)));
+    const score = document.createElement('select'); score.className = 'tool-select'; score.setAttribute('aria-label', `Your score for ${entry.title}`);
+    score.append(new Option('Score', '', false, !entry.score));
+    for (let value = 10; value >= 1; value--) score.append(new Option(`${value}/10`, String(value), false, entry.score === value));
+    score.addEventListener('change', () => update(entry.slug, current => ({ ...current, score: score.value ? Number(score.value) : undefined, updatedAt: now() })));
+    controls.append(status, minus, count, plus, score);
+    body.append(title, meta, controls);
+    if (percent !== null) { const bar = document.createElement('div'); bar.className = 'wl-progress'; const fill = document.createElement('span'); fill.style.width = `${percent}%`; bar.append(fill); body.append(bar); }
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'tool-button tool-button--quiet'; remove.textContent = 'Remove';
+    remove.addEventListener('click', () => { entries = entries.filter(other => other.slug !== entry.slug); save(); render(); say(`Removed ${entry.title}.`); });
+    item.append(body, remove);
+    return item;
+  }
+
+  function render() {
+    root.querySelectorAll<HTMLButtonElement>('[data-status-filter] button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.value === filter)));
+    const visible = sortEntries(entries.filter(entry => filter === 'all' || entry.status === filter), sort);
+    list.replaceChildren(...visible.map(row));
+    list.hidden = !visible.length;
+    const empty = root.querySelector<HTMLElement>('[data-empty]')!;
+    empty.hidden = Boolean(visible.length);
+    empty.textContent = entries.length ? 'Nothing with this status yet.' : 'Your watchlist is empty. Search above to add your first series.';
+    const summary = stats(entries);
+    const set = (name: string, value: string) => { root.querySelector(`[data-stat="${name}"]`)!.textContent = value; };
+    set('total', String(summary.total));
+    set('completed', String(summary.byStatus.completed));
+    set('episodes', summary.watchedEpisodes.toLocaleString());
+    set('time', formatDuration(summary.watchedMinutes));
+    set('detail', [
+      `${summary.byStatus.watching} watching · ${summary.byStatus.planning} planning · ${summary.byStatus['on-hold']} on hold · ${summary.byStatus.dropped} dropped`,
+      summary.remainingMinutes ? `${formatDuration(summary.remainingMinutes)} left to watch` : '',
+      summary.meanScore ? `mean score ${summary.meanScore}` : '',
+    ].filter(Boolean).join(' · '));
+  }
+
+  createPicker({
+    root: root.querySelector<HTMLElement>('[data-picker="wl-search"]')!,
+    endpoint: '/api/tools/anime-search',
+    onSelect: item => {
+      if (entries.some(entry => entry.slug === item.s)) { say(`${item.t} is already on your list.`); return; }
+      const stamp = now();
+      entries = [{
+        slug: item.s, title: item.t, poster: item.p, format: item.f, year: item.y,
+        episodes: item.st === 'airing' ? null : item.e ?? null, minutesPerEpisode: item.d ?? null,
+        status: 'planning', watched: 0, addedAt: stamp, updatedAt: stamp,
+      }, ...entries];
+      save(); render(); say(`Added ${item.t} to Planning.`);
+      (root.querySelector('[data-picker="wl-search"] input') as HTMLInputElement).value = '';
+    },
+  });
+  root.querySelector('[data-status-filter]')!.addEventListener('click', event => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
+    if (button) { filter = (button.dataset.value || 'all') as typeof filter; render(); }
+  });
+  root.querySelector<HTMLSelectElement>('[data-sort]')!.addEventListener('change', event => { sort = (event.target as HTMLSelectElement).value as SortKey; writeLocal('watchlist:sort', sort); render(); });
+  root.querySelector('[data-export]')!.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(exportFile(entries, now()), null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `animesparks-watchlist-${now().slice(0, 10)}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  });
+  const fileInput = root.querySelector<HTMLInputElement>('[data-import]')!;
+  root.querySelector('[data-import-trigger]')!.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = '';
+    if (!file) return;
+    if (file.size > 5_000_000) { say('That file is too large to be a watchlist export.'); return; }
+    try {
+      const result = parseImport(JSON.parse(await file.text()));
+      if (result.error) { say(result.error); return; }
+      const before = entries.length;
+      entries = mergeEntries(entries, result.entries);
+      save(); render();
+      say(`Imported ${result.entries.length} series (${entries.length - before} new)${result.skipped ? `, skipped ${result.skipped} invalid` : ''}.`);
+    } catch { say('That file isn’t valid JSON.'); }
+  });
+  render();
+</script>

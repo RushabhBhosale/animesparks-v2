@@ -1,0 +1,178 @@
+{
+  "slug": "bleach",
+  "arcs": [
+    {
+      "name": "Agent of the Shinigami Arc",
+      "episodeStart": 1,
+      "episodeEnd": 20
+    },
+    {
+      "name": "Soul Society: The Sneak Entry Arc",
+      "episodeStart": 21,
+      "episodeEnd": 41
+    },
+    {
+      "name": "Soul Society: The Rescue Arc",
+      "episodeStart": 42,
+      "episodeEnd": 63
+    },
+    {
+      "name": "The Bount Arc",
+      "episodeStart": 64,
+      "episodeEnd": 91
+    },
+    {
+      "name": "Bount Assault on Soul Society Arc",
+      "episodeStart": 92,
+      "episodeEnd": 109
+    },
+    {
+      "name": "The Arrancar Arc",
+      "episodeStart": 110,
+      "episodeEnd": 134
+    },
+    {
+      "name": "Arrancar Arc",
+      "episodeStart": 135,
+      "episodeEnd": 135
+    },
+    {
+      "name": "The Arrancar Arc",
+      "episodeStart": 136,
+      "episodeEnd": 143
+    },
+    {
+      "name": "The Hueco Mundo arc Part 1",
+      "episodeStart": 144,
+      "episodeEnd": 167
+    },
+    {
+      "name": "The New Captain Shūsuke Amagai Arc",
+      "episodeStart": 168,
+      "episodeEnd": 189
+    },
+    {
+      "name": "Hueco Mundo arc Part 2",
+      "episodeStart": 190,
+      "episodeEnd": 203
+    },
+    {
+      "name": "None",
+      "episodeStart": 204,
+      "episodeEnd": 205
+    },
+    {
+      "name": "Turn Back The Pendulum Arc",
+      "episodeStart": 206,
+      "episodeEnd": 212
+    },
+    {
+      "name": "None",
+      "episodeStart": 213,
+      "episodeEnd": 214
+    },
+    {
+      "name": "The Fake Karakura Town Arc",
+      "episodeStart": 215,
+      "episodeEnd": 226
+    },
+    {
+      "name": "None",
+      "episodeStart": 227,
+      "episodeEnd": 229
+    },
+    {
+      "name": "Zanpakutō Unknown Tales Arc",
+      "episodeStart": 230,
+      "episodeEnd": 255
+    },
+    {
+      "name": "Beast Swords Arc",
+      "episodeStart": 256,
+      "episodeEnd": 265
+    },
+    {
+      "name": "The Fake Karakura Town arc Part 2",
+      "episodeStart": 266,
+      "episodeEnd": 286
+    },
+    {
+      "name": "None",
+      "episodeStart": 287,
+      "episodeEnd": 287
+    },
+    {
+      "name": "The Fake Karakura Town arc Part 2",
+      "episodeStart": 288,
+      "episodeEnd": 297
+    },
+    {
+      "name": "N/A",
+      "episodeStart": 298,
+      "episodeEnd": 299
+    },
+    {
+      "name": "The Fake Karakura Town arc Part 2",
+      "episodeStart": 300,
+      "episodeEnd": 303
+    },
+    {
+      "name": "None",
+      "episodeStart": 304,
+      "episodeEnd": 305
+    },
+    {
+      "name": "The Fake Karakura Town arc Part 2",
+      "episodeStart": 306,
+      "episodeEnd": 310
+    },
+    {
+      "name": "None",
+      "episodeStart": 311,
+      "episodeEnd": 316
+    },
+    {
+      "name": "Gotei 13 Invading Army Arc",
+      "episodeStart": 317,
+      "episodeEnd": 334
+    },
+    {
+      "name": "Gotei 13 Invading Army Arc",
+      "episodeStart": 336,
+      "episodeEnd": 341
+    },
+    {
+      "name": "Gotei 13 Invading Army arc & The Fake Karakura Town arc Part 2",
+      "episodeStart": 342,
+      "episodeEnd": 342
+    },
+    {
+      "name": "The Lost Substitute Shinigami Arc",
+      "episodeStart": 343,
+      "episodeEnd": 354
+    },
+    {
+      "name": "None",
+      "episodeStart": 355,
+      "episodeEnd": 355
+    },
+    {
+      "name": "The Lost Substitute Shinigami Arc",
+      "episodeStart": 356,
+      "episodeEnd": 366
+    }
+  ],
+  "sources": [
+    {
+      "name": "Bleach Wiki on Fandom (CC BY-SA)",
+      "url": "https://bleach.fandom.com/wiki/The_Day_I_Became_a_Shinigami"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Bleach Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

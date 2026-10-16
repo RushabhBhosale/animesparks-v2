@@ -1,0 +1,93 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import '../../styles/tools.css';
+import { SITE } from '../../lib/content/seo';
+import { TOOLS, TOOL_CATEGORIES, LIVE_TOOLS, toolPath } from '../../lib/tools/registry';
+import { TOOLS_IMAGE } from '../../lib/tools/seo';
+
+export const prerender = true;
+const title = 'Anime Tools — Watch Order, Filler Lists, Calendar & More | AnimeSparks';
+const description = 'Free anime tools from AnimeSparks: watch orders, filler lists, binge time, release calendar, watchlist, recommendations, tier lists and a daily guessing game.';
+const canonical = `${SITE}/tools`;
+const jsonLd = [
+  { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+    { '@type': 'ListItem', position: 2, name: 'Tools', item: canonical },
+  ] },
+  { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'AnimeSparks Tools', description, url: canonical,
+    mainEntity: { '@type': 'ItemList', itemListElement: LIVE_TOOLS.filter(tool => !tool.awaitingData).map((tool, index) => ({ '@type': 'ListItem', position: index + 1, name: tool.name, url: `${SITE}${toolPath(tool)}` })) } },
+];
+---
+<SiteLayout title={title} socialTitle="AnimeSparks Tools" description={description} canonical={canonical} image={TOOLS_IMAGE} jsonLd={jsonLd} showFooterAd>
+  <main>
+    <header class="tools-hub-hero">
+      <div class="shell">
+        <p class="kicker red">AnimeSparks Tools</p>
+        <h1>Plan the watch.<br />Then enjoy the show<span class="text-accent">.</span></h1>
+        <p>Practical tools for anime fans, built on verified data. No sign-up and nothing to install. Your progress stays on your device.</p>
+        <label class="tools-hub-search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
+          <span class="sr-only">Search tools</span>
+          <input id="tools-filter" type="search" placeholder="Find a tool — e.g. “watch order”" autocomplete="off" />
+        </label>
+      </div>
+    </header>
+
+    <div class="shell tool-main">
+      {TOOL_CATEGORIES.map(category => {
+        const tools = TOOLS.filter(tool => tool.category === category.id);
+        return (
+          <section class="tools-category" data-category aria-labelledby={`cat-${category.id}`}>
+            <div class="tools-category__head">
+              <h2 id={`cat-${category.id}`}>{category.label}</h2>
+              <p>{category.blurb}</p>
+            </div>
+            <div class="tools-grid">
+              {tools.map(tool => tool.live ? (
+                <a class="tool-card" href={toolPath(tool)} data-tool={[tool.name, tool.description, ...tool.keywords].join(' ').toLowerCase()}>
+                  <div class="tool-card__top"><span class="tool-card__glyph" aria-hidden="true">{tool.glyph}</span>{tool.awaitingData ? <span class="tool-card__state">Data in review</span> : <span class="tool-card__state tool-card__state--live">Live</span>}</div>
+                  <h3>{tool.name}</h3>
+                  <p>{tool.description}</p>
+                  <span class="tool-card__cta">Open tool →</span>
+                </a>
+              ) : (
+                <div class="tool-card tool-card--planned" data-tool={[tool.name, tool.description, ...tool.keywords].join(' ').toLowerCase()}>
+                  <div class="tool-card__top"><span class="tool-card__glyph" aria-hidden="true">{tool.glyph}</span><span class="tool-card__state">In the workshop</span></div>
+                  <h3>{tool.name}</h3>
+                  <p>{tool.description}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+      <p class="tools-empty" id="tools-empty" hidden>No tool matches that search yet. Try “order”, “time” or “filler”.</p>
+
+      <section class="tool-section tool-guide" aria-labelledby="tools-about">
+        <h2 id="tools-about">How these tools are built</h2>
+        <p>Series details such as episode counts, runtimes, air dates and how seasons connect come from <a href="https://myanimelist.net" rel="nofollow noopener" target="_blank">MyAnimeList</a> through the <a href="https://tenrai.org" rel="nofollow noopener" target="_blank">Tenrai API</a>. AnimeSparks refreshes this data once a day. Pages load from our own servers, so the tools keep working even when those services are down.</p>
+        <p>Anything that needs editorial judgement is only published after an editor has checked it against cited sources. That includes recommended orders, filler lists and manga chapter mappings. Where we don’t have that verification yet, the tool says so.</p>
+      </section>
+    </div>
+  </main>
+</SiteLayout>
+
+<script>
+  const input = document.getElementById('tools-filter') as HTMLInputElement | null;
+  const empty = document.getElementById('tools-empty');
+  input?.addEventListener('input', () => {
+    const terms = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    let visible = 0;
+    document.querySelectorAll<HTMLElement>('[data-category]').forEach(section => {
+      let shown = 0;
+      section.querySelectorAll<HTMLElement>('[data-tool]').forEach(card => {
+        const match = terms.every(term => (card.dataset.tool || '').includes(term));
+        card.hidden = !match;
+        if (match) shown++;
+      });
+      section.hidden = shown === 0;
+      visible += shown;
+    });
+    if (empty) empty.hidden = visible > 0;
+  });
+</script>

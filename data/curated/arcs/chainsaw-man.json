@@ -1,0 +1,43 @@
+{
+  "slug": "chainsaw-man",
+  "arcs": [
+    {
+      "name": "Introduction Arc",
+      "episodeStart": 1,
+      "episodeEnd": 2
+    },
+    {
+      "name": "Bat Devil Arc",
+      "episodeStart": 3,
+      "episodeEnd": 4
+    },
+    {
+      "name": "Bat Devil arc Eternity Devil Arc",
+      "episodeStart": 5,
+      "episodeEnd": 5
+    },
+    {
+      "name": "Eternity Devil Arc",
+      "episodeStart": 6,
+      "episodeEnd": 7
+    },
+    {
+      "name": "Katana Man Arc",
+      "episodeStart": 8,
+      "episodeEnd": 12
+    }
+  ],
+  "sources": [
+    {
+      "name": "Chainsaw Man Wiki on Fandom (CC BY-SA)",
+      "url": "https://chainsaw-man.fandom.com/wiki/Episode_1"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Chainsaw Man Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

@@ -10,6 +10,9 @@
     "build:production": "node scripts/build.mjs --target=production",
     "preview": "astro preview",
     "check": "astro check",
+    "test": "node --test --test-reporter=spec \"tests/tools/*.test.ts\"",
+    "tools:sync": "node scripts/tools/sync-tenrai.mjs",
+    "tools:import-curated": "node scripts/tools/import-curated.mjs",
     "deploy": "node scripts/deploy-staging.mjs",
     "postinstall": "node scripts/patch-tr46.mjs"
   },

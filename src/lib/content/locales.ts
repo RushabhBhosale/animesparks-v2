@@ -2,7 +2,7 @@ export type PublicLocale = 'en' | 'es';
 
 const ui = {
   en: {
-    home: 'Home', categories: 'Categories', latest: 'Latest', trending: 'Trending',
+    home: 'Home', categories: 'Categories', latest: 'Latest', trending: 'Trending', tools: 'Tools',
     searchLabel: 'Search AnimeSparks', searchPlaceholder: 'Search series, articles...', searchSubmit: 'Submit search',
     openMenu: 'Open menu', closeMenu: 'Close menu', openSearch: 'Open search',
     mainNav: 'Main navigation', footerExplore: 'Footer explore', publication: 'Publication',
@@ -24,7 +24,7 @@ const ui = {
     read: 'min read', readMore: 'Read more',
   },
   es: {
-    home: 'Inicio', categories: 'Categorías', latest: 'Últimos artículos', trending: 'Tendencias',
+    home: 'Inicio', categories: 'Categorías', latest: 'Últimos artículos', trending: 'Tendencias', tools: 'Herramientas',
     searchLabel: 'Buscar en AnimeSparks', searchPlaceholder: 'Busca series y artículos...', searchSubmit: 'Enviar búsqueda',
     openMenu: 'Abrir menú', closeMenu: 'Cerrar menú', openSearch: 'Abrir búsqueda',
     mainNav: 'Navegación principal', footerExplore: 'Explorar el pie de página', publication: 'Publicación',

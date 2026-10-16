@@ -1,0 +1,204 @@
+---
+import ToolPage from '../../components/tools/ToolPage.astro';
+import AnimePicker from '../../components/tools/AnimePicker.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { getToolsBuildData } from '../../lib/tools/build-data';
+import { getToolsExtras } from '../../lib/tools/build-extras';
+
+export const prerender = true;
+const { english } = await getBuildData();
+const [{ bySlug }, extras] = await Promise.all([getToolsBuildData(), getToolsExtras(english)]);
+const entries = Object.values(extras.source);
+const verified = entries.filter(entry => entry.mapping);
+const popular = entries
+  .filter(entry => entry.manga)
+  .sort((a, b) => (bySlug.get(a.slug)?.popularity || Infinity) - (bySlug.get(b.slug)?.popularity || Infinity))
+  .slice(0, 12)
+  .map(entry => {
+    const item = bySlug.get(entry.slug)!;
+    return { entry, pick: { s: item.slug, t: item.title, f: item.format, st: item.status, y: item.year || undefined, e: item.episodes || undefined, ea: item.episodesAired ?? undefined, p: item.images?.posterSmall } };
+  });
+const faq = [
+  { question: 'Where do the chapter numbers come from?', answer: 'From each episode’s “adapted chapters” field on the series’ fan wiki (Fandom, licensed CC BY-SA), imported through the wiki’s official API, or from guides checked by AnimeSparks editors. The source is shown with every answer. Series without that data say so instead of estimating.' },
+  { question: 'Which chapter should I read after the anime?', answer: 'For series with a verified guide, the finder shows the chapter that picks up after the final episode. For others, it shows the source manga’s status, chapter count and volumes so you know what’s waiting.' },
+  { question: 'Is the manga still publishing?', answer: 'Each source work shows its MyAnimeList publication status: publishing, finished, on hiatus or discontinued. Chapter counts are only final once a manga has finished.' },
+];
+---
+<ToolPage
+  path="/tools/anime-manga-chapter-finder" title="Anime to Manga Chapter Finder — Where Does the Anime End? | AnimeSparks" socialTitle="Episode-to-Manga Finder"
+  description="Find which manga chapter an anime episode adapts and where to continue reading after the anime. See the source manga's status, chapters and volumes."
+  name="Episode-to-Manga Finder" crumb="Manga Finder" kicker="Watch smarter" heading="Episode-to-Manga Finder"
+  deck="Finished the anime and want more? Find the source manga, its publication status and, where a verified guide exists, the exact chapter to continue from."
+  facts={[[String(entries.filter(entry => entry.manga).length), 'source works tracked'], [String(verified.length), 'verified chapter guides']]}
+  faq={faq} credit="Source manga data"
+>
+  <div class="tool-layout">
+    <div>
+      <section class="tool-panel" aria-labelledby="manga-pick">
+        <div class="tool-panel__head"><h2 id="manga-pick"><span class="tool-step">1</span>Choose an anime</h2></div>
+        <div class="tool-panel__body">
+          <AnimePicker id="manga-search" label="Search anime" placeholder="Frieren, Chainsaw Man, Jujutsu Kaisen…" />
+          {popular.length > 0 && (
+            <div class="tool-field" style="margin-top: var(--sp-4)">
+              <span class="tool-legend">Popular adaptations</span>
+              <div class="tool-chips">{popular.map(({ pick }) => <button type="button" data-quick-pick={JSON.stringify(pick)}>{pick.t}</button>)}</div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section class="tool-panel" style="margin-top: var(--sp-5)" aria-labelledby="manga-episode" data-episode-step hidden>
+        <div class="tool-panel__head"><h2 id="manga-episode"><span class="tool-step">2</span>Episode you reached</h2><span class="tool-legend">Verified guide</span></div>
+        <form class="tool-panel__body tool-grid" data-episode-form>
+          <label class="tool-field"><span>Episode number</span><input class="tool-input" name="episode" type="number" min="1" max="5000" inputmode="numeric" placeholder="e.g. 12" /></label>
+          <div class="tool-field" style="justify-content:flex-end"><button class="tool-button tool-button--primary" type="submit">Find chapter</button></div>
+        </form>
+      </section>
+
+      <section class="tool-results" style="margin-top: var(--sp-5)" aria-live="polite" aria-labelledby="manga-result-title">
+        <h2 class="sr-only" id="manga-result-title">Result</h2>
+        <p data-results-empty>Choose an anime to see its source material.</p>
+        <div data-result hidden style="padding: var(--sp-6)"></div>
+      </section>
+    </div>
+
+    <aside class="tool-aside" aria-label="About the manga finder">
+      <div class="tool-aside-card">
+        <p class="kicker red">Verified only</p>
+        <p>Chapter numbers come from each series’ fan wiki or an editor-checked guide, never estimates. Series without one still show the source manga’s status, chapters and volumes.</p>
+      </div>
+      <div class="tool-aside-card">
+        <p class="kicker">Series with chapter guides</p>
+        {verified.length
+          ? <ul>{verified.map(entry => <li>{entry.title}</li>)}</ul>
+          : <p>No series has a verified episode-to-chapter guide yet. New guides are added as they’re checked.</p>}
+      </div>
+    </aside>
+  </div>
+
+  <Fragment slot="guide">
+    <h2>From the last episode to the first page</h2>
+    <p>Most anime adapt a manga, light novel or web novel, and many seasons end partway through the story. Pick a series to see the work it adapts, who created it, whether it is still publishing and how many chapters and volumes are out.</p>
+    <p>Where AnimeSparks has a verified episode-to-chapter guide, enter the episode you reached to see which chapters it covers and where to pick up. Mappings are never estimated from episode counts. Pacing varies too much, and a wrong chapter would spoil the story or skip part of it.</p>
+  </Fragment>
+</ToolPage>
+
+<script>
+  import { chapterForEpisode } from '../../lib/tools/episodes';
+  import { createPicker, type PickerItem } from '../../scripts/tools/anime-picker';
+  import type { SourceEntry } from '../../lib/tools/build-extras';
+
+  const result = document.querySelector<HTMLElement>('[data-result]')!;
+  const empty = document.querySelector<HTMLElement>('[data-results-empty]')!;
+  const form = document.querySelector<HTMLFormElement>('[data-episode-form]')!;
+  const episodeInput = form.elements.namedItem('episode') as HTMLInputElement;
+  let selected: PickerItem | null = null;
+  let source: SourceEntry | null = null;
+  const episodeStep = document.querySelector<HTMLElement>('[data-episode-step]')!;
+  const STATUS: Record<string, string> = { publishing: 'Publishing', finished: 'Finished', hiatus: 'On hiatus', discontinued: 'Discontinued', upcoming: 'Not yet published', unknown: 'Status unknown' };
+
+  const el = (tag: string, text?: string, className?: string) => {
+    const node = document.createElement(tag);
+    if (text) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  };
+  const link = (href: string, text: string, external = false) => {
+    const anchor = el('a', text) as HTMLAnchorElement;
+    anchor.href = href;
+    if (external) { anchor.rel = 'nofollow noopener'; anchor.target = '_blank'; }
+    return anchor;
+  };
+
+  function render() {
+    episodeStep.hidden = !source?.mapping;
+    empty.hidden = Boolean(selected);
+    result.hidden = !selected;
+    if (!selected) return;
+    result.replaceChildren();
+    const heading = el('h3', selected.t);
+    heading.style.cssText = 'margin:0 0 var(--sp-3);font-family:var(--font-body);font-size:var(--text-2xl)';
+    result.append(heading);
+    if (!source?.manga && !source?.mapping) {
+      result.append(el('p', source?.sourceMaterial && !/manga|novel/i.test(source.sourceMaterial)
+        ? `This anime is listed as “${source.sourceMaterial}”, so there’s no manga to continue with.`
+        : 'We don’t have source-manga data for this title yet.', 'tool-note tool-note--muted'));
+      return;
+    }
+    if (source.manga) {
+      const manga = source.manga;
+      const facts = el('dl', undefined, 'stat-row');
+      const add = (label: string, value: string, accent = false) => {
+        const box = el('div');
+        box.append(el('dt', label));
+        const dd = el('dd', value);
+        if (accent) dd.classList.add('is-accent');
+        box.append(dd);
+        facts.append(box);
+      };
+      add('Status', STATUS[manga.status] || 'Unknown', manga.status === 'publishing');
+      add('Chapters', manga.chapters ? String(manga.chapters) : manga.status === 'publishing' ? 'Ongoing' : '—');
+      add('Volumes', manga.volumes ? String(manga.volumes) : manga.status === 'publishing' ? 'Ongoing' : '—');
+      add('Since', manga.publishedFrom ? manga.publishedFrom.slice(0, 4) : '—');
+      const by = el('p');
+      by.style.cssText = 'margin:0 0 var(--sp-4);color:var(--ink-2)';
+      by.append(`Based on ${manga.type.toLowerCase() === 'manga' ? 'the manga' : `the ${manga.type.toLowerCase()}`} `);
+      by.append(manga.url ? link(manga.url, manga.title, true) : manga.title);
+      if (manga.authors.length) by.append(` by ${manga.authors.join(' & ')}`);
+      if (manga.serializations.length) by.append(`, serialised in ${manga.serializations[0]}`);
+      by.append('.');
+      result.append(by, facts);
+    }
+    const episode = Number(episodeInput.value);
+    const answer = el('div');
+    answer.style.marginTop = 'var(--sp-5)';
+    if (source.mapping) {
+      if (!episode) answer.append(el('p', 'Enter the episode you reached to find its chapters.', 'tool-note tool-note--muted'));
+      else {
+        const lookup = chapterForEpisode(source.mapping, episode);
+        if (lookup.kind === 'found') answer.append(el('p', `Episode ${episode} adapts chapters ${lookup.chapterStart}–${lookup.chapterEnd}. Continue reading from chapter ${lookup.nextChapter}.${lookup.note ? ` ${lookup.note}` : ''}`, 'tool-note'));
+        else if (lookup.kind === 'after-anime') {
+          const lead = source.status === 'airing' ? `Episode ${episode} is past what the chapter guide covers so far.` : `That’s past the last episode of ${selected.t}.`;
+          answer.append(el('p', lookup.continueFromChapter ? `${lead} Continue reading from chapter ${lookup.continueFromChapter}.${lookup.note ? ` ${lookup.note}` : ''}` : lead, 'tool-note'));
+        }
+        else answer.append(el('p', `Episode ${episode} has no source chapters in the guide. It’s usually an anime-original (filler) or recap episode.`, 'tool-note tool-note--muted'));
+      }
+      const sources = el('p', source.mapping.imported ? `Chapter data from ` : `Verified${source.mapping.verifiedAt ? ` on ${source.mapping.verifiedAt}` : ''}. Sources: `, 'order-sources');
+      source.mapping.sources.forEach((item, index) => { if (index) sources.append(', '); sources.append(link(item.url, item.name, true)); });
+      if (source.mapping.imported) sources.append(`, imported ${source.mapping.verifiedAt}. Wiki data can contain errors.`);
+      answer.append(sources);
+    } else {
+      answer.append(el('p', `Chapter-by-episode lookup isn’t available for ${selected.t} yet. We only show chapter numbers an editor has checked against sources, and this series hasn’t been checked. ${source.manga?.chapters ? `Reading from the start covers all ${source.manga.chapters} chapters.` : 'Reading from the start is the safe option for now.'}`.trim(), 'tool-note tool-note--muted'));
+    }
+    result.append(answer);
+    const next = el('p');
+    next.style.cssText = 'margin:var(--sp-5) 0 0;color:var(--ink-2);font-size:var(--text-sm)';
+    if (source.franchiseSlug) { next.append('See the '); next.append(link(`/tools/anime-watch-order/${source.franchiseSlug}`, 'watch order')); next.append('. '); }
+    if (source.articles.length) {
+      next.append('Read more: ');
+      source.articles.forEach((article, index) => { if (index) next.append(' · '); next.append(link(`/blog/${article.slug}`, article.title)); });
+    }
+    if (next.childNodes.length) result.append(next);
+  }
+
+  async function select(item: PickerItem) {
+    selected = item;
+    source = null;
+    episodeInput.value = String(item.st === 'airing' ? item.ea || '' : item.e || '');
+    empty.hidden = true;
+    result.hidden = false;
+    result.textContent = 'Loading…';
+    try {
+      const response = await fetch(`/api/tools/source?slug=${encodeURIComponent(item.s)}`);
+      if (!response.ok) throw new Error(String(response.status));
+      source = ((await response.json()) as { result: SourceEntry | null }).result;
+      render();
+    } catch {
+      result.replaceChildren(el('p', 'Source data is unavailable right now. Please try again shortly.', 'tool-error'));
+    }
+  }
+
+  createPicker({ root: document.querySelector<HTMLElement>('[data-picker="manga-search"]')!, endpoint: '/api/tools/anime-search', onSelect: select });
+  document.querySelectorAll<HTMLButtonElement>('[data-quick-pick]').forEach(button => button.addEventListener('click', () => select(JSON.parse(button.dataset.quickPick || '{}'))));
+  form.addEventListener('submit', event => { event.preventDefault(); render(); });
+</script>

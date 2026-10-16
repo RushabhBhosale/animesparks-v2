@@ -1,0 +1,43 @@
+{
+  "slug": "my-hero-academia-season-4",
+  "arcs": [
+    {
+      "name": "Shie Hassaikai",
+      "episodeStart": 1,
+      "episodeEnd": 14
+    },
+    {
+      "name": "Shie Hassaikai Arc Remedial Course Arc",
+      "episodeStart": 15,
+      "episodeEnd": 15
+    },
+    {
+      "name": "Remedial Course",
+      "episodeStart": 16,
+      "episodeEnd": 17
+    },
+    {
+      "name": "U.A. School Festival",
+      "episodeStart": 18,
+      "episodeEnd": 23
+    },
+    {
+      "name": "Pro Hero",
+      "episodeStart": 24,
+      "episodeEnd": 25
+    }
+  ],
+  "sources": [
+    {
+      "name": "My Hero Academia Wiki on Fandom (CC BY-SA)",
+      "url": "https://myheroacademia.fandom.com/wiki/Episode_64"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from My Hero Academia Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

@@ -1,0 +1,64 @@
+---
+import ToolPage from '../../../components/tools/ToolPage.astro';
+import AnimePicker from '../../../components/tools/AnimePicker.astro';
+import { getBuildData } from '../../../lib/content/build-data';
+import { relatedArticles } from '../../../lib/tools/build-data';
+import { getToolsExtras } from '../../../lib/tools/build-extras';
+
+export const prerender = true;
+const { english } = await getBuildData();
+const { filler } = await getToolsExtras(english);
+const featured = filler.filter(view => view.indexable).slice(0, 18);
+const keys = new Set(featured.flatMap(view => [...view.titleKeys]));
+const faq = [
+  { question: 'What counts as filler?', answer: 'Filler episodes tell stories that aren’t in the original manga or novel, often added when the anime caught up with its source. Recap episodes mostly replay earlier scenes.' },
+  { question: 'Where does the filler data come from?', answer: 'From MyAnimeList’s per-episode filler and recap flags, refreshed regularly. When AnimeSparks editors verify a more detailed list (manga canon, anime canon, mixed), that list is used instead and its sources are shown.' },
+  { question: 'Why isn’t every anime listed?', answer: 'Lists exist for series with at least a dozen episodes and published episode data. Shorter shows rarely have filler.' },
+  { question: 'Does it remember what I’ve watched?', answer: 'Yes. Tick episodes, or mark everything up to an episode number. Progress is stored in this browser only.' },
+];
+---
+<ToolPage
+  path="/tools/anime-filler-checker" title="Anime Filler Checker — Filler Lists & Canon Episodes | AnimeSparks" socialTitle="Anime Filler Checker"
+  description="Check which anime episodes are filler, recap or canon. Get filler percentages, episode ranges and a filler-free watch order for Naruto, One Piece, Bleach and more."
+  name="Anime Filler Checker" crumb="Filler Checker" kicker="Watch smarter" heading="Anime Filler Checker"
+  deck="Find out which episodes you can skip. Episode-by-episode filler and recap lists, filler percentages and a filler-free watch order, with your progress saved as you go."
+  facts={[[String(filler.length), 'series covered'], [String(filler.filter(view => view.summary.skippable).length), 'with filler or recaps']]}
+  faq={faq} related={relatedArticles(english, keys, 6)} credit="Episode filler and recap flags"
+>
+  <section class="tool-panel" aria-labelledby="filler-find">
+    <div class="tool-panel__head"><h2 id="filler-find">Check a series</h2></div>
+    <div class="tool-panel__body">
+      <AnimePicker id="filler-search" label="Search anime" placeholder="Naruto Shippuden, Bleach, One Piece…" hint="Only series with episode data are listed." />
+    </div>
+  </section>
+
+  {featured.length > 0 && (
+    <section class="tool-section" aria-labelledby="filler-popular">
+      <h2 id="filler-popular">Popular filler lists</h2>
+      <div class="mini-list">
+        {featured.map(view => (
+          <a class="mini-card" href={`/tools/anime-filler-checker/${view.slug}`}>
+            {view.poster ? <img src={view.poster} alt="" width="46" height="64" loading="lazy" decoding="async" referrerpolicy="no-referrer" /> : <span class="mini-card__thumb"></span>}
+            <div><strong>{view.title}</strong><span><em>{view.summary.fillerPercent}% filler & recap</em> · {view.summary.total} eps</span></div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <Fragment slot="guide">
+    <h2>How to use the filler checker</h2>
+    <p>Search for a series to open its filler list. You get the filler percentage, every episode range grouped by type and a <strong>filler-free watch order</strong> you can copy. Tick episodes as you watch, or mark everything up to an episode in one go.</p>
+    <p>We never guess. Classifications come from MyAnimeList’s flags or from editor-verified lists with cited sources. MAL flags only mark filler and recap episodes, so where a verified list doesn’t exist yet, the remaining episodes appear as “canon (not flagged)” rather than being split into manga canon and anime canon.</p>
+  </Fragment>
+</ToolPage>
+
+<script>
+  import { createPicker } from '../../../scripts/tools/anime-picker';
+  createPicker({
+    root: document.querySelector<HTMLElement>('[data-picker="filler-search"]')!,
+    endpoint: '/api/tools/filler-search',
+    describe: item => item.n ? `${item.n} filler/recap episodes` : 'No filler flagged',
+    onSelect: item => { window.location.href = `/tools/anime-filler-checker/${encodeURIComponent(item.s)}`; },
+  });
+</script>

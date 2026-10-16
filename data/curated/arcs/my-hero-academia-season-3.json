@@ -1,0 +1,43 @@
+{
+  "slug": "my-hero-academia-season-3",
+  "arcs": [
+    {
+      "name": "Forest Training Camp",
+      "episodeStart": 1,
+      "episodeEnd": 7
+    },
+    {
+      "name": "Hideout Raid",
+      "episodeStart": 8,
+      "episodeEnd": 12
+    },
+    {
+      "name": "Provisional Hero License Exam",
+      "episodeStart": 13,
+      "episodeEnd": 23
+    },
+    {
+      "name": "Provisional Hero License Exam Arc",
+      "episodeStart": 24,
+      "episodeEnd": 24
+    },
+    {
+      "name": "Shie Hassaikai",
+      "episodeStart": 25,
+      "episodeEnd": 25
+    }
+  ],
+  "sources": [
+    {
+      "name": "My Hero Academia Wiki on Fandom (CC BY-SA)",
+      "url": "https://myheroacademia.fandom.com/wiki/Episode_39"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from My Hero Academia Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

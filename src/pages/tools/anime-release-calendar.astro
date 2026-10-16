@@ -1,0 +1,222 @@
+---
+import ToolPage from '../../components/tools/ToolPage.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { getToolsExtras } from '../../lib/tools/build-extras';
+import { WEEKDAYS, weekdayIndex } from '../../lib/tools/schedule';
+
+export const prerender = true;
+const { english } = await getBuildData();
+const { calendar, premieres } = await getToolsExtras(english);
+const capitalize = (value: string) => value[0].toUpperCase() + value.slice(1);
+// Crawlable fallback grouped by the Japanese broadcast day.
+const byJstDay = [1, 2, 3, 4, 5, 6, 0].map(day => ({
+  day: capitalize(WEEKDAYS[day]),
+  shows: calendar.filter(entry => weekdayIndex(entry.day) === day).sort((a, b) => a.time.localeCompare(b.time)),
+}));
+const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c');
+const faq = [
+  { question: 'Are these streaming release times?', answer: 'No. They are the weekly Japanese TV broadcast slots listed on MyAnimeList, converted to your timezone. Streaming services such as Crunchyroll or Netflix often publish later, and timing varies by platform and region.' },
+  { question: 'How is the countdown calculated?', answer: 'From the next occurrence of each show’s weekly Japanese broadcast slot (JST, UTC+9). Breaks, delays and specials aren’t in the weekly slot, so a delay notice is shown only when we’ve verified it from an official source.' },
+  { question: 'How do I build my own schedule?', answer: 'Tap the star on any show to follow it, then switch to “My schedule”. Follows are saved in this browser only.' },
+  { question: 'Which timezone is used?', answer: 'Your device’s timezone, detected automatically. You can choose another one from the timezone menu.' },
+];
+---
+<ToolPage
+  path="/tools/anime-release-calendar" title="Anime Release Calendar — This Week's Airing Schedule in Your Timezone | AnimeSparks" socialTitle="Anime Release Calendar"
+  description="Weekly anime airing schedule with Japanese broadcast times converted to your timezone, live countdowns, and a personal schedule of the shows you follow."
+  name="Anime Release Calendar" crumb="Release Calendar" kicker="Track" heading="Anime Release Calendar"
+  deck="Every currently airing anime by weekday, with Japanese broadcast times shown in your timezone and a countdown to the next slot. Follow shows to build your own schedule."
+  facts={[[String(calendar.length), 'airing shows'], [String(premieres.length), 'upcoming premieres']]}
+  faq={faq} credit="Broadcast schedules"
+>
+  <div data-calendar>
+    <script type="application/json" id="calendar-data" set:html={safeJson({ calendar, premieres })}></script>
+    <div class="tool-panel">
+      <div class="tool-panel__body" style="display:grid;gap:var(--sp-4)">
+        <p class="tool-note" style="margin:0">Times are <strong>Japanese TV broadcast</strong> slots converted to your timezone. Streaming releases are often later and vary by service and region.</p>
+        <div class="tool-grid tool-grid--3">
+          <label class="tool-field"><span>Timezone</span><select class="tool-select" data-tz></select></label>
+          <label class="tool-field"><span>Search</span><input class="tool-input" type="search" data-search placeholder="Filter by title" /></label>
+          <div class="tool-field"><span class="tool-legend">Show</span>
+            <div class="tool-segment" role="group" aria-label="Show" data-scope>
+              <button type="button" data-value="all" aria-pressed="true">All shows</button>
+              <button type="button" data-value="mine" aria-pressed="false">My schedule</button>
+            </div>
+          </div>
+        </div>
+        <div class="tool-segment" role="tablist" aria-label="Day" data-days style="width:100%"></div>
+      </div>
+    </div>
+    <div data-list style="margin-top: var(--sp-5)">
+      {byJstDay.map(group => (
+        <section style="margin-bottom: var(--sp-6)">
+          <h3 class="tool-legend" style="margin:0 0 var(--sp-3)">{group.day} (Japan time)</h3>
+          <ul class="mini-list" style="list-style:none;margin:0;padding:0">
+            {group.shows.map(show => <li class="mini-card">{show.p ? <img src={show.p} alt="" width="46" height="64" loading="lazy" decoding="async" referrerpolicy="no-referrer" /> : <span class="mini-card__thumb"></span>}<div><strong>{show.t}</strong><span>{group.day} {show.time} JST{show.ea ? ` · ${show.ea} episodes aired` : ''}</span></div></li>)}
+          </ul>
+        </section>
+      ))}
+    </div>
+    {premieres.length > 0 && (
+      <section class="tool-section" aria-labelledby="premieres-title">
+        <h2 id="premieres-title">Premiering soon</h2>
+        <p class="tool-hero__deck" style="margin-bottom: var(--sp-4)">Premiere dates as listed on MyAnimeList (Japan dates). Dates can change before broadcast.</p>
+        <ul class="mini-list" style="list-style:none;margin:0;padding:0" data-premieres>
+          {premieres.map(show => <li class="mini-card" data-slug={show.s}>{show.p ? <img src={show.p} alt="" width="46" height="64" loading="lazy" decoding="async" referrerpolicy="no-referrer" /> : <span class="mini-card__thumb"></span>}<div><strong>{show.t}</strong><span>{new Date(`${show.date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} · {show.f.toUpperCase()}</span></div></li>)}
+        </ul>
+      </section>
+    )}
+  </div>
+
+  <Fragment slot="guide">
+    <h2>Japanese broadcast times, in your timezone</h2>
+    <p>Most anime premiere on Japanese TV first. Each show’s weekly slot is listed in Japan Standard Time (UTC+9, no daylight saving). The calendar converts it to your timezone, so a Saturday 23:30 JST show might land on Saturday afternoon in Europe or Saturday morning in the Americas.</p>
+    <p>Late-night Japanese listings sometimes use times like “25:30”, meaning 1:30 the next morning. The calendar handles that for you. If a show takes a break or is delayed, the weekly slot won’t reflect it. We only add a delay notice once it’s confirmed by an official source.</p>
+  </Fragment>
+</ToolPage>
+
+<style is:global>
+  .cal-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: var(--sp-3); align-items: center; padding: var(--sp-3); border: 1px solid var(--line); background: var(--surface); }
+  .cal-card img, .cal-card .mini-card__thumb { width: 46px; height: 64px; object-fit: cover; background: var(--surface2); }
+  .cal-card strong { display: block; color: var(--ink); font-size: var(--text-sm); line-height: 1.3; }
+  .cal-card span { display: block; margin-top: 2px; color: var(--ink-3); font-size: var(--text-xs); }
+  .cal-card .cal-time { color: var(--ink); font-weight: 700; font-size: var(--text-sm); }
+  .cal-card .cal-countdown { color: var(--accent-2); font-variant-numeric: tabular-nums; }
+  .cal-card .cal-notice { color: #e3b53b; }
+  .cal-follow { width: 36px; height: 36px; border: 1px solid var(--line-2); background: transparent; color: var(--ink-3); font-size: 18px; line-height: 1; }
+  .cal-follow[aria-pressed="true"] { color: #e3b53b; border-color: #e3b53b; }
+  .cal-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); margin: 0; padding: 0; list-style: none; }
+  .cal-day { margin: var(--sp-6) 0 var(--sp-3); font-family: var(--font-body); font-size: var(--text-2xl); letter-spacing: -.03em; }
+  .cal-empty { padding: var(--sp-8); border: 1px dashed var(--line-2); color: var(--ink-2); text-align: center; }
+  [data-days] button { flex: 1; }
+  @media (max-width: 960px) { .cal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 700px) { .cal-grid { grid-template-columns: 1fr; } [data-days] { display: grid !important; grid-template-columns: repeat(4, 1fr); } [data-days] button { border-top: 1px solid var(--line-2); } }
+</style>
+
+<script>
+  import { WEEKDAYS, countdownParts, nextBroadcast, weekdayIn } from '../../lib/tools/schedule';
+  import { readLocal, writeLocal } from '../../scripts/tools/storage';
+  import type { CalendarEntry } from '../../lib/tools/build-extras';
+
+  const root = document.querySelector<HTMLElement>('[data-calendar]');
+  if (root) {
+    const { calendar } = JSON.parse(document.getElementById('calendar-data')!.textContent || '{}') as { calendar: CalendarEntry[] };
+    const tzSelect = root.querySelector<HTMLSelectElement>('[data-tz]')!;
+    const search = root.querySelector<HTMLInputElement>('[data-search]')!;
+    const dayTabs = root.querySelector<HTMLElement>('[data-days]')!;
+    const list = root.querySelector<HTMLElement>('[data-list]')!;
+    const detected = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    let timeZone = readLocal<string>('calendar:tz', '') || detected;
+    let scope = readLocal<string>('calendar:scope', 'all');
+    const followed = new Set(readLocal<string[]>('calendar:follow', []));
+    let day = weekdayIn(Date.now(), timeZone);
+
+    const zones = (() => {
+      try { return (Intl as unknown as { supportedValuesOf(key: string): string[] }).supportedValuesOf('timeZone'); }
+      catch { return [detected, 'UTC', 'America/New_York', 'America/Los_Angeles', 'Europe/London', 'Europe/Berlin', 'Asia/Kolkata', 'Asia/Tokyo', 'Australia/Sydney']; }
+    })();
+    for (const zone of [...new Set([detected, ...zones])]) {
+      const option = new Option(zone === detected ? `${zone} (detected)` : zone, zone);
+      tzSelect.append(option);
+    }
+    tzSelect.value = zones.includes(timeZone) || timeZone === detected ? timeZone : detected;
+
+    const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const order = [1, 2, 3, 4, 5, 6, 0];
+    const renderTabs = () => {
+      dayTabs.replaceChildren();
+      for (const value of [...order, -1]) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.setAttribute('role', 'tab');
+        button.textContent = value === -1 ? 'Week' : labels[value];
+        button.setAttribute('aria-selected', String(value === day));
+        button.addEventListener('click', () => { day = value; render(); });
+        dayTabs.append(button);
+      }
+    };
+    const timeFormat = () => new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZone });
+    const countdownText = (ms: number) => {
+      const { days, hours, minutes, seconds } = countdownParts(ms);
+      return days ? `in ${days}d ${hours}h ${minutes}m` : `in ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+
+    function card(entry: CalendarEntry, next: number) {
+      const item = document.createElement('li');
+      item.className = 'cal-card';
+      if (entry.p) {
+        const image = document.createElement('img');
+        image.src = entry.p; image.alt = ''; image.width = 46; image.height = 64; image.loading = 'lazy'; image.decoding = 'async'; image.referrerPolicy = 'no-referrer';
+        item.append(image);
+      } else {
+        const thumb = document.createElement('span'); thumb.className = 'mini-card__thumb'; item.append(thumb);
+      }
+      const body = document.createElement('div');
+      const title = document.createElement('strong'); title.textContent = entry.t;
+      const time = document.createElement('span'); time.className = 'cal-time'; time.textContent = timeFormat().format(next);
+      const countdown = document.createElement('span'); countdown.className = 'cal-countdown'; countdown.dataset.next = String(next); countdown.textContent = countdownText(next - Date.now());
+      const meta = document.createElement('span'); meta.textContent = [`${entry.day.replace(/s$/, '')} ${entry.time} JST`, entry.ea ? `${entry.ea}${entry.e ? `/${entry.e}` : ''} aired` : ''].filter(Boolean).join(' · ');
+      body.append(title, time, countdown, meta);
+      if (entry.notice) { const notice = document.createElement('span'); notice.className = 'cal-notice'; notice.textContent = `${entry.notice.text} (${entry.notice.source})`; body.append(notice); }
+      const follow = document.createElement('button');
+      follow.type = 'button'; follow.className = 'cal-follow'; follow.textContent = '★';
+      follow.setAttribute('aria-pressed', String(followed.has(entry.s)));
+      follow.setAttribute('aria-label', `${followed.has(entry.s) ? 'Unfollow' : 'Follow'} ${entry.t}`);
+      follow.addEventListener('click', () => {
+        if (followed.has(entry.s)) followed.delete(entry.s); else followed.add(entry.s);
+        writeLocal('calendar:follow', [...followed]);
+        render();
+      });
+      item.append(body, follow);
+      return item;
+    }
+
+    function render() {
+      const now = Date.now();
+      const query = search.value.trim().toLowerCase();
+      root!.querySelectorAll<HTMLButtonElement>('[data-scope] button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.value === scope)));
+      renderTabs();
+      const rows = calendar
+        .filter(entry => scope !== 'mine' || followed.has(entry.s))
+        .filter(entry => !query || entry.t.toLowerCase().includes(query))
+        .map(entry => ({ entry, next: nextBroadcast(entry.day, entry.time, now) }))
+        .filter((row): row is { entry: CalendarEntry; next: number } => row.next !== null)
+        .map(row => ({ ...row, localDay: weekdayIn(row.next, timeZone) }));
+      list.replaceChildren();
+      const days = day === -1 ? order : [day];
+      let shown = 0;
+      for (const value of days) {
+        const group = rows.filter(row => row.localDay === value).sort((a, b) => a.next - b.next);
+        if (!group.length) continue;
+        if (day === -1) { const heading = document.createElement('h3'); heading.className = 'cal-day'; heading.textContent = `${WEEKDAYS[value][0].toUpperCase()}${WEEKDAYS[value].slice(1)}`; list.append(heading); }
+        const grid = document.createElement('ul'); grid.className = 'cal-grid';
+        group.forEach(row => grid.append(card(row.entry, row.next)));
+        list.append(grid);
+        shown += group.length;
+      }
+      if (!shown) {
+        const emptyState = document.createElement('p'); emptyState.className = 'cal-empty';
+        emptyState.textContent = scope === 'mine' ? (followed.size ? 'None of your followed shows air on this day.' : 'You aren’t following any shows yet. Tap ★ on a show to add it to your schedule.') : 'No shows match.';
+        list.append(emptyState);
+      }
+    }
+
+    tzSelect.addEventListener('change', () => { timeZone = tzSelect.value; writeLocal('calendar:tz', timeZone === detected ? '' : timeZone); render(); });
+    search.addEventListener('input', render);
+    root.querySelector('[data-scope]')!.addEventListener('click', event => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
+      if (!button) return;
+      scope = button.dataset.value || 'all';
+      writeLocal('calendar:scope', scope);
+      render();
+    });
+    render();
+    window.setInterval(() => {
+      const now = Date.now();
+      list.querySelectorAll<HTMLElement>('[data-next]').forEach(node => {
+        const remaining = Number(node.dataset.next) - now;
+        node.textContent = remaining > 0 ? countdownText(remaining) : 'Airing now';
+      });
+    }, 1000);
+  }
+</script>

@@ -1,0 +1,23 @@
+{
+  "slug": "jujutsu-kaisen-the-culling-game-part-1",
+  "arcs": [
+    {
+      "name": "Culling Game Arc",
+      "episodeStart": 1,
+      "episodeEnd": 12
+    }
+  ],
+  "sources": [
+    {
+      "name": "Jujutsu Kaisen Wiki on Fandom (CC BY-SA)",
+      "url": "https://jujutsu-kaisen.fandom.com/wiki/Episode_48"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Jujutsu Kaisen Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

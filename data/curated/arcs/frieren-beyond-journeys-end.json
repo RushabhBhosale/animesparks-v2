@@ -1,0 +1,48 @@
+{
+  "slug": "frieren-beyond-journeys-end",
+  "arcs": [
+    {
+      "name": "Beyond Journey's End",
+      "episodeStart": 1,
+      "episodeEnd": 7
+    },
+    {
+      "name": "Aura the Guillotine",
+      "episodeStart": 8,
+      "episodeEnd": 11
+    },
+    {
+      "name": "Travels to Äußerst",
+      "episodeStart": 12,
+      "episodeEnd": 17
+    },
+    {
+      "name": "First-Class Mage Exam Arc (First Stage)",
+      "episodeStart": 18,
+      "episodeEnd": 22
+    },
+    {
+      "name": "First-Class Mage Exam Arc (Second Stage)",
+      "episodeStart": 23,
+      "episodeEnd": 26
+    },
+    {
+      "name": "First-Class Mage Exam Arc (Final Stage)",
+      "episodeStart": 27,
+      "episodeEnd": 28
+    }
+  ],
+  "sources": [
+    {
+      "name": "Frieren Wiki on Fandom (CC BY-SA)",
+      "url": "https://frieren.fandom.com/wiki/Episode_1"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Frieren Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

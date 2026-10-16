@@ -21,7 +21,7 @@ async function readSnapshot() {
   try {
     await client.connect();
     const db = client.db(process.env.MONGODB_DB_NAME || 'animesparks');
-    const [articles, categories, anime, homepage] = await Promise.all([
+    const [articles, categories, anime, homepage, toolAnime, toolFranchises, toolWatchOrders, toolEpisodeLists, toolManga, toolCurated, toolDailyGame] = await Promise.all([
       db.collection('articles').find(
         { publicationState: 'published', language: { $in: ['en', 'es'] } },
         { projection: { _id: 0, sourceUnknownFields: 0 } },
@@ -35,6 +35,20 @@ async function readSnapshot() {
         { projection: { _id: 0, sanityId: 1, title: 1, score: 1, coverImage: 1, bannerImage: 1, genres: 1, year: 1 } },
       ).sort({ title: 1 }).toArray(),
       db.collection('homepageSettings').findOne({}, { projection: { _id: 0, editorsPicks: 1, moreBlogs: 1 } }),
+      // Tool data rendered into /tools pages. Sync timestamps and unrendered
+      // metrics are excluded so an unchanged sync does not force a rebuild.
+      db.collection('toolAnime').find({}, { projection: {
+        _id: 0, slug: 1, title: 1, titleEnglish: 1, titleRomaji: 1, synonyms: 1, format: 1, status: 1, episodes: 1, episodesAired: 1,
+        durationMinutes: 1, airedFrom: 1, year: 1, 'images.poster': 1, 'images.posterSmall': 1, franchiseSlug: 1, legacy: 1,
+        genres: 1, themes: 1, demographics: 1, studios: 1, score: 1, season: 1, broadcast: 1, sourceWorks: 1, sourceMaterial: 1, recommendations: 1,
+      } }).sort({ slug: 1 }).toArray(),
+      db.collection('toolFranchises').find({ active: true }, { projection: { _id: 0, slug: 1, title: 1, members: 1, truncated: 1 } }).sort({ slug: 1 }).toArray(),
+      db.collection('toolWatchOrders').find({}, { projection: { _id: 0 } }).sort({ franchiseSlug: 1, kind: 1 }).toArray(),
+      db.collection('toolEpisodeLists').find({}, { projection: { _id: 0, slug: 1, episodes: 1 } }).sort({ slug: 1 }).toArray(),
+      db.collection('toolManga').find({}, { projection: { _id: 0, updatedAt: 0, 'provenance.fetchedAt': 0 } }).sort({ 'externalIds.malManga': 1 }).toArray(),
+      Promise.all(['toolFillerLists', 'toolMangaMappings', 'toolArcs', 'toolScheduleNotices'].map(name =>
+        db.collection(name).find({}, { projection: { _id: 0 } }).sort({ slug: 1, date: 1 }).toArray())),
+      db.collection('toolDailyGame').find({}, { projection: { _id: 0 } }).sort({ date: 1 }).toArray(),
     ]);
     const publishedArticles = articles.filter(article => ['en', 'es'].includes(article.language) && live(article));
     const categoryIds = [...new Set(publishedArticles.flatMap(article => article.categorySanityIds || []))];
@@ -57,6 +71,11 @@ async function readSnapshot() {
       authors: byId(authors),
       anime: byId(anime),
       homepage: homepage || null,
+      // Present only once tool data exists, so the fingerprint of an
+      // installation without tools is unchanged.
+      ...(toolAnime.length || toolFranchises.length || toolWatchOrders.length
+        ? { tools: { toolAnime, toolFranchises, toolWatchOrders, toolEpisodeLists, toolManga, toolCurated, toolDailyGame } }
+        : {}),
     };
   } finally {
     await client.close();

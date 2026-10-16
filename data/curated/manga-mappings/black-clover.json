@@ -1,0 +1,824 @@
+{
+  "slug": "black-clover",
+  "ranges": [
+    {
+      "episodeStart": 1,
+      "episodeEnd": 1,
+      "chapterStart": 1,
+      "chapterEnd": 1
+    },
+    {
+      "episodeStart": 2,
+      "episodeEnd": 2,
+      "chapterStart": 1,
+      "chapterEnd": 1
+    },
+    {
+      "episodeStart": 3,
+      "episodeEnd": 3,
+      "chapterStart": 1,
+      "chapterEnd": 2
+    },
+    {
+      "episodeStart": 4,
+      "episodeEnd": 4,
+      "chapterStart": 2,
+      "chapterEnd": 2
+    },
+    {
+      "episodeStart": 5,
+      "episodeEnd": 5,
+      "chapterStart": 3,
+      "chapterEnd": 3
+    },
+    {
+      "episodeStart": 6,
+      "episodeEnd": 6,
+      "chapterStart": 3,
+      "chapterEnd": 4
+    },
+    {
+      "episodeStart": 7,
+      "episodeEnd": 7,
+      "chapterStart": 5,
+      "chapterEnd": 5
+    },
+    {
+      "episodeStart": 8,
+      "episodeEnd": 8,
+      "chapterStart": 6,
+      "chapterEnd": 6
+    },
+    {
+      "episodeStart": 9,
+      "episodeEnd": 9,
+      "chapterStart": 6,
+      "chapterEnd": 7
+    },
+    {
+      "episodeStart": 10,
+      "episodeEnd": 10,
+      "chapterStart": 7,
+      "chapterEnd": 9
+    },
+    {
+      "episodeStart": 11,
+      "episodeEnd": 11,
+      "chapterStart": 10,
+      "chapterEnd": 10
+    },
+    {
+      "episodeStart": 12,
+      "episodeEnd": 12,
+      "chapterStart": 10,
+      "chapterEnd": 10
+    },
+    {
+      "episodeStart": 14,
+      "episodeEnd": 14,
+      "chapterStart": 11,
+      "chapterEnd": 11
+    },
+    {
+      "episodeStart": 15,
+      "episodeEnd": 15,
+      "chapterStart": 12,
+      "chapterEnd": 13
+    },
+    {
+      "episodeStart": 16,
+      "episodeEnd": 16,
+      "chapterStart": 14,
+      "chapterEnd": 15
+    },
+    {
+      "episodeStart": 17,
+      "episodeEnd": 17,
+      "chapterStart": 16,
+      "chapterEnd": 17
+    },
+    {
+      "episodeStart": 18,
+      "episodeEnd": 18,
+      "chapterStart": 18,
+      "chapterEnd": 20
+    },
+    {
+      "episodeStart": 19,
+      "episodeEnd": 19,
+      "chapterStart": 19,
+      "chapterEnd": 21
+    },
+    {
+      "episodeStart": 20,
+      "episodeEnd": 20,
+      "chapterStart": 22,
+      "chapterEnd": 23
+    },
+    {
+      "episodeStart": 21,
+      "episodeEnd": 21,
+      "chapterStart": 23,
+      "chapterEnd": 25
+    },
+    {
+      "episodeStart": 22,
+      "episodeEnd": 22,
+      "chapterStart": 26,
+      "chapterEnd": 27
+    },
+    {
+      "episodeStart": 23,
+      "episodeEnd": 23,
+      "chapterStart": 28,
+      "chapterEnd": 31
+    },
+    {
+      "episodeStart": 24,
+      "episodeEnd": 24,
+      "chapterStart": 28,
+      "chapterEnd": 32
+    },
+    {
+      "episodeStart": 25,
+      "episodeEnd": 25,
+      "chapterStart": 30,
+      "chapterEnd": 33
+    },
+    {
+      "episodeStart": 26,
+      "episodeEnd": 26,
+      "chapterStart": 34,
+      "chapterEnd": 36
+    },
+    {
+      "episodeStart": 27,
+      "episodeEnd": 27,
+      "chapterStart": 36,
+      "chapterEnd": 37
+    },
+    {
+      "episodeStart": 28,
+      "episodeEnd": 28,
+      "chapterStart": 38,
+      "chapterEnd": 38
+    },
+    {
+      "episodeStart": 30,
+      "episodeEnd": 30,
+      "chapterStart": 39,
+      "chapterEnd": 39
+    },
+    {
+      "episodeStart": 31,
+      "episodeEnd": 31,
+      "chapterStart": 40,
+      "chapterEnd": 41
+    },
+    {
+      "episodeStart": 32,
+      "episodeEnd": 32,
+      "chapterStart": 42,
+      "chapterEnd": 43
+    },
+    {
+      "episodeStart": 33,
+      "episodeEnd": 33,
+      "chapterStart": 44,
+      "chapterEnd": 46
+    },
+    {
+      "episodeStart": 34,
+      "episodeEnd": 34,
+      "chapterStart": 46,
+      "chapterEnd": 48
+    },
+    {
+      "episodeStart": 35,
+      "episodeEnd": 35,
+      "chapterStart": 49,
+      "chapterEnd": 50
+    },
+    {
+      "episodeStart": 36,
+      "episodeEnd": 36,
+      "chapterStart": 51,
+      "chapterEnd": 52
+    },
+    {
+      "episodeStart": 37,
+      "episodeEnd": 37,
+      "chapterStart": 52,
+      "chapterEnd": 53
+    },
+    {
+      "episodeStart": 38,
+      "episodeEnd": 38,
+      "chapterStart": 54,
+      "chapterEnd": 56
+    },
+    {
+      "episodeStart": 39,
+      "episodeEnd": 39,
+      "chapterStart": 55,
+      "chapterEnd": 56
+    },
+    {
+      "episodeStart": 40,
+      "episodeEnd": 40,
+      "chapterStart": 57,
+      "chapterEnd": 57
+    },
+    {
+      "episodeStart": 41,
+      "episodeEnd": 41,
+      "chapterStart": 58,
+      "chapterEnd": 58
+    },
+    {
+      "episodeStart": 42,
+      "episodeEnd": 42,
+      "chapterStart": 59,
+      "chapterEnd": 60
+    },
+    {
+      "episodeStart": 43,
+      "episodeEnd": 43,
+      "chapterStart": 60,
+      "chapterEnd": 62
+    },
+    {
+      "episodeStart": 44,
+      "episodeEnd": 44,
+      "chapterStart": 63,
+      "chapterEnd": 64
+    },
+    {
+      "episodeStart": 45,
+      "episodeEnd": 45,
+      "chapterStart": 64,
+      "chapterEnd": 66
+    },
+    {
+      "episodeStart": 46,
+      "episodeEnd": 46,
+      "chapterStart": 67,
+      "chapterEnd": 68
+    },
+    {
+      "episodeStart": 47,
+      "episodeEnd": 47,
+      "chapterStart": 69,
+      "chapterEnd": 69
+    },
+    {
+      "episodeStart": 48,
+      "episodeEnd": 48,
+      "chapterStart": 70,
+      "chapterEnd": 70
+    },
+    {
+      "episodeStart": 49,
+      "episodeEnd": 49,
+      "chapterStart": 71,
+      "chapterEnd": 72
+    },
+    {
+      "episodeStart": 50,
+      "episodeEnd": 50,
+      "chapterStart": 73,
+      "chapterEnd": 74
+    },
+    {
+      "episodeStart": 51,
+      "episodeEnd": 51,
+      "chapterStart": 74,
+      "chapterEnd": 75
+    },
+    {
+      "episodeStart": 52,
+      "episodeEnd": 52,
+      "chapterStart": 76,
+      "chapterEnd": 78
+    },
+    {
+      "episodeStart": 53,
+      "episodeEnd": 53,
+      "chapterStart": 78,
+      "chapterEnd": 79
+    },
+    {
+      "episodeStart": 54,
+      "episodeEnd": 54,
+      "chapterStart": 80,
+      "chapterEnd": 82
+    },
+    {
+      "episodeStart": 56,
+      "episodeEnd": 56,
+      "chapterStart": 81,
+      "chapterEnd": 82
+    },
+    {
+      "episodeStart": 57,
+      "episodeEnd": 57,
+      "chapterStart": 82,
+      "chapterEnd": 83
+    },
+    {
+      "episodeStart": 58,
+      "episodeEnd": 58,
+      "chapterStart": 83,
+      "chapterEnd": 85
+    },
+    {
+      "episodeStart": 59,
+      "episodeEnd": 59,
+      "chapterStart": 86,
+      "chapterEnd": 88
+    },
+    {
+      "episodeStart": 60,
+      "episodeEnd": 60,
+      "chapterStart": 88,
+      "chapterEnd": 91
+    },
+    {
+      "episodeStart": 61,
+      "episodeEnd": 61,
+      "chapterStart": 91,
+      "chapterEnd": 93
+    },
+    {
+      "episodeStart": 62,
+      "episodeEnd": 62,
+      "chapterStart": 94,
+      "chapterEnd": 96
+    },
+    {
+      "episodeStart": 63,
+      "episodeEnd": 63,
+      "chapterStart": 97,
+      "chapterEnd": 98
+    },
+    {
+      "episodeStart": 64,
+      "episodeEnd": 64,
+      "chapterStart": 99,
+      "chapterEnd": 100
+    },
+    {
+      "episodeStart": 65,
+      "episodeEnd": 65,
+      "chapterStart": 101,
+      "chapterEnd": 102
+    },
+    {
+      "episodeStart": 67,
+      "episodeEnd": 67,
+      "chapterStart": 102,
+      "chapterEnd": 103
+    },
+    {
+      "episodeStart": 68,
+      "episodeEnd": 68,
+      "chapterStart": 103,
+      "chapterEnd": 103
+    },
+    {
+      "episodeStart": 69,
+      "episodeEnd": 69,
+      "chapterStart": 103,
+      "chapterEnd": 104
+    },
+    {
+      "episodeStart": 70,
+      "episodeEnd": 70,
+      "chapterStart": 105,
+      "chapterEnd": 107
+    },
+    {
+      "episodeStart": 71,
+      "episodeEnd": 71,
+      "chapterStart": 108,
+      "chapterEnd": 109
+    },
+    {
+      "episodeStart": 72,
+      "episodeEnd": 72,
+      "chapterStart": 110,
+      "chapterEnd": 111
+    },
+    {
+      "episodeStart": 73,
+      "episodeEnd": 73,
+      "chapterStart": 112,
+      "chapterEnd": 113
+    },
+    {
+      "episodeStart": 74,
+      "episodeEnd": 74,
+      "chapterStart": 113,
+      "chapterEnd": 115
+    },
+    {
+      "episodeStart": 75,
+      "episodeEnd": 75,
+      "chapterStart": 116,
+      "chapterEnd": 117
+    },
+    {
+      "episodeStart": 76,
+      "episodeEnd": 76,
+      "chapterStart": 118,
+      "chapterEnd": 119
+    },
+    {
+      "episodeStart": 77,
+      "episodeEnd": 77,
+      "chapterStart": 119,
+      "chapterEnd": 121
+    },
+    {
+      "episodeStart": 78,
+      "episodeEnd": 78,
+      "chapterStart": 122,
+      "chapterEnd": 123
+    },
+    {
+      "episodeStart": 79,
+      "episodeEnd": 79,
+      "chapterStart": 124,
+      "chapterEnd": 125
+    },
+    {
+      "episodeStart": 80,
+      "episodeEnd": 80,
+      "chapterStart": 126,
+      "chapterEnd": 127
+    },
+    {
+      "episodeStart": 81,
+      "episodeEnd": 81,
+      "chapterStart": 127,
+      "chapterEnd": 129
+    },
+    {
+      "episodeStart": 83,
+      "episodeEnd": 83,
+      "chapterStart": 129,
+      "chapterEnd": 131
+    },
+    {
+      "episodeStart": 84,
+      "episodeEnd": 84,
+      "chapterStart": 132,
+      "chapterEnd": 133
+    },
+    {
+      "episodeStart": 85,
+      "episodeEnd": 85,
+      "chapterStart": 133,
+      "chapterEnd": 133
+    },
+    {
+      "episodeStart": 86,
+      "episodeEnd": 86,
+      "chapterStart": 133,
+      "chapterEnd": 133
+    },
+    {
+      "episodeStart": 87,
+      "episodeEnd": 87,
+      "chapterStart": 133,
+      "chapterEnd": 134
+    },
+    {
+      "episodeStart": 88,
+      "episodeEnd": 88,
+      "chapterStart": 135,
+      "chapterEnd": 135
+    },
+    {
+      "episodeStart": 89,
+      "episodeEnd": 89,
+      "chapterStart": 138,
+      "chapterEnd": 139
+    },
+    {
+      "episodeStart": 90,
+      "episodeEnd": 90,
+      "chapterStart": 140,
+      "chapterEnd": 142
+    },
+    {
+      "episodeStart": 91,
+      "episodeEnd": 91,
+      "chapterStart": 136,
+      "chapterEnd": 138
+    },
+    {
+      "episodeStart": 92,
+      "episodeEnd": 92,
+      "chapterStart": 142,
+      "chapterEnd": 143
+    },
+    {
+      "episodeStart": 93,
+      "episodeEnd": 93,
+      "chapterStart": 144,
+      "chapterEnd": 146
+    },
+    {
+      "episodeStart": 94,
+      "episodeEnd": 94,
+      "chapterStart": 146,
+      "chapterEnd": 147
+    },
+    {
+      "episodeStart": 95,
+      "episodeEnd": 95,
+      "chapterStart": 148,
+      "chapterEnd": 149
+    },
+    {
+      "episodeStart": 96,
+      "episodeEnd": 96,
+      "chapterStart": 149,
+      "chapterEnd": 169
+    },
+    {
+      "episodeStart": 97,
+      "episodeEnd": 97,
+      "chapterStart": 150,
+      "chapterEnd": 170
+    },
+    {
+      "episodeStart": 98,
+      "episodeEnd": 98,
+      "chapterStart": 170,
+      "chapterEnd": 172
+    },
+    {
+      "episodeStart": 99,
+      "episodeEnd": 99,
+      "chapterStart": 152,
+      "chapterEnd": 154
+    },
+    {
+      "episodeStart": 100,
+      "episodeEnd": 100,
+      "chapterStart": 154,
+      "chapterEnd": 157
+    },
+    {
+      "episodeStart": 101,
+      "episodeEnd": 101,
+      "chapterStart": 157,
+      "chapterEnd": 158
+    },
+    {
+      "episodeStart": 102,
+      "episodeEnd": 102,
+      "chapterStart": 159,
+      "chapterEnd": 159
+    },
+    {
+      "episodeStart": 103,
+      "episodeEnd": 103,
+      "chapterStart": 159,
+      "chapterEnd": 160
+    },
+    {
+      "episodeStart": 104,
+      "episodeEnd": 104,
+      "chapterStart": 160,
+      "chapterEnd": 163
+    },
+    {
+      "episodeStart": 105,
+      "episodeEnd": 105,
+      "chapterStart": 163,
+      "chapterEnd": 164
+    },
+    {
+      "episodeStart": 106,
+      "episodeEnd": 106,
+      "chapterStart": 165,
+      "chapterEnd": 167
+    },
+    {
+      "episodeStart": 107,
+      "episodeEnd": 107,
+      "chapterStart": 173,
+      "chapterEnd": 175
+    },
+    {
+      "episodeStart": 108,
+      "episodeEnd": 108,
+      "chapterStart": 176,
+      "chapterEnd": 178
+    },
+    {
+      "episodeStart": 109,
+      "episodeEnd": 109,
+      "chapterStart": 179,
+      "chapterEnd": 181
+    },
+    {
+      "episodeStart": 110,
+      "episodeEnd": 110,
+      "chapterStart": 182,
+      "chapterEnd": 186
+    },
+    {
+      "episodeStart": 111,
+      "episodeEnd": 111,
+      "chapterStart": 183,
+      "chapterEnd": 188
+    },
+    {
+      "episodeStart": 112,
+      "episodeEnd": 112,
+      "chapterStart": 185,
+      "chapterEnd": 189
+    },
+    {
+      "episodeStart": 113,
+      "episodeEnd": 113,
+      "chapterStart": 190,
+      "chapterEnd": 192
+    },
+    {
+      "episodeStart": 114,
+      "episodeEnd": 114,
+      "chapterStart": 193,
+      "chapterEnd": 195
+    },
+    {
+      "episodeStart": 115,
+      "episodeEnd": 115,
+      "chapterStart": 196,
+      "chapterEnd": 198
+    },
+    {
+      "episodeStart": 116,
+      "episodeEnd": 116,
+      "chapterStart": 198,
+      "chapterEnd": 201
+    },
+    {
+      "episodeStart": 117,
+      "episodeEnd": 117,
+      "chapterStart": 202,
+      "chapterEnd": 204
+    },
+    {
+      "episodeStart": 118,
+      "episodeEnd": 118,
+      "chapterStart": 205,
+      "chapterEnd": 207
+    },
+    {
+      "episodeStart": 119,
+      "episodeEnd": 119,
+      "chapterStart": 208,
+      "chapterEnd": 211
+    },
+    {
+      "episodeStart": 120,
+      "episodeEnd": 120,
+      "chapterStart": 212,
+      "chapterEnd": 214
+    },
+    {
+      "episodeStart": 121,
+      "episodeEnd": 121,
+      "chapterStart": 215,
+      "chapterEnd": 217
+    },
+    {
+      "episodeStart": 122,
+      "episodeEnd": 122,
+      "chapterStart": 218,
+      "chapterEnd": 220
+    },
+    {
+      "episodeStart": 126,
+      "episodeEnd": 126,
+      "chapterStart": 220,
+      "chapterEnd": 221
+    },
+    {
+      "episodeStart": 127,
+      "episodeEnd": 127,
+      "chapterStart": 221,
+      "chapterEnd": 223
+    },
+    {
+      "episodeStart": 128,
+      "episodeEnd": 128,
+      "chapterStart": 224,
+      "chapterEnd": 226
+    },
+    {
+      "episodeStart": 129,
+      "episodeEnd": 129,
+      "chapterStart": 227,
+      "chapterEnd": 228
+    },
+    {
+      "episodeStart": 158,
+      "episodeEnd": 158,
+      "chapterStart": 229,
+      "chapterEnd": 231
+    },
+    {
+      "episodeStart": 159,
+      "episodeEnd": 159,
+      "chapterStart": 232,
+      "chapterEnd": 233
+    },
+    {
+      "episodeStart": 160,
+      "episodeEnd": 160,
+      "chapterStart": 234,
+      "chapterEnd": 235
+    },
+    {
+      "episodeStart": 161,
+      "episodeEnd": 161,
+      "chapterStart": 236,
+      "chapterEnd": 239
+    },
+    {
+      "episodeStart": 162,
+      "episodeEnd": 162,
+      "chapterStart": 239,
+      "chapterEnd": 243
+    },
+    {
+      "episodeStart": 163,
+      "episodeEnd": 163,
+      "chapterStart": 244,
+      "chapterEnd": 248
+    },
+    {
+      "episodeStart": 164,
+      "episodeEnd": 164,
+      "chapterStart": 246,
+      "chapterEnd": 251
+    },
+    {
+      "episodeStart": 165,
+      "episodeEnd": 165,
+      "chapterStart": 246,
+      "chapterEnd": 253
+    },
+    {
+      "episodeStart": 166,
+      "episodeEnd": 166,
+      "chapterStart": 254,
+      "chapterEnd": 258
+    },
+    {
+      "episodeStart": 167,
+      "episodeEnd": 167,
+      "chapterStart": 255,
+      "chapterEnd": 260
+    },
+    {
+      "episodeStart": 168,
+      "episodeEnd": 168,
+      "chapterStart": 261,
+      "chapterEnd": 264
+    },
+    {
+      "episodeStart": 169,
+      "episodeEnd": 169,
+      "chapterStart": 265,
+      "chapterEnd": 267
+    },
+    {
+      "episodeStart": 170,
+      "episodeEnd": 170,
+      "chapterStart": 268,
+      "chapterEnd": 272
+    }
+  ],
+  "continueFromChapter": 273,
+  "continueNote": "This is the chapter after the last one this season adapts.",
+  "sources": [
+    {
+      "name": "Black Clover Wiki on Fandom (CC BY-SA)",
+      "url": "https://blackclover.fandom.com/wiki/Episode_1"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Black Clover Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

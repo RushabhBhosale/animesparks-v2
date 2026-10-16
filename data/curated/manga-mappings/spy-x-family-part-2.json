@@ -1,0 +1,98 @@
+{
+  "slug": "spy-x-family-part-2",
+  "ranges": [
+    {
+      "episodeStart": 1,
+      "episodeEnd": 1,
+      "chapterStart": 18,
+      "chapterEnd": 19
+    },
+    {
+      "episodeStart": 2,
+      "episodeEnd": 2,
+      "chapterStart": 20,
+      "chapterEnd": 21
+    },
+    {
+      "episodeStart": 3,
+      "episodeEnd": 3,
+      "chapterStart": 22,
+      "chapterEnd": 23
+    },
+    {
+      "episodeStart": 4,
+      "episodeEnd": 4,
+      "chapterStart": 24,
+      "chapterEnd": 24
+    },
+    {
+      "episodeStart": 5,
+      "episodeEnd": 5,
+      "chapterStart": 25,
+      "chapterEnd": 25
+    },
+    {
+      "episodeStart": 6,
+      "episodeEnd": 6,
+      "chapterStart": 26,
+      "chapterEnd": 27
+    },
+    {
+      "episodeStart": 7,
+      "episodeEnd": 7,
+      "chapterStart": 28,
+      "chapterEnd": 28
+    },
+    {
+      "episodeStart": 8,
+      "episodeEnd": 8,
+      "chapterStart": 29,
+      "chapterEnd": 29
+    },
+    {
+      "episodeStart": 9,
+      "episodeEnd": 9,
+      "chapterStart": 30,
+      "chapterEnd": 30
+    },
+    {
+      "episodeStart": 10,
+      "episodeEnd": 10,
+      "chapterStart": 31,
+      "chapterEnd": 32
+    },
+    {
+      "episodeStart": 11,
+      "episodeEnd": 11,
+      "chapterStart": 33,
+      "chapterEnd": 34
+    },
+    {
+      "episodeStart": 12,
+      "episodeEnd": 12,
+      "chapterStart": 35,
+      "chapterEnd": 36
+    },
+    {
+      "episodeStart": 13,
+      "episodeEnd": 13,
+      "chapterStart": 37,
+      "chapterEnd": 38
+    }
+  ],
+  "continueFromChapter": 39,
+  "continueNote": "This is the chapter after the last one this season adapts.",
+  "sources": [
+    {
+      "name": "Spy × Family Wiki on Fandom (CC BY-SA)",
+      "url": "https://spy-x-family.fandom.com/wiki/Episode_13"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Spy × Family Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

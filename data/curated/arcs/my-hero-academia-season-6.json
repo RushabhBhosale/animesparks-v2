@@ -1,0 +1,28 @@
+{
+  "slug": "my-hero-academia-season-6",
+  "arcs": [
+    {
+      "name": "Paranormal Liberation War",
+      "episodeStart": 1,
+      "episodeEnd": 18
+    },
+    {
+      "name": "Dark Hero",
+      "episodeStart": 19,
+      "episodeEnd": 25
+    }
+  ],
+  "sources": [
+    {
+      "name": "My Hero Academia Wiki on Fandom (CC BY-SA)",
+      "url": "https://myheroacademia.fandom.com/wiki/Episode_114"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from My Hero Academia Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

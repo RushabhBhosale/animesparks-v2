@@ -1,0 +1,33 @@
+{
+  "slug": "frieren-beyond-journeys-end-season-2",
+  "arcs": [
+    {
+      "name": "Continued Northern Travels",
+      "episodeStart": 1,
+      "episodeEnd": 5
+    },
+    {
+      "name": "Divine Revolte",
+      "episodeStart": 6,
+      "episodeEnd": 8
+    },
+    {
+      "name": "The Golden Land",
+      "episodeStart": 9,
+      "episodeEnd": 10
+    }
+  ],
+  "sources": [
+    {
+      "name": "Frieren Wiki on Fandom (CC BY-SA)",
+      "url": "https://frieren.fandom.com/wiki/Episode_29"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Frieren Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

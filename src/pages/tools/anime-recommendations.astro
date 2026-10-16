@@ -1,0 +1,220 @@
+---
+import ToolPage from '../../components/tools/ToolPage.astro';
+import AnimePicker from '../../components/tools/AnimePicker.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { getToolsExtras } from '../../lib/tools/build-extras';
+import { MOODS } from '../../lib/tools/recommend';
+
+export const prerender = true;
+const { english } = await getBuildData();
+const { recGenres, recIndex } = await getToolsExtras(english);
+const genreCounts = new Map(recGenres.map(genre => [genre, recIndex.filter(entry => entry.g.includes(genre) || entry.th.includes(genre)).length]));
+const genres = recGenres.filter(genre => (genreCounts.get(genre) || 0) >= 15 && !/^(hentai|erotica|ecchi)$/i.test(genre));
+const thisYear = new Date().getUTCFullYear();
+const years = Array.from({ length: thisYear - 1979 }, (_, index) => thisYear - index);
+const faq = [
+  { question: 'How are recommendations chosen?', answer: 'With transparent rules, not AI. Titles score points for genres and themes they share with the series you pick, for the same studio, and when MyAnimeList users recommend them to fans of that series. Score and popularity break ties. Every result says why it was picked.' },
+  { question: 'Can I hide shows I’ve already seen?', answer: 'Yes. Everything on your AnimeSparks watchlist is excluded automatically when that option is on, and you can hide any result with one tap.' },
+  { question: 'What do the moods mean?', answer: 'Each mood is a set of MyAnimeList genres and themes, for example “Cozy” covers slice of life and iyashikei. A show matches if it has any of them.' },
+];
+---
+<ToolPage
+  path="/tools/anime-recommendations" title="Anime Recommendation Finder — What to Watch Next | AnimeSparks" socialTitle="Anime Recommendation Finder"
+  description="Find your next anime. Filter by genre, mood, length, year, status and popularity, find shows similar to ones you love, or get a random pick, with reasons for every suggestion."
+  name="Anime Recommendation Finder" crumb="Recommendations" kicker="Discover" heading="Anime Recommendation Finder"
+  deck="Tell us what you loved and what you’re in the mood for. Filter by genre, length, year and popularity, or let a random pick surprise you. Every suggestion says why it was chosen."
+  facts={[[recIndex.length.toLocaleString('en-US'), 'titles to choose from']]}
+  faq={faq} credit="Genres, scores and user recommendations"
+>
+  <div data-recs>
+    <section class="tool-panel" aria-labelledby="rec-like">
+      <div class="tool-panel__head"><h2 id="rec-like"><span class="tool-step">1</span>Similar to… <small style="color:var(--ink-3);font-weight:400">(optional, up to 3)</small></h2></div>
+      <div class="tool-panel__body">
+        <AnimePicker id="rec-search" label="Add a series you loved" placeholder="Frieren, Steins;Gate, Haikyu!!…" />
+        <div class="tool-chips" data-seeds style="margin-top: var(--sp-3)"></div>
+      </div>
+    </section>
+
+    <section class="tool-panel" style="margin-top: var(--sp-5)" aria-labelledby="rec-filters">
+      <div class="tool-panel__head"><h2 id="rec-filters"><span class="tool-step">2</span>Narrow it down</h2></div>
+      <form class="tool-panel__body" data-filters novalidate>
+        <div class="tool-field">
+          <span class="tool-legend">Mood</span>
+          <div class="tool-chips" data-mood>
+            <button type="button" data-value="" aria-pressed="true">Any</button>
+            {Object.entries(MOODS).map(([key, mood]) => <button type="button" data-value={key} aria-pressed="false">{mood.label}</button>)}
+          </div>
+        </div>
+        <div class="tool-grid tool-grid--3" style="margin-top: var(--sp-5)">
+          <label class="tool-field"><span>Genre</span>
+            <select class="tool-select" name="genre"><option value="">Any genre</option>{genres.map(genre => <option value={genre}>{genre}</option>)}</select>
+          </label>
+          <label class="tool-field"><span>Length</span>
+            <select class="tool-select" name="length">
+              <option value="">Any length</option><option value="1-1">Movie / single episode</option><option value="2-13">Short (up to 13)</option>
+              <option value="14-26">Standard (14–26)</option><option value="27-100">Long (27–100)</option><option value="101-5000">Very long (100+)</option>
+            </select>
+          </label>
+          <label class="tool-field"><span>Status</span>
+            <select class="tool-select" name="status"><option value="">Any</option><option value="finished">Finished</option><option value="airing">Airing now</option></select>
+          </label>
+          <label class="tool-field"><span>From year</span>
+            <select class="tool-select" name="fromYear"><option value="">Any</option>{years.map(year => <option value={year}>{year}</option>)}</select>
+          </label>
+          <label class="tool-field"><span>To year</span>
+            <select class="tool-select" name="toYear"><option value="">Any</option>{years.map(year => <option value={year}>{year}</option>)}</select>
+          </label>
+          <label class="tool-field"><span>Popularity</span>
+            <select class="tool-select" name="popularity"><option value="">Any</option><option value="mainstream">Mainstream hits</option><option value="popular">Well known</option><option value="hidden">Hidden gems</option></select>
+          </label>
+        </div>
+        <label class="tool-check" style="margin-top: var(--sp-5)"><input type="checkbox" name="excludeWatchlist" checked /><span>Hide anything on my AnimeSparks watchlist<small data-watchlist-count></small></span></label>
+        <div class="tool-results__actions" style="margin-top: var(--sp-5)">
+          <button type="submit" class="tool-button tool-button--primary">Find anime</button>
+          <button type="button" class="tool-button" data-random>Surprise me</button>
+          <button type="button" class="tool-button tool-button--quiet" data-reset-hidden hidden>Show hidden titles</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="tool-section" aria-live="polite" aria-labelledby="rec-results-title">
+      <h2 id="rec-results-title">Suggestions</h2>
+      <p data-status class="tool-note tool-note--muted">Pick a series you loved or choose a mood, then press “Find anime”.</p>
+      <ul class="rec-grid" data-results></ul>
+    </section>
+  </div>
+
+  <Fragment slot="guide">
+    <h2>Recommendations you can see the reasoning behind</h2>
+    <p>There’s no black-box AI here. Add up to three series you loved and the finder looks for titles that share their genres and themes, come from the same studio, or that MyAnimeList users recommend to fans of those shows. Without a starting series, it ranks titles that match your filters by score and popularity.</p>
+    <p>Hide anything you’ve already seen with one tap. Titles on your <a href="/tools/anime-watchlist">AnimeSparks watchlist</a> are skipped automatically.</p>
+  </Fragment>
+</ToolPage>
+
+<style is:global>
+  .rec-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); margin: var(--sp-4) 0 0; padding: 0; list-style: none; }
+  .rec-card { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: var(--sp-4); padding: var(--sp-4); border: 1px solid var(--line); background: var(--surface); }
+  .rec-card img, .rec-card .mini-card__thumb { width: 70px; height: 98px; object-fit: cover; background: var(--surface2); }
+  .rec-card h3 { margin: 0; font-size: 16px; line-height: 1.3; color: var(--ink); }
+  .rec-card p { margin: 4px 0 0; color: var(--ink-3); font-size: var(--text-xs); }
+  .rec-card ul { margin: var(--sp-2) 0 0; padding-left: 1.1em; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
+  .rec-card .tool-results__actions { margin-top: var(--sp-3); }
+  .rec-card .tool-button { min-height: 32px; padding: 0 var(--sp-3); font-size: var(--text-xs); }
+  @media (max-width: 700px) { .rec-grid { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  import { formatLabel } from '../../lib/tools/normalize';
+  import type { RecEntry } from '../../lib/tools/recommend';
+  import type { WatchlistEntry } from '../../lib/tools/watchlist';
+  import { createPicker, type PickerItem } from '../../scripts/tools/anime-picker';
+  import { readLocal, writeLocal } from '../../scripts/tools/storage';
+
+  const root = document.querySelector<HTMLElement>('[data-recs]')!;
+  const form = root.querySelector<HTMLFormElement>('[data-filters]')!;
+  const results = root.querySelector<HTMLElement>('[data-results]')!;
+  const status = root.querySelector<HTMLElement>('[data-status]')!;
+  const seedBox = root.querySelector<HTMLElement>('[data-seeds]')!;
+  const resetHidden = root.querySelector<HTMLButtonElement>('[data-reset-hidden]')!;
+  let seeds: PickerItem[] = [];
+  let mood = '';
+  let hidden = new Set(readLocal<string[]>('recs:hidden', []));
+  let randomCount = 0;
+  const watchlist = readLocal<WatchlistEntry[]>('watchlist', []);
+  root.querySelector('[data-watchlist-count]')!.textContent = watchlist.length ? `${watchlist.length} titles on your watchlist.` : 'Your watchlist is empty.';
+
+  const renderSeeds = () => {
+    seedBox.replaceChildren(...seeds.map(seed => {
+      const chip = document.createElement('button');
+      chip.type = 'button'; chip.textContent = `${seed.t} ✕`; chip.setAttribute('aria-label', `Remove ${seed.t}`);
+      chip.addEventListener('click', () => { seeds = seeds.filter(other => other.s !== seed.s); renderSeeds(); });
+      return chip;
+    }));
+    resetHidden.hidden = !hidden.size;
+  };
+
+  const filters = () => {
+    const data = new FormData(form);
+    const [minEpisodes, maxEpisodes] = String(data.get('length') || '').split('-').map(Number);
+    const number = (name: string) => Number(data.get(name)) || undefined;
+    return {
+      mood: mood || undefined,
+      genres: data.get('genre') ? [String(data.get('genre'))] : [],
+      minEpisodes: minEpisodes || undefined, maxEpisodes: maxEpisodes || undefined,
+      fromYear: number('fromYear'), toYear: number('toYear'),
+      status: data.get('status') || undefined, popularity: data.get('popularity') || undefined,
+    };
+  };
+  const exclusions = () => [...hidden, ...((form.elements.namedItem('excludeWatchlist') as HTMLInputElement).checked ? watchlist.map(entry => entry.slug) : [])];
+
+  function card(entry: RecEntry, reasons: string[]) {
+    const item = document.createElement('li');
+    item.className = 'rec-card';
+    if (entry.p) { const image = document.createElement('img'); image.src = entry.p; image.alt = ''; image.width = 70; image.height = 98; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer'; item.append(image); }
+    else { const thumb = document.createElement('span'); thumb.className = 'mini-card__thumb'; item.append(thumb); }
+    const body = document.createElement('div');
+    const title = document.createElement('h3'); title.textContent = entry.t;
+    const meta = document.createElement('p');
+    meta.textContent = [formatLabel(entry.f), entry.y, entry.e ? `${entry.e} eps` : entry.st === 'airing' ? 'Airing' : '', entry.sc ? `★ ${entry.sc.toFixed(2)}` : '', [...entry.g, ...entry.th].slice(0, 3).join(', ')].filter(Boolean).join(' · ');
+    const why = document.createElement('ul');
+    for (const reason of reasons.length ? reasons : ['Matches your filters']) { const li = document.createElement('li'); li.textContent = reason; why.append(li); }
+    const actions = document.createElement('div'); actions.className = 'tool-results__actions';
+    const add = document.createElement('button'); add.type = 'button'; add.className = 'tool-button'; add.textContent = 'Add to watchlist';
+    add.addEventListener('click', () => {
+      const list = readLocal<WatchlistEntry[]>('watchlist', []);
+      if (!list.some(other => other.slug === entry.s)) {
+        const stamp = new Date().toISOString();
+        list.unshift({ slug: entry.s, title: entry.t, poster: entry.p, format: entry.f, year: entry.y, episodes: entry.st === 'airing' ? null : entry.e ?? null, minutesPerEpisode: entry.d ?? null, status: 'planning', watched: 0, addedAt: stamp, updatedAt: stamp });
+        writeLocal('watchlist', list);
+      }
+      add.textContent = 'On your watchlist'; add.disabled = true;
+    });
+    const hide = document.createElement('button'); hide.type = 'button'; hide.className = 'tool-button tool-button--quiet'; hide.textContent = 'Seen it / hide';
+    hide.addEventListener('click', () => { hidden.add(entry.s); writeLocal('recs:hidden', [...hidden]); item.remove(); resetHidden.hidden = false; });
+    const more = document.createElement('a'); more.className = 'tool-button tool-button--quiet'; more.href = `/tools/anime-binge-calculator?anime=${entry.s}`; more.textContent = 'How long?';
+    actions.append(add, hide, more);
+    body.append(title, meta, why, actions);
+    item.append(body);
+    return item;
+  }
+
+  async function run(random = false) {
+    status.hidden = false;
+    status.textContent = random ? 'Rolling the dice…' : 'Finding matches…';
+    results.replaceChildren();
+    try {
+      const response = await fetch('/api/tools/recommend', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seeds: seeds.map(seed => seed.s), filters: filters(), exclude: exclusions(), random: random ? `${Date.now()}-${randomCount++}` : undefined }),
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      const data = await response.json() as { results: Array<{ entry: RecEntry; reasons: string[] }> };
+      results.replaceChildren(...data.results.map(result => card(result.entry, result.reasons)));
+      status.hidden = data.results.length > 0;
+      status.textContent = 'Nothing matches all of that. Try fewer filters or a different mood.';
+    } catch {
+      status.textContent = 'Recommendations are unavailable right now. Please try again shortly.';
+    }
+  }
+
+  createPicker({
+    root: root.querySelector<HTMLElement>('[data-picker="rec-search"]')!,
+    endpoint: '/api/tools/anime-search',
+    onSelect: item => {
+      if (!seeds.some(seed => seed.s === item.s)) seeds = [...seeds, item].slice(-3);
+      (root.querySelector('[data-picker="rec-search"] input') as HTMLInputElement).value = '';
+      renderSeeds();
+      run();
+    },
+  });
+  root.querySelector('[data-mood]')!.addEventListener('click', event => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
+    if (!button) return;
+    mood = button.dataset.value || '';
+    root.querySelectorAll<HTMLButtonElement>('[data-mood] button').forEach(other => other.setAttribute('aria-pressed', String(other === button)));
+  });
+  form.addEventListener('submit', event => { event.preventDefault(); run(); });
+  root.querySelector('[data-random]')!.addEventListener('click', () => run(true));
+  resetHidden.addEventListener('click', () => { hidden = new Set(); writeLocal('recs:hidden', []); resetHidden.hidden = true; run(); });
+  renderSeeds();
+</script>

@@ -1,0 +1,17 @@
+---
+import Card from '../Card.astro';
+import type { ArticleCard } from '../../lib/content/types';
+interface Props {
+  articles: ArticleCard[];
+  heading?: string;
+}
+const { articles, heading = 'Related reading on AnimeSparks' } = Astro.props;
+---
+{articles.length > 0 && (
+  <section class="tool-section" aria-labelledby="tool-related-title">
+    <h2 id="tool-related-title">{heading}</h2>
+    <div class="card-grid card-grid--3">
+      {articles.slice(0, 6).map(article => <Card article={article} variant="compact" showExcerpt={false} />)}
+    </div>
+  </section>
+)}

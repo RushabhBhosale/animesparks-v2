@@ -29,7 +29,8 @@ export default {
       }
     }
 
-    if (url.pathname.startsWith('/tag-variants/') || url.pathname === '/listing-variant') {
+    // /tools-data/ holds build-time indexes read through env.ASSETS by /api/tools/*; they are not public files.
+    if (url.pathname.startsWith('/tag-variants/') || url.pathname === '/listing-variant' || url.pathname.startsWith('/tools-data/')) {
       return new Response('Not found', { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow' } });
     }
     let response;

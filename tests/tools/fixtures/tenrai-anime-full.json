@@ -1,0 +1,225 @@
+{
+ "mal_id": 52991,
+ "url": "https://myanimelist.net/anime/52991/Sousou_no_Frieren",
+ "images": {
+  "jpg": {
+   "image_url": "https://cdn.myanimelist.net/images/anime/1015/138006.jpg",
+   "small_image_url": "https://cdn.myanimelist.net/images/anime/1015/138006t.jpg",
+   "large_image_url": "https://cdn.myanimelist.net/images/anime/1015/138006l.jpg"
+  }
+ },
+ "approved": true,
+ "titles": [
+  {
+   "type": "Default",
+   "title": "Sousou no Frieren"
+  },
+  {
+   "type": "Japanese",
+   "title": "葬送のフリーレン"
+  },
+  {
+   "type": "English",
+   "title": "Frieren: Beyond Journey's End"
+  },
+  {
+   "type": "Synonym",
+   "title": "Frieren at the Funeral"
+  },
+  {
+   "type": "Synonym",
+   "title": "Frieren The Slayer"
+  }
+ ],
+ "title": "Sousou no Frieren",
+ "title_english": "Frieren: Beyond Journey's End",
+ "title_japanese": "葬送のフリーレン",
+ "title_synonyms": [
+  "Frieren at the Funeral",
+  "Frieren The Slayer"
+ ],
+ "type": "TV",
+ "source": "Manga",
+ "episodes": 28,
+ "status": "Finished Airing",
+ "airing": false,
+ "aired": {
+  "from": "2023-09-29T00:00:00+00:00",
+  "to": "2024-03-22T00:00:00+00:00"
+ },
+ "duration": "24 min per ep",
+ "rating": "PG-13 - Teens 13 or older",
+ "score": 9.24,
+ "popularity": 96,
+ "members": 1531332,
+ "season": "fall",
+ "year": 2023,
+ "broadcast": {
+  "day": "Fridays",
+  "time": "23:00",
+  "timezone": "Asia/Tokyo",
+  "string": "Fridays at 23:00 (JST)"
+ },
+ "studios": [
+  {
+   "mal_id": 11,
+   "type": "anime",
+   "name": "Madhouse",
+   "url": "https://myanimelist.net/anime/producer/11/Madhouse"
+  }
+ ],
+ "genres": [
+  {
+   "mal_id": 2,
+   "type": "anime",
+   "name": "Adventure",
+   "url": "https://myanimelist.net/anime/genre/2/Adventure"
+  },
+  {
+   "mal_id": 46,
+   "type": "anime",
+   "name": "Award Winning",
+   "url": "https://myanimelist.net/anime/genre/46/Award_Winning"
+  },
+  {
+   "mal_id": 8,
+   "type": "anime",
+   "name": "Drama",
+   "url": "https://myanimelist.net/anime/genre/8/Drama"
+  },
+  {
+   "mal_id": 10,
+   "type": "anime",
+   "name": "Fantasy",
+   "url": "https://myanimelist.net/anime/genre/10/Fantasy"
+  }
+ ],
+ "explicit_genres": [],
+ "themes": [],
+ "demographics": [
+  {
+   "mal_id": 27,
+   "type": "anime",
+   "name": "Shounen",
+   "url": "https://myanimelist.net/anime/genre/27/Shounen"
+  }
+ ],
+ "relations": [
+  {
+   "relation": "Sequel",
+   "entry": [
+    {
+     "mal_id": 59978,
+     "type": "anime",
+     "name": "Sousou no Frieren 2nd Season",
+     "url": "https://myanimelist.net/anime/59978/Sousou_no_Frieren_2nd_Season",
+     "media_type": "TV",
+     "images": {
+      "jpg": {
+       "image_url": "https://cdn.myanimelist.net/images/anime/1921/154528.jpg",
+       "small_image_url": "https://cdn.myanimelist.net/images/anime/1921/154528t.jpg",
+       "large_image_url": "https://cdn.myanimelist.net/images/anime/1921/154528l.jpg"
+      },
+      "webp": {
+       "image_url": "https://cdn.myanimelist.net/images/anime/1921/154528.webp",
+       "small_image_url": "https://cdn.myanimelist.net/images/anime/1921/154528t.webp",
+       "large_image_url": "https://cdn.myanimelist.net/images/anime/1921/154528l.webp"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "relation": "Adaptation",
+   "entry": [
+    {
+     "mal_id": 126287,
+     "type": "manga",
+     "name": "Sousou no Frieren",
+     "url": "https://myanimelist.net/manga/126287/Sousou_no_Frieren",
+     "media_type": "Manga",
+     "images": {
+      "jpg": {
+       "image_url": "https://cdn.myanimelist.net/images/manga/3/232121.jpg",
+       "small_image_url": "https://cdn.myanimelist.net/images/manga/3/232121t.jpg",
+       "large_image_url": "https://cdn.myanimelist.net/images/manga/3/232121l.jpg"
+      },
+      "webp": {
+       "image_url": "https://cdn.myanimelist.net/images/manga/3/232121.webp",
+       "small_image_url": "https://cdn.myanimelist.net/images/manga/3/232121t.webp",
+       "large_image_url": "https://cdn.myanimelist.net/images/manga/3/232121l.webp"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "relation": "Side Story",
+   "entry": [
+    {
+     "mal_id": 56885,
+     "type": "anime",
+     "name": "Sousou no Frieren: ●● no Mahou",
+     "url": "https://myanimelist.net/anime/56885/Sousou_no_Frieren___no_Mahou",
+     "media_type": "ONA",
+     "images": {
+      "jpg": {
+       "image_url": "https://cdn.myanimelist.net/images/anime/1045/150038.jpg",
+       "small_image_url": "https://cdn.myanimelist.net/images/anime/1045/150038t.jpg",
+       "large_image_url": "https://cdn.myanimelist.net/images/anime/1045/150038l.jpg"
+      },
+      "webp": {
+       "image_url": "https://cdn.myanimelist.net/images/anime/1045/150038.webp",
+       "small_image_url": "https://cdn.myanimelist.net/images/anime/1045/150038t.webp",
+       "large_image_url": "https://cdn.myanimelist.net/images/anime/1045/150038l.webp"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "relation": "Other",
+   "entry": [
+    {
+     "mal_id": 56805,
+     "type": "anime",
+     "name": "Yuusha",
+     "url": "https://myanimelist.net/anime/56805/Yuusha",
+     "media_type": "Music",
+     "images": {
+      "jpg": {
+       "image_url": "https://cdn.myanimelist.net/images/anime/1947/138863.jpg",
+       "small_image_url": "https://cdn.myanimelist.net/images/anime/1947/138863t.jpg",
+       "large_image_url": "https://cdn.myanimelist.net/images/anime/1947/138863l.jpg"
+      },
+      "webp": {
+       "image_url": "https://cdn.myanimelist.net/images/anime/1947/138863.webp",
+       "small_image_url": "https://cdn.myanimelist.net/images/anime/1947/138863t.webp",
+       "large_image_url": "https://cdn.myanimelist.net/images/anime/1947/138863l.webp"
+      }
+     }
+    },
+    {
+     "mal_id": 58313,
+     "type": "anime",
+     "name": "Haru (2024)",
+     "url": "https://myanimelist.net/anime/58313/Haru_2024",
+     "media_type": "Music",
+     "images": {
+      "jpg": {
+       "image_url": "https://cdn.myanimelist.net/images/anime/1434/142159.jpg",
+       "small_image_url": "https://cdn.myanimelist.net/images/anime/1434/142159t.jpg",
+       "large_image_url": "https://cdn.myanimelist.net/images/anime/1434/142159l.jpg"
+      },
+      "webp": {
+       "image_url": "https://cdn.myanimelist.net/images/anime/1434/142159.webp",
+       "small_image_url": "https://cdn.myanimelist.net/images/anime/1434/142159t.webp",
+       "large_image_url": "https://cdn.myanimelist.net/images/anime/1434/142159l.webp"
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "synopsis": "During their decade-long quest to defeat the Demon King... (truncated fixture)\n\n[Written by MAL Rewrite]"
+}

@@ -1,0 +1,53 @@
+{
+  "slug": "my-hero-academia-season-5",
+  "arcs": [
+    {
+      "name": "Pro Hero",
+      "episodeStart": 1,
+      "episodeEnd": 2
+    },
+    {
+      "name": "Joint Training",
+      "episodeStart": 3,
+      "episodeEnd": 11
+    },
+    {
+      "name": "Joint Training Arc",
+      "episodeStart": 12,
+      "episodeEnd": 12
+    },
+    {
+      "name": "Endeavor Agency",
+      "episodeStart": 13,
+      "episodeEnd": 18
+    },
+    {
+      "name": "Paranormal Liberation War",
+      "episodeStart": 19,
+      "episodeEnd": 19
+    },
+    {
+      "name": "Meta Liberation Army",
+      "episodeStart": 20,
+      "episodeEnd": 24
+    },
+    {
+      "name": "Paranormal Liberation War",
+      "episodeStart": 25,
+      "episodeEnd": 25
+    }
+  ],
+  "sources": [
+    {
+      "name": "My Hero Academia Wiki on Fandom (CC BY-SA)",
+      "url": "https://myheroacademia.fandom.com/wiki/Episode_89"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from My Hero Academia Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

@@ -92,11 +92,7 @@ const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003
         <a href="/categories" aria-current={Astro.url.pathname.startsWith('/categories') ? 'page' : undefined}>{copy.categories}</a>
         <a href={lang === 'es' ? '/blogs/es' : '/blogs'} aria-current={Astro.url.pathname === '/blogs' || Astro.url.pathname === '/blogs/es' ? 'page' : undefined}>{copy.latest}</a>
         <a href="/trending" aria-current={Astro.url.pathname.startsWith('/trending') ? 'page' : undefined}>{copy.trending}</a>
-        {lang === 'es' ? (
-          <a href={englishUrl || '/blogs'} hreflang="en" class="nav-lang" title={copy.readInEnglish}>EN</a>
-        ) : (
-          <a href={spanishUrl || '/blogs/es'} hreflang="es" class="nav-lang" title={copy.readInSpanish}>ES</a>
-        )}
+        <a href="/tools" aria-current={Astro.url.pathname.startsWith('/tools') ? 'page' : undefined}>{copy.tools}</a>
       </nav>
 
       <div class="header-search">
@@ -139,6 +135,7 @@ const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003
         <a href="/categories">{copy.editorialSections}</a>
         <a href="/trending">{copy.trendingNow}</a>
         <a href="/my-anime-list">{lang === 'es' ? 'Mi lista de anime' : 'My anime list'}</a>
+        <a href="/tools">{lang === 'es' ? 'Herramientas de anime' : 'Anime tools'}</a>
         <a href="/blogs/es" hreflang="es">{copy.spanishEdition}</a>
       </nav>
 

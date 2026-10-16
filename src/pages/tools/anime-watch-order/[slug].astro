@@ -1,0 +1,218 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import '../../../styles/tools.css';
+import AdUnit from '../../../components/AdUnit.astro';
+import ToolHero from '../../../components/tools/ToolHero.astro';
+import RelatedReading from '../../../components/tools/RelatedReading.astro';
+import { getBuildData } from '../../../lib/content/build-data';
+import { SITE } from '../../../lib/content/seo';
+import { getToolsBuildData, relatedArticles, type FranchiseEntryView, type FranchiseView } from '../../../lib/tools/build-data';
+import { formatDuration, formatHours, formatLabel, statusLabel } from '../../../lib/tools/normalize';
+import { toolBreadcrumbs, TOOLS_IMAGE } from '../../../lib/tools/seo';
+
+export const prerender = true;
+export async function getStaticPaths() {
+  const { franchises } = await getToolsBuildData();
+  return franchises.map(franchise => ({ params: { slug: franchise.slug }, props: { franchise } }));
+}
+
+const { franchise } = Astro.props as { franchise: FranchiseView };
+const { english } = await getBuildData();
+const path = `/tools/anime-watch-order/${franchise.slug}`;
+const count = franchise.releaseOrder.length;
+const mainCount = franchise.releaseOrder.filter(entry => entry.role === 'main').length;
+const allTime = franchise.totals.all;
+const mainTime = franchise.totals.main;
+const title = `${franchise.title} Watch Order — All ${count} Entries in Order | AnimeSparks`;
+const description = `How to watch ${franchise.title} in order: ${count} seasons, movies and specials in release order${allTime.minutes ? `, about ${formatHours(allTime.minutes)} in total` : ''}. Track your progress as you go.`.slice(0, 300);
+const related = relatedArticles(english, franchise.titleKeys, 6);
+const orderLabels: Record<string, string> = { chronological: 'Chronological', beginner: 'Beginner-friendly' };
+const roleLabels: Record<string, string> = { main: 'Main story', side: 'Side story', recap: 'Recap' };
+
+const meta = (entry: FranchiseEntryView) => {
+  const parts: string[] = [formatLabel(entry.format)];
+  if (entry.year) parts.push(String(entry.year));
+  if (entry.format !== 'movie' || (entry.episodes || 1) > 1) {
+    if (entry.status === 'airing') parts.push(entry.episodesAired ? `${entry.episodesAired}${entry.episodes ? `/${entry.episodes}` : ''} eps aired` : 'Airing');
+    else if (entry.episodes) parts.push(`${entry.episodes} ep${entry.episodes === 1 ? '' : 's'}`);
+  }
+  if (entry.durationMinutes) parts.push(entry.format === 'movie' && (entry.episodes || 1) === 1 ? `${Math.round(entry.durationMinutes)} min` : `${Math.round(entry.durationMinutes)} min each`);
+  if (entry.watchMinutes && (entry.watchEpisodes || 0) > 1) parts.push(`≈ ${formatDuration(entry.watchMinutes)}`);
+  return parts;
+};
+const jsonLd = [
+  toolBreadcrumbs([['Watch Order Guide', '/tools/anime-watch-order'], [`${franchise.title} watch order`, path]]),
+  { '@context': 'https://schema.org', '@type': 'ItemList', name: `${franchise.title} watch order (release order)`, numberOfItems: count,
+    itemListOrder: 'https://schema.org/ItemListOrderAscending',
+    itemListElement: franchise.releaseOrder.map((entry, index) => ({
+      '@type': 'ListItem', position: index + 1,
+      item: { '@type': entry.format === 'movie' ? 'Movie' : 'TVSeries', name: entry.title, ...(entry.airedFrom ? { datePublished: entry.airedFrom.slice(0, 10) } : {}), ...(entry.sourceUrl ? { sameAs: entry.sourceUrl } : {}) },
+    })) },
+];
+const lists = [
+  { id: 'release', label: 'Release order', entries: franchise.releaseOrder.map(entry => ({ ...entry, optional: false, note: undefined as string | undefined, episodeRange: undefined as string | undefined })) },
+  ...franchise.curated.map(order => ({ id: order.kind, label: orderLabels[order.kind], entries: order.entries, order })),
+];
+// Hands the franchise total to the Binge Calculator (episodes and average runtime).
+const bingeLink = (scope: string, time: { minutes: number; episodes: number }) => {
+  const params = new URLSearchParams({ label: `${franchise.title} (${scope})`, ep: String(time.episodes), min: String(Math.round((time.minutes / time.episodes) * 10) / 10) });
+  return `/tools/anime-binge-calculator?${params}`;
+};
+const missingKinds = ['chronological', 'beginner'].filter(kind => !franchise.curated.some(order => order.kind === kind));
+---
+<SiteLayout title={title} socialTitle={`${franchise.title} Watch Order`} description={description} canonical={`${SITE}${path}`} image={franchise.poster || TOOLS_IMAGE} jsonLd={jsonLd} robotsNoindex={!franchise.indexable}>
+  <main>
+    <ToolHero
+      crumbs={[['Home', '/'], ['Tools', '/tools'], ['Watch Order', '/tools/anime-watch-order'], [franchise.title]]}
+      kicker="Watch order"
+      title={`How to watch ${franchise.title} in order`}
+      deck={`Every ${franchise.title} season, movie and special, in the order it was released. Tick entries off as you watch. Your progress stays in this browser.`}
+      facts={[
+        [String(count), 'entries'],
+        [String(mainCount), 'in the main story'],
+        ...(allTime.minutes ? [[formatHours(allTime.minutes), 'total'] as [string, string]] : []),
+      ]}
+    />
+
+    <div class="shell tool-main">
+      <div class="tool-layout">
+        <div data-franchise={franchise.slug}>
+          <h2 class="sr-only">{franchise.title} viewing order</h2>
+          <div class="order-toolbar">
+            <div class="tool-segment" role="tablist" aria-label="Viewing order">
+              {lists.map((list, index) => <button type="button" role="tab" id={`tab-${list.id}`} aria-controls={`list-${list.id}`} aria-selected={index === 0 ? 'true' : 'false'} data-order-tab={list.id}>{list.label}</button>)}
+            </div>
+            <label class="tool-check"><input type="checkbox" data-main-only /><span>Main story only</span></label>
+          </div>
+
+          <div class="order-progress" aria-live="polite">
+            <div class="order-progress__bar"><span data-progress-bar></span></div>
+            <p><span data-progress-count>0 of {count} watched</span><span data-progress-left>{allTime.minutes ? `${formatDuration(allTime.minutes)} left` : ''}</span></p>
+          </div>
+
+          {lists.map((list, index) => (
+            <div id={`list-${list.id}`} role="tabpanel" aria-labelledby={`tab-${list.id}`} hidden={index !== 0}>
+              {'order' in list && list.order?.summary && <p class="tool-note tool-note--muted" style="margin-bottom: var(--sp-4)">{list.order.summary}</p>}
+              <ol class="order-list" data-order-list>
+                {list.entries.map(entry => (
+                  <li class="order-item" data-entry={entry.slug} data-role={entry.role} data-minutes={entry.watchMinutes ?? ''}>
+                    {entry.poster
+                      ? <img src={entry.poster} alt="" width="54" height="76" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+                      : <span class="order-item__thumb"></span>}
+                    <div>
+                      <h3 class="order-item__title">{entry.title}</h3>
+                      {entry.titleRomaji && <p class="order-item__alt">{entry.titleRomaji}</p>}
+                      <p class="order-item__meta">
+                        <span class:list={['order-badge', entry.role === 'main' && 'order-badge--main']}>{roleLabels[entry.role]}</span>
+                        {entry.optional && <span class="order-badge">Optional</span>}
+                        {entry.status === 'upcoming' && <span class="order-badge order-badge--upcoming">{statusLabel(entry.status)}</span>}
+                        {entry.status === 'airing' && <span class="order-badge order-badge--upcoming">Airing</span>}
+                        {entry.episodeRange && <span>Episodes {entry.episodeRange}</span>}
+                        {meta(entry).map(part => <span>{part}</span>)}
+                      </p>
+                      {entry.note && <p class="order-item__note">{entry.note}</p>}
+                    </div>
+                    <label class="order-done"><input type="checkbox" data-done={entry.slug} aria-label={`Mark ${entry.title} as watched`} /><span>Watched</span></label>
+                  </li>
+                ))}
+              </ol>
+              {'order' in list && list.order && (
+                <p class="order-sources">Verified by {list.order.verifiedBy || 'AnimeSparks editors'}{list.order.verifiedAt && ` on ${list.order.verifiedAt}`}. Sources: {list.order.sources.map((source, position) => <>{position > 0 && ', '}<a href={source.url} rel="nofollow noopener" target="_blank">{source.name}</a></>)}</p>
+              )}
+            </div>
+          ))}
+
+          {franchise.truncated && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">This franchise has more related entries than we list here. The earliest {count} are shown.</p>}
+          <div class="tool-ad-slot"><AdUnit slot="horizontal1" /></div>
+        </div>
+
+        <aside class="tool-aside" aria-label="About this watch order">
+          <div class="tool-aside-card">
+            <p class="kicker red">At a glance</p>
+            <p><strong>Everything:</strong> {count} entries{allTime.minutes ? `, ≈ ${formatHours(allTime.minutes)}` : ''}.</p>
+            <p><strong>Main story only:</strong> {mainCount} entries{mainTime.minutes ? `, ≈ ${formatHours(mainTime.minutes)}` : ''}.</p>
+            {allTime.unknownCount > 0 && <p>{allTime.unknownCount} {allTime.unknownCount === 1 ? 'entry has' : 'entries have'} no listed runtime yet and {allTime.unknownCount === 1 ? 'is' : 'are'} left out of the total.</p>}
+          </div>
+          {missingKinds.length > 0 && (
+            <div class="tool-aside-card">
+              <p class="kicker">Other orders</p>
+              <p>A {missingKinds.map(kind => orderLabels[kind].toLowerCase()).join(' or ')} order hasn’t been editor-verified for {franchise.title} yet. Until then, release order is the reliable choice for a first watch.</p>
+            </div>
+          )}
+          <div class="tool-aside-card">
+            <p class="kicker">How long?</p>
+            {mainTime.minutes > 0 && mainTime.episodes > 0
+              ? <p>Plan it in the Binge Calculator: <a href={bingeLink('main story', mainTime)}>main story</a>{allTime.episodes > mainTime.episodes && <> or <a href={bingeLink('everything', allTime)}>everything</a></>}.</p>
+              : <p>Work out your finish date in the <a href="/tools/anime-binge-calculator">Binge Calculator</a>.</p>}
+          </div>
+        </aside>
+      </div>
+
+      <section class="tool-section tool-guide" aria-labelledby="franchise-method">
+        <h2 id="franchise-method">How this list is built</h2>
+        <p>Entries are gathered from MyAnimeList’s sequel, prequel, side-story and summary links, starting from {franchise.releaseOrder[0]?.title}. They are then sorted by original premiere date. Main-story entries are joined by sequel and prequel links. Everything else is marked as a side story or recap so you can skip it.</p>
+        <p>Watch time uses each entry’s listed runtime. Ongoing series count only the episodes aired so far, and unannounced entries count as zero until they premiere.</p>
+      </section>
+
+      <RelatedReading articles={related} heading={`More on ${franchise.title}`} />
+
+      <p class="tool-credit">
+        Relations, air dates and runtimes: <a href="https://myanimelist.net" rel="nofollow noopener" target="_blank">MyAnimeList</a> via the <a href="https://tenrai.org" rel="nofollow noopener" target="_blank">Tenrai API</a> · refreshed {new Date(franchise.fetchedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}.
+      </p>
+    </div>
+  </main>
+</SiteLayout>
+
+<script>
+  import { formatDuration } from '../../../lib/tools/normalize';
+  import { readLocal, writeLocal } from '../../../scripts/tools/storage';
+
+  const root = document.querySelector<HTMLElement>('[data-franchise]');
+  if (root) {
+    const key = `watch-order:${root.dataset.franchise}`;
+    const done = new Set(readLocal<string[]>(key, []));
+    const mainOnly = root.querySelector<HTMLInputElement>('[data-main-only]')!;
+    const bar = root.querySelector<HTMLElement>('[data-progress-bar]')!;
+    const countLabel = root.querySelector<HTMLElement>('[data-progress-count]')!;
+    const leftLabel = root.querySelector<HTMLElement>('[data-progress-left]')!;
+    let activeList = root.querySelector<HTMLElement>('[role="tabpanel"]:not([hidden]) [data-order-list]')!;
+    mainOnly.checked = readLocal<boolean>(`${key}:main-only`, false);
+
+    const render = () => {
+      root.querySelectorAll<HTMLElement>('[data-order-list]').forEach(list => list.classList.toggle('is-main-only', mainOnly.checked));
+      root.querySelectorAll<HTMLInputElement>('[data-done]').forEach(box => {
+        box.checked = done.has(box.dataset.done || '');
+        box.closest('.order-item')?.classList.toggle('is-done', box.checked);
+      });
+      const items = [...activeList.querySelectorAll<HTMLElement>('.order-item')]
+        .filter(item => !mainOnly.checked || item.dataset.role === 'main');
+      const unique = new Map(items.map(item => [item.dataset.entry || '', Number(item.dataset.minutes || 0)]));
+      const watched = [...unique.keys()].filter(slug => done.has(slug)).length;
+      const left = [...unique].filter(([slug]) => !done.has(slug)).reduce((sum, [, minutes]) => sum + minutes, 0);
+      bar.style.width = unique.size ? `${(watched / unique.size) * 100}%` : '0';
+      countLabel.textContent = `${watched} of ${unique.size} watched`;
+      leftLabel.textContent = left > 0 ? `${formatDuration(left)} left` : watched === unique.size && unique.size ? 'All caught up' : '';
+    };
+
+    root.addEventListener('change', event => {
+      const target = event.target as HTMLInputElement;
+      if (target.dataset.done) {
+        if (target.checked) done.add(target.dataset.done); else done.delete(target.dataset.done);
+        writeLocal(key, [...done]);
+      } else if (target === mainOnly) {
+        writeLocal(`${key}:main-only`, mainOnly.checked);
+      }
+      render();
+    });
+    root.querySelectorAll<HTMLButtonElement>('[data-order-tab]').forEach(tab => tab.addEventListener('click', () => {
+      root.querySelectorAll<HTMLButtonElement>('[data-order-tab]').forEach(other => {
+        const selected = other === tab;
+        other.setAttribute('aria-selected', String(selected));
+        document.getElementById(other.getAttribute('aria-controls') || '')!.hidden = !selected;
+      });
+      activeList = document.getElementById(tab.getAttribute('aria-controls') || '')!.querySelector<HTMLElement>('[data-order-list]')!;
+      render();
+    }));
+    render();
+  }
+</script>

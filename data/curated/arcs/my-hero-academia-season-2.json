@@ -1,0 +1,33 @@
+{
+  "slug": "my-hero-academia-season-2",
+  "arcs": [
+    {
+      "name": "U.A. Sports Festival",
+      "episodeStart": 1,
+      "episodeEnd": 12
+    },
+    {
+      "name": "Vs. Hero Killer",
+      "episodeStart": 13,
+      "episodeEnd": 20
+    },
+    {
+      "name": "Final Exams",
+      "episodeStart": 21,
+      "episodeEnd": 25
+    }
+  ],
+  "sources": [
+    {
+      "name": "My Hero Academia Wiki on Fandom (CC BY-SA)",
+      "url": "https://myheroacademia.fandom.com/wiki/Episode_14"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from My Hero Academia Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

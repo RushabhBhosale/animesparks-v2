@@ -1,0 +1,427 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import '../../styles/tools.css';
+import AdUnit from '../../components/AdUnit.astro';
+import ToolHero from '../../components/tools/ToolHero.astro';
+import ToolFaq from '../../components/tools/ToolFaq.astro';
+import AnimePicker from '../../components/tools/AnimePicker.astro';
+import RelatedReading from '../../components/tools/RelatedReading.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { SITE } from '../../lib/content/seo';
+import { getToolsBuildData, relatedArticles } from '../../lib/tools/build-data';
+import { compactKey } from '../../lib/tools/normalize';
+import { faqPage, toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../lib/tools/seo';
+
+export const prerender = true;
+const path = '/tools/anime-binge-calculator';
+const title = 'Anime Binge Calculator — How Long to Watch Any Anime | AnimeSparks';
+const description = 'Find out how long it takes to watch any anime at your own pace. Set daily hours, skip openings, change playback speed and get your finish date.';
+const [{ english }, tools] = await Promise.all([getBuildData(), getToolsBuildData()]);
+
+// Quick picks: the most popular long-running series in the catalogue.
+const quickPicks = tools.animeIndex
+  .filter(entry => (entry.st === 'airing' ? entry.ea || 0 : entry.e || 0) >= 60 && entry.d)
+  .slice(0, 6);
+const longSeriesKeys = new Set(tools.anime
+  .filter(item => (item.episodes || item.episodesAired || 0) >= 100)
+  .flatMap(item => [item.title, item.titleEnglish, item.titleRomaji, ...(item.legacy?.articleAnimeNames || [])])
+  .filter((value): value is string => Boolean(value)).map(compactKey).filter(key => key.length > 2));
+const related = relatedArticles(english, longSeriesKeys, 6);
+
+const faq = [
+  { question: 'How is the total watch time calculated?', answer: 'Episodes × minutes per episode, divided by your playback speed. With opening and ending skipping on, the skip length (3 minutes by default) is removed from every episode that runs 15 minutes or longer. The total is then spread across the daily hours and watching days you choose.' },
+  { question: 'Where do episode counts and runtimes come from?', answer: 'From MyAnimeList, via the Tenrai API, refreshed once a day. For a series that is still airing, the calculator uses only the episodes that have already aired, and it says so. You can always type your own numbers.' },
+  { question: 'Can I skip filler episodes?', answer: 'Yes, for series with filler data. The option uses the filler and recap episodes flagged on MyAnimeList, or an editor-verified list where one exists. We never guess, so the option stays off for series without that data.' },
+  { question: 'Is my data saved?', answer: 'Your last settings are kept in this browser only. Nothing is sent to AnimeSparks. The share link contains just the numbers you entered.' },
+  { question: 'How long does it take to watch One Piece?', answer: 'Pick One Piece in the search box. The calculator uses the current aired episode count and shows the total in days and hours, plus a finish date for the pace you set.' },
+];
+const jsonLd = [
+  toolBreadcrumbs([['Anime Binge Calculator', path]]),
+  toolApplication('Anime Binge Calculator', description, path),
+  faqPage(faq),
+];
+---
+<SiteLayout title={title} socialTitle="Anime Binge Calculator" description={description} canonical={`${SITE}${path}`} image={TOOLS_IMAGE} jsonLd={jsonLd} showFooterAd>
+  <main>
+    <ToolHero
+      crumbs={[['Home', '/'], ['Tools', '/tools'], ['Binge Calculator']]}
+      kicker="Watch smarter"
+      title="Anime Binge Calculator"
+      deck="How long will it take to finish that 500-episode classic? Pick a series and set your pace to get the total watch time and the date you’ll finish."
+    />
+
+    <div class="shell tool-main">
+      <div class="tool-layout">
+        <div>
+          <section class="tool-panel" aria-labelledby="binge-pick">
+            <div class="tool-panel__head"><h2 id="binge-pick"><span class="tool-step">1</span>Choose a series</h2></div>
+            <div class="tool-panel__body">
+              <AnimePicker id="binge-search" label="Search anime" placeholder="One Piece, Frieren, Naruto Shippuden…" hint="Or skip this step and type the episode count and length yourself." />
+              {quickPicks.length > 0 && (
+                <div class="tool-field" style="margin-top: var(--sp-4)">
+                  <span class="tool-legend">Popular long series</span>
+                  <div class="tool-chips">
+                    {quickPicks.map(entry => <button type="button" data-quick-pick={JSON.stringify(entry)}>{entry.t}</button>)}
+                  </div>
+                </div>
+              )}
+              <div class="anime-summary" id="binge-summary" hidden>
+                <span class="anime-summary__thumb" data-summary-image></span>
+                <div>
+                  <h3 data-summary-title></h3>
+                  <p data-summary-meta></p>
+                  <p class="tool-note" data-summary-note hidden></p>
+                </div>
+                <button type="button" class="tool-button tool-button--quiet" data-summary-clear>Clear</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="tool-panel" style="margin-top: var(--sp-5)" aria-labelledby="binge-pace">
+            <div class="tool-panel__head"><h2 id="binge-pace"><span class="tool-step">2</span>Set your pace</h2></div>
+            <form class="tool-panel__body" id="binge-form" novalidate>
+              <div class="tool-grid">
+                <label class="tool-field"><span>Episodes</span><input class="tool-input" name="episodes" type="number" inputmode="numeric" min="1" max="5000" step="1" placeholder="e.g. 220" /></label>
+                <label class="tool-field"><span>Minutes per episode</span><input class="tool-input" name="minutes" type="number" inputmode="decimal" min="1" max="600" step="0.5" value="24" /></label>
+                <div class="tool-field">
+                  <label for="binge-hours"><span class="tool-legend">Hours per day</span></label>
+                  <input class="tool-input" id="binge-hours" name="hours" type="number" inputmode="decimal" min="0.25" max="24" step="0.25" value="2" />
+                  <div class="tool-chips" data-hour-chips>
+                    {[1, 2, 3, 5, 8].map(hours => <button type="button" data-hours={hours} aria-pressed={hours === 2 ? 'true' : 'false'}>{hours}h</button>)}
+                  </div>
+                </div>
+                <label class="tool-field"><span>Watching days per week</span>
+                  <select class="tool-select" name="days">
+                    {[7, 6, 5, 4, 3, 2, 1].map(days => <option value={days}>{days === 7 ? 'Every day' : `${days} days a week`}</option>)}
+                  </select>
+                </label>
+                <div class="tool-field span-2">
+                  <span class="tool-legend" id="binge-speed-label">Playback speed</span>
+                  <div class="tool-segment" role="group" aria-labelledby="binge-speed-label" data-speed>
+                    {[1, 1.25, 1.5, 2].map(speed => <button type="button" data-value={speed} aria-pressed={speed === 1 ? 'true' : 'false'}>{speed}×</button>)}
+                  </div>
+                </div>
+                <label class="tool-field"><span>Start date</span><input class="tool-input" name="start" type="date" /></label>
+                <div class="tool-field">
+                  <span class="tool-legend">Skipping</span>
+                  <label class="tool-check"><input type="checkbox" name="skipOpEd" /><span>Skip openings &amp; endings<small>Removes <input class="tool-input" style="display:inline-block;width:64px;min-height:30px;padding:0 6px;font-size:14px" name="opEd" type="number" min="0" max="10" step="0.5" value="3" aria-label="Minutes skipped per episode" /> min from each episode of 15+ minutes.</small></span></label>
+                  <label class="tool-check tool-check--disabled" data-filler-option><input type="checkbox" name="skipFiller" disabled /><span>Skip filler &amp; recap episodes<small data-filler-reason>Only available for series with filler data.</small></span></label>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <section class="tool-results" style="margin-top: var(--sp-5)" aria-live="polite" aria-labelledby="binge-results-title">
+            <h2 class="sr-only" id="binge-results-title">Your binge plan</h2>
+            <p data-results-empty>Enter an episode count, or pick a series, to see your plan.</p>
+            <p class="tool-error" data-results-error hidden></p>
+            <div data-results hidden>
+              <dl class="tool-results__grid">
+                <div class="tool-stat tool-stat--lead"><dt>Total watch time</dt><dd data-out="total"></dd></div>
+                <div class="tool-stat"><dt>You’ll finish on</dt><dd data-out="finish"></dd></div>
+                <div class="tool-stat"><dt>Watching days</dt><dd data-out="days"></dd></div>
+                <div class="tool-stat"><dt>Episodes per day</dt><dd data-out="perDay"></dd></div>
+              </dl>
+              <div class="tool-results__foot">
+                <p data-out="summary"></p>
+                <div class="tool-results__actions">
+                  <button type="button" class="tool-button tool-button--primary" data-share>Share result</button>
+                  <button type="button" class="tool-button" data-copy-link>Copy link</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="tool-ad-slot"><AdUnit slot="horizontal1" /></div>
+        </div>
+
+        <aside class="tool-aside" aria-label="About this calculator">
+          <div class="tool-aside-card">
+            <p class="kicker red">How it works</p>
+            <p>Total time = episodes × minutes per episode ÷ playback speed. The calculator spreads that across your daily hours and watching days, counting today as day one.</p>
+          </div>
+          <div class="tool-aside-card">
+            <p class="kicker">Good to know</p>
+            <ul>
+              <li>Ongoing series use only the episodes that have aired so far.</li>
+              <li>Openings and endings average about 1.5 minutes each.</li>
+              <li>Everything stays in your browser.</li>
+            </ul>
+          </div>
+          <div class="tool-aside-card">
+            <p class="kicker">Next</p>
+            <p>Not sure which season comes first? Try the <a href="/tools/anime-watch-order">Watch Order Guide</a>.</p>
+          </div>
+        </aside>
+      </div>
+
+      <section class="tool-section tool-guide" aria-labelledby="binge-guide">
+        <h2 id="binge-guide">Plan a long series without burning out</h2>
+        <p>Long-running shounen series can be huge commitments. Watched straight through, a few hundred episodes add up to days of runtime. Planning a marathon is easier with real numbers, so the calculator turns episode counts into total hours, daily viewing and a finish date.</p>
+        <h3>Use it in three steps</h3>
+        <ol>
+          <li><strong>Pick a series.</strong> Episode count and runtime fill in automatically. Ongoing shows count only the episodes already released.</li>
+          <li><strong>Set your pace.</strong> Choose daily hours, watching days and playback speed. Turn on opening and ending skipping if you skip intros.</li>
+          <li><strong>Share or save.</strong> The link keeps your exact settings, so you can send it to a friend or come back later.</li>
+        </ol>
+        <h3>Why your total may differ from a streaming service</h3>
+        <p>Runtimes are listed per episode and rounded to the minute. Recaps, previews and post-credit scenes vary between releases, and some platforms split or merge episodes. Treat the result as a reliable estimate rather than an exact runtime.</p>
+      </section>
+
+      <ToolFaq faq={faq} />
+      <RelatedReading articles={related} heading="Reading for long series" />
+
+      <p class="tool-credit">
+        Episode counts and runtimes: <a href="https://myanimelist.net" rel="nofollow noopener" target="_blank">MyAnimeList</a>, provided by the <a href="https://tenrai.org" rel="nofollow noopener" target="_blank">Tenrai API</a>{tools.lastSyncedAt && <> · last refreshed {new Date(tools.lastSyncedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</>}. AnimeSparks is not affiliated with MyAnimeList or Tenrai.
+      </p>
+    </div>
+  </main>
+</SiteLayout>
+
+<script>
+  import { calculateBinge, type BingeInput } from '../../lib/tools/binge';
+  import { formatDuration, formatHours, formatLabel, statusLabel } from '../../lib/tools/normalize';
+  import { createPicker, type PickerItem } from '../../scripts/tools/anime-picker';
+  import { readLocal, writeLocal } from '../../scripts/tools/storage';
+
+  const form = document.getElementById('binge-form') as HTMLFormElement;
+  const field = <T extends HTMLInputElement | HTMLSelectElement>(name: string) => form.elements.namedItem(name) as T;
+  const episodes = field<HTMLInputElement>('episodes');
+  const minutes = field<HTMLInputElement>('minutes');
+  const hours = field<HTMLInputElement>('hours');
+  const days = field<HTMLSelectElement>('days');
+  const start = field<HTMLInputElement>('start');
+  const skipOpEd = field<HTMLInputElement>('skipOpEd');
+  const skipFiller = field<HTMLInputElement>('skipFiller');
+  const fillerOption = document.querySelector<HTMLElement>('[data-filler-option]')!;
+  const fillerReason = document.querySelector<HTMLElement>('[data-filler-reason]')!;
+  const opEd = field<HTMLInputElement>('opEd');
+  const speedGroup = document.querySelector<HTMLElement>('[data-speed]')!;
+  const hourChips = document.querySelector<HTMLElement>('[data-hour-chips]')!;
+  const summary = document.getElementById('binge-summary')!;
+  const results = document.querySelector<HTMLElement>('[data-results]')!;
+  const emptyState = document.querySelector<HTMLElement>('[data-results-empty]')!;
+  const errorState = document.querySelector<HTMLElement>('[data-results-error]')!;
+  const out = (name: string) => document.querySelector<HTMLElement>(`[data-out="${name}"]`)!;
+  let selected: PickerItem | null = null;
+  let speed = 1;
+  // Viewing a shared link must not overwrite the reader's own saved pace.
+  let persistPrefs = !new URLSearchParams(location.search).has('ep');
+
+  const localToday = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  };
+  const prettyDate = (iso: string) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
+  };
+  const setPressed = (group: HTMLElement, attribute: string, value: string) => {
+    group.querySelectorAll<HTMLButtonElement>('button').forEach(button => button.setAttribute('aria-pressed', String(button.getAttribute(attribute) === value)));
+  };
+
+  function updateFillerOption(item: PickerItem | null) {
+    const count = item?.fl || 0;
+    skipFiller.disabled = !count;
+    fillerOption.classList.toggle('tool-check--disabled', !count);
+    if (!count) skipFiller.checked = false;
+    fillerReason.textContent = count
+      ? `Removes the ${count} filler and recap episodes flagged on MyAnimeList.`
+      : item ? 'No filler or recap episodes are flagged for this series.' : 'Only available for series with filler data.';
+  }
+
+  function showSelection(item: PickerItem | null) {
+    selected = item;
+    summary.hidden = !item;
+    updateFillerOption(item);
+    if (!item) return;
+    const imageSlot = summary.querySelector<HTMLElement>('[data-summary-image], img')!;
+    if (item.p) {
+      const image = document.createElement('img');
+      image.src = item.p; image.alt = ''; image.width = 64; image.height = 90; image.referrerPolicy = 'no-referrer';
+      imageSlot.replaceWith(image);
+    } else if (imageSlot.tagName === 'IMG') {
+      const placeholder = document.createElement('span');
+      placeholder.className = 'anime-summary__thumb';
+      placeholder.dataset.summaryImage = '';
+      imageSlot.replaceWith(placeholder);
+    }
+    summary.querySelector('[data-summary-title]')!.textContent = item.t;
+    summary.querySelector('[data-summary-meta]')!.textContent = item.s
+      ? [item.f && formatLabel(item.f), item.y, item.st && statusLabel(item.st), item.d && `${item.d} min per episode`].filter(Boolean).join(' · ')
+      : [item.e && `${item.e} episodes in total`, item.d && `about ${item.d} min each`].filter(Boolean).join(' · ');
+    const note = summary.querySelector<HTMLElement>('[data-summary-note]')!;
+    let message = '';
+    if (item.st === 'airing') {
+      if (item.ea) {
+        episodes.value = String(item.ea);
+        message = `Still airing: using the ${item.ea} episodes released so far${item.e ? ` of ${item.e} planned` : ''}.`;
+      } else {
+        episodes.value = '';
+        message = 'Still airing, and the number of released episodes isn’t confirmed yet. Enter how many are out.';
+      }
+    } else if (item.st === 'upcoming') {
+      episodes.value = item.e ? String(item.e) : '';
+      message = item.e ? 'Not aired yet: using the planned episode count.' : 'Not aired yet, and the episode count hasn’t been announced.';
+    } else {
+      episodes.value = item.e ? String(item.e) : '';
+      if (!item.e) message = 'Episode count isn’t listed for this title. Enter it manually.';
+    }
+    if (item.d) minutes.value = String(item.d);
+    else { minutes.value = '24'; message = `${message} Runtime isn’t listed, so 24 minutes is used. Adjust it if needed.`.trim(); }
+    note.textContent = message;
+    note.hidden = !message;
+  }
+
+  function readInput(): BingeInput {
+    return {
+      episodes: Number(episodes.value),
+      minutesPerEpisode: Number(minutes.value),
+      skipOpeningEnding: skipOpEd.checked,
+      openingEndingMinutes: Number(opEd.value || 0),
+      skippedEpisodes: skipFiller.checked && selected?.fl ? Math.min(selected.fl, Math.max(0, Number(episodes.value) - 1)) : 0,
+      hoursPerDay: Number(hours.value),
+      daysPerWeek: Number(days.value),
+      playbackSpeed: speed,
+      startDate: start.value || localToday(),
+    };
+  }
+
+  let urlTimer: number | undefined;
+  function syncUrl(input: BingeInput) {
+    window.clearTimeout(urlTimer);
+    urlTimer = window.setTimeout(() => {
+      const params = new URLSearchParams();
+      if (selected?.s) params.set('anime', selected.s);
+      else if (selected) params.set('label', selected.t);
+      params.set('ep', String(input.episodes));
+      params.set('min', String(input.minutesPerEpisode));
+      params.set('h', String(input.hoursPerDay));
+      if (input.daysPerWeek !== 7) params.set('d', String(input.daysPerWeek));
+      if (input.playbackSpeed !== 1) params.set('x', String(input.playbackSpeed));
+      if (input.skipOpeningEnding) params.set('skip', String(input.openingEndingMinutes));
+      if (input.skippedEpisodes) params.set('nofiller', '1');
+      history.replaceState(null, '', `${location.pathname}?${params}`);
+    }, 300);
+  }
+
+  function update() {
+    const input = readInput();
+    if (persistPrefs) writeLocal('binge:prefs', { hours: input.hoursPerDay, days: input.daysPerWeek, speed, skip: input.skipOpeningEnding, opEd: input.openingEndingMinutes });
+    setPressed(hourChips, 'data-hours', String(input.hoursPerDay));
+    if (!episodes.value) {
+      results.hidden = true; errorState.hidden = true; emptyState.hidden = false;
+      return;
+    }
+    emptyState.hidden = true;
+    try {
+      const result = calculateBinge(input);
+      errorState.hidden = true;
+      results.hidden = false;
+      out('total').innerHTML = '';
+      out('total').append(formatDuration(result.totalMinutes), Object.assign(document.createElement('small'), { textContent: formatHours(result.totalMinutes) }));
+      out('finish').innerHTML = '';
+      out('finish').append(prettyDate(result.completionDate), Object.assign(document.createElement('small'), { textContent: `${result.calendarDays} calendar day${result.calendarDays === 1 ? '' : 's'} from your start date` }));
+      out('days').textContent = String(result.watchingDays);
+      out('perDay').textContent = result.episodesPerDay >= 10 ? String(Math.floor(result.episodesPerDay)) : String(Math.round(result.episodesPerDay * 10) / 10);
+      const name = selected?.t || 'this series';
+      const skipNote = input.skipOpeningEnding && !result.openingEndingApplied ? ' Episodes are under 15 minutes, so nothing is skipped.' : '';
+      const fillerNote = input.skippedEpisodes ? ` (${input.skippedEpisodes} filler/recap skipped)` : '';
+      out('summary').textContent = `${result.episodesWatched} episodes${fillerNote} of ${name} at ${input.hoursPerDay} h/day${input.daysPerWeek < 7 ? `, ${input.daysPerWeek} days a week` : ''}${speed !== 1 ? ` at ${speed}×` : ''}.${skipNote}`;
+      syncUrl(input);
+    } catch (error) {
+      results.hidden = true;
+      errorState.hidden = false;
+      errorState.textContent = (error as Error).message;
+    }
+  }
+
+  function shareText() {
+    const total = out('total').firstChild?.textContent || '';
+    return `${selected ? selected.t : 'My anime binge'}: ${total} of watching, done by ${out('finish').firstChild?.textContent}. Plan yours on AnimeSparks:`;
+  }
+
+  // A shared link (it always carries ep) reproduces the sender's settings
+  // exactly, using defaults for omitted values; otherwise restore this
+  // reader's saved preferences.
+  const params = new URLSearchParams(location.search);
+  const prefs = params.has('ep') ? {} : readLocal<{ hours?: number; days?: number; speed?: number; skip?: boolean; opEd?: number }>('binge:prefs', {});
+  hours.value = params.get('h') || String(prefs.hours || 2);
+  days.value = params.get('d') || String(prefs.days || 7);
+  speed = Number(params.get('x') || prefs.speed || 1);
+  if (![1, 1.25, 1.5, 2].includes(speed)) speed = 1;
+  setPressed(speedGroup, 'data-value', String(speed));
+  skipOpEd.checked = params.has('skip') || Boolean(prefs.skip);
+  opEd.value = params.get('skip') || String(prefs.opEd ?? 3);
+  start.value = localToday();
+
+  createPicker({
+    root: document.querySelector<HTMLElement>('[data-picker="binge-search"]')!,
+    endpoint: '/api/tools/anime-search',
+    onSelect: item => { showSelection(item); update(); },
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-quick-pick]').forEach(button => button.addEventListener('click', () => {
+    showSelection(JSON.parse(button.dataset.quickPick || '{}'));
+    update();
+  }));
+  summary.querySelector('[data-summary-clear]')!.addEventListener('click', () => { showSelection(null); update(); });
+  speedGroup.addEventListener('click', event => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
+    if (!button) return;
+    speed = Number(button.dataset.value);
+    setPressed(speedGroup, 'data-value', String(speed));
+    userUpdate();
+  });
+  hourChips.addEventListener('click', event => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
+    if (!button) return;
+    hours.value = button.dataset.hours || '2';
+    userUpdate();
+  });
+  const userUpdate = () => { persistPrefs = true; update(); };
+  form.addEventListener('input', userUpdate);
+  form.addEventListener('change', userUpdate);
+  form.addEventListener('submit', event => event.preventDefault());
+
+  const copy = async (text: string, button: HTMLButtonElement) => {
+    const label = button.textContent;
+    try { await navigator.clipboard.writeText(text); button.textContent = 'Copied'; }
+    catch { button.textContent = 'Copy failed'; }
+    window.setTimeout(() => { button.textContent = label; }, 1600);
+  };
+  document.querySelector<HTMLButtonElement>('[data-copy-link]')!.addEventListener('click', event => copy(location.href, event.currentTarget as HTMLButtonElement));
+  document.querySelector<HTMLButtonElement>('[data-share]')!.addEventListener('click', async event => {
+    const button = event.currentTarget as HTMLButtonElement;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Anime Binge Calculator', text: shareText(), url: location.href }); return; }
+      catch (error) { if ((error as Error).name === 'AbortError') return; }
+    }
+    copy(`${shareText()} ${location.href}`, button);
+  });
+
+  // Links from other tools: a series (?anime=), or a labelled total such as a
+  // whole franchise (?label=&ep=&min=). Load it, then apply any shared numbers.
+  const sharedSlug = params.get('anime');
+  const sharedLabel = params.get('label')?.slice(0, 120);
+  if (!sharedSlug && sharedLabel && params.get('ep')) {
+    showSelection({ s: '', t: sharedLabel, e: Number(params.get('ep')) || undefined, d: Number(params.get('min')) || undefined, st: 'finished' });
+  }
+  const applyShared = () => {
+    if (params.get('ep')) episodes.value = params.get('ep')!;
+    if (params.get('min')) minutes.value = params.get('min')!;
+    update();
+  };
+  if (sharedSlug) {
+    fetch(`/api/tools/anime-search?slug=${encodeURIComponent(sharedSlug)}`)
+      .then(response => response.ok ? response.json() : null)
+      .then((body: { result?: PickerItem } | null) => {
+        if (!body?.result) return;
+        showSelection(body.result);
+        if (params.get('nofiller') && !skipFiller.disabled) skipFiller.checked = true;
+      })
+      .catch(() => {})
+      .finally(applyShared);
+  } else {
+    applyShared();
+  }
+</script>

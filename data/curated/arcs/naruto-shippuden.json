@@ -1,0 +1,288 @@
+{
+  "slug": "naruto-shippuden",
+  "arcs": [
+    {
+      "name": "Kazekage Rescue Mission",
+      "episodeStart": 1,
+      "episodeEnd": 32
+    },
+    {
+      "name": "Tenchi Bridge Reconnaissance Mission",
+      "episodeStart": 33,
+      "episodeEnd": 53
+    },
+    {
+      "name": "Twelve Guardian Ninja Arc",
+      "episodeStart": 54,
+      "episodeEnd": 71
+    },
+    {
+      "name": "Akatsuki Suppression Mission",
+      "episodeStart": 72,
+      "episodeEnd": 88
+    },
+    {
+      "name": "Three-Tails' Appearance",
+      "episodeStart": 89,
+      "episodeEnd": 112
+    },
+    {
+      "name": "Itachi Pursuit Mission",
+      "episodeStart": 113,
+      "episodeEnd": 118
+    },
+    {
+      "name": "Kakashi Gaiden",
+      "episodeStart": 119,
+      "episodeEnd": 120
+    },
+    {
+      "name": "Itachi Pursuit Mission",
+      "episodeStart": 121,
+      "episodeEnd": 126
+    },
+    {
+      "name": "Tale of Jiraiya the Gallant",
+      "episodeStart": 127,
+      "episodeEnd": 133
+    },
+    {
+      "name": "Fated Battle Between Brothers",
+      "episodeStart": 134,
+      "episodeEnd": 143
+    },
+    {
+      "name": "Six-Tails Unleashed",
+      "episodeStart": 144,
+      "episodeEnd": 151
+    },
+    {
+      "name": "Pain's Assault Arc",
+      "episodeStart": 152,
+      "episodeEnd": 169
+    },
+    {
+      "name": "Pain's Assault Arc",
+      "episodeStart": 172,
+      "episodeEnd": 175
+    },
+    {
+      "name": "Past Arc: The Locus of Konoha",
+      "episodeStart": 176,
+      "episodeEnd": 196
+    },
+    {
+      "name": "Five Kage Summit Arc",
+      "episodeStart": 197,
+      "episodeEnd": 214
+    },
+    {
+      "name": "Fourth Shinobi World War: Countdown",
+      "episodeStart": 215,
+      "episodeEnd": 222
+    },
+    {
+      "name": "Paradise Life on a Boat",
+      "episodeStart": 223,
+      "episodeEnd": 242
+    },
+    {
+      "name": "Fourth Shinobi World War: Countdown",
+      "episodeStart": 243,
+      "episodeEnd": 256
+    },
+    {
+      "name": "Fourth Shinobi World War: Confrontation",
+      "episodeStart": 261,
+      "episodeEnd": 270
+    },
+    {
+      "name": "Fourth Shinobi World War: Confrontation",
+      "episodeStart": 272,
+      "episodeEnd": 289
+    },
+    {
+      "name": "Power Arc",
+      "episodeStart": 290,
+      "episodeEnd": 295
+    },
+    {
+      "name": "Fourth Shinobi World War: Confrontation",
+      "episodeStart": 296,
+      "episodeEnd": 310
+    },
+    {
+      "name": "Fourth Shinobi World War: Confrontation",
+      "episodeStart": 312,
+      "episodeEnd": 321
+    },
+    {
+      "name": "Fourth Shinobi World War: Climax",
+      "episodeStart": 322,
+      "episodeEnd": 348
+    },
+    {
+      "name": "Kakashi's Anbu Arc: The Shinobi That Lives in the Darkness",
+      "episodeStart": 349,
+      "episodeEnd": 361
+    },
+    {
+      "name": "Fourth Shinobi World War: Climax",
+      "episodeStart": 362,
+      "episodeEnd": 375
+    },
+    {
+      "name": "Birth of the Ten-Tails' Jinchūriki",
+      "episodeStart": 378,
+      "episodeEnd": 388
+    },
+    {
+      "name": "Birth of the Ten-Tails' Jinchūriki",
+      "episodeStart": 391,
+      "episodeEnd": 393
+    },
+    {
+      "name": "In Naruto's Footsteps: The Friends' Paths",
+      "episodeStart": 394,
+      "episodeEnd": 413
+    },
+    {
+      "name": "Birth of the Ten-Tails' Jinchūriki",
+      "episodeStart": 414,
+      "episodeEnd": 421
+    },
+    {
+      "name": "Birth of the Ten-Tails' Jinchūriki",
+      "episodeStart": 424,
+      "episodeEnd": 431
+    },
+    {
+      "name": "Jiraiya Shinobi Handbook: The Tale of Naruto the Hero",
+      "episodeStart": 432,
+      "episodeEnd": 450
+    },
+    {
+      "name": "Kaguya Ōtsutsuki Strikes, Itachi Shinden Book: Light and Darkness,",
+      "episodeStart": 451,
+      "episodeEnd": 451
+    },
+    {
+      "name": "Itachi Shinden Book: Light and Darkness",
+      "episodeStart": 452,
+      "episodeEnd": 454
+    },
+    {
+      "name": "Kaguya Ōtsutsuki Strikes, Itachi Shinden Book: Light and Darkness",
+      "episodeStart": 455,
+      "episodeEnd": 455
+    },
+    {
+      "name": "Itachi Shinden Book: Light and Darkness",
+      "episodeStart": 456,
+      "episodeEnd": 457
+    },
+    {
+      "name": "Itachi Shinden Book: Light and Darkness,Kaguya Ōtsutsuki Strikes",
+      "episodeStart": 458,
+      "episodeEnd": 458
+    },
+    {
+      "name": "Kaguya Ōtsutsuki Strikes,",
+      "episodeStart": 459,
+      "episodeEnd": 468
+    },
+    {
+      "name": "Kaguya Ōtsutsuki Strikes,",
+      "episodeStart": 470,
+      "episodeEnd": 474
+    },
+    {
+      "name": "Kaguya Ōtsutsuki Strikes",
+      "episodeStart": 475,
+      "episodeEnd": 475
+    },
+    {
+      "name": "Kaguya Ōtsutsuki Strikes,",
+      "episodeStart": 476,
+      "episodeEnd": 477
+    },
+    {
+      "name": "Kaguya Ōtsutsuki Strikes",
+      "episodeStart": 478,
+      "episodeEnd": 479
+    },
+    {
+      "name": "Childhood",
+      "episodeStart": 480,
+      "episodeEnd": 480
+    },
+    {
+      "name": "Childhood,",
+      "episodeStart": 481,
+      "episodeEnd": 481
+    },
+    {
+      "name": "Childhood",
+      "episodeStart": 482,
+      "episodeEnd": 482
+    },
+    {
+      "name": "Childhood,",
+      "episodeStart": 483,
+      "episodeEnd": 483
+    },
+    {
+      "name": "Sasuke Shinden: Book of Sunrise Arc",
+      "episodeStart": 484,
+      "episodeEnd": 486
+    },
+    {
+      "name": "Sasuke Shinden: Book of Sunrise (Arc),",
+      "episodeStart": 487,
+      "episodeEnd": 488
+    },
+    {
+      "name": "Shikamaru Hiden: A Cloud Drifting in Silent Darkness (Arc),",
+      "episodeStart": 489,
+      "episodeEnd": 489
+    },
+    {
+      "name": "Shikamaru Hiden: A Cloud Drifting in Silent Darkness Arc",
+      "episodeStart": 490,
+      "episodeEnd": 490
+    },
+    {
+      "name": "Shikamaru Hiden: A Cloud Drifting in Silent Darkness (Arc),",
+      "episodeStart": 491,
+      "episodeEnd": 493
+    },
+    {
+      "name": "Konoha Hiden: The Perfect Day for a Wedding Arc",
+      "episodeStart": 494,
+      "episodeEnd": 497
+    },
+    {
+      "name": "Konoha Hiden: The Perfect Day for a Wedding (Arc),",
+      "episodeStart": 498,
+      "episodeEnd": 498
+    },
+    {
+      "name": "Konoha Hiden: The Perfect Day for a Wedding Arc",
+      "episodeStart": 499,
+      "episodeEnd": 500
+    }
+  ],
+  "sources": [
+    {
+      "name": "Narutopedia on Fandom (CC BY-SA)",
+      "url": "https://naruto.fandom.com/wiki/Homecoming_(episode)"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Narutopedia",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

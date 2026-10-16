@@ -1,0 +1,27 @@
+---
+interface Props {
+  crumbs: Array<[string, string?]>;
+  kicker: string;
+  title: string;
+  deck: string;
+  facts?: Array<[string, string]>;
+}
+const { crumbs, kicker, title, deck, facts = [] } = Astro.props;
+---
+<header class="tool-hero">
+  <div class="shell">
+    <nav aria-label="Breadcrumb">
+      <ol class="tool-crumbs">
+        {crumbs.map(([label, href]) => <li>{href ? <a href={href}>{label}</a> : <span aria-current="page">{label}</span>}</li>)}
+      </ol>
+    </nav>
+    <p class="kicker red">{kicker}</p>
+    <h1>{title}<span class="red">.</span></h1>
+    <p class="tool-hero__deck">{deck}</p>
+    {facts.length > 0 && (
+      <ul class="tool-hero__facts">
+        {facts.map(([value, label]) => <li><strong>{value}</strong> {label}</li>)}
+      </ul>
+    )}
+  </div>
+</header>

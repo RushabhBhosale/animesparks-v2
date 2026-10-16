@@ -1,0 +1,128 @@
+{
+  "slug": "naruto",
+  "arcs": [
+    {
+      "name": "Prologue — Land of Waves",
+      "episodeStart": 1,
+      "episodeEnd": 19
+    },
+    {
+      "name": "Chūnin Exams Arc",
+      "episodeStart": 20,
+      "episodeEnd": 67
+    },
+    {
+      "name": "Konoha Crush Arc",
+      "episodeStart": 68,
+      "episodeEnd": 80
+    },
+    {
+      "name": "Search for Tsunade",
+      "episodeStart": 81,
+      "episodeEnd": 100
+    },
+    {
+      "name": "Land of Tea Escort Mission",
+      "episodeStart": 102,
+      "episodeEnd": 106
+    },
+    {
+      "name": "Sasuke Recovery Mission",
+      "episodeStart": 107,
+      "episodeEnd": 135
+    },
+    {
+      "name": "Land of Rice Fields Investigation Mission",
+      "episodeStart": 136,
+      "episodeEnd": 141
+    },
+    {
+      "name": "Mizuki Tracking Mission",
+      "episodeStart": 142,
+      "episodeEnd": 147
+    },
+    {
+      "name": "Bikōchū Search Mission",
+      "episodeStart": 148,
+      "episodeEnd": 151
+    },
+    {
+      "name": "Kurosuki Family Removal Mission",
+      "episodeStart": 152,
+      "episodeEnd": 157
+    },
+    {
+      "name": "Gosunkugi Capture Mission",
+      "episodeStart": 159,
+      "episodeEnd": 160
+    },
+    {
+      "name": "Cursed Warrior Extermination Mission",
+      "episodeStart": 162,
+      "episodeEnd": 167
+    },
+    {
+      "name": "Kaima Capture Mission",
+      "episodeStart": 169,
+      "episodeEnd": 173
+    },
+    {
+      "name": "Buried Gold Excavation Mission",
+      "episodeStart": 175,
+      "episodeEnd": 176
+    },
+    {
+      "name": "Star Guard Mission",
+      "episodeStart": 178,
+      "episodeEnd": 183
+    },
+    {
+      "name": "Peddlers Escort Mission",
+      "episodeStart": 187,
+      "episodeEnd": 191
+    },
+    {
+      "name": "Third Great Beast Arc",
+      "episodeStart": 195,
+      "episodeEnd": 196
+    },
+    {
+      "name": "Konoha Plans Recapture Mission",
+      "episodeStart": 197,
+      "episodeEnd": 201
+    },
+    {
+      "name": "Yakumo Kurama Rescue Mission",
+      "episodeStart": 203,
+      "episodeEnd": 207
+    },
+    {
+      "name": "Gantetsu Escort Mission",
+      "episodeStart": 209,
+      "episodeEnd": 212
+    },
+    {
+      "name": "Menma Memory Search Mission",
+      "episodeStart": 213,
+      "episodeEnd": 215
+    },
+    {
+      "name": "Sunagakure Support Mission",
+      "episodeStart": 216,
+      "episodeEnd": 220
+    }
+  ],
+  "sources": [
+    {
+      "name": "Narutopedia on Fandom (CC BY-SA)",
+      "url": "https://naruto.fandom.com/wiki/Enter%3A_Naruto_Uzumaki!"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Narutopedia",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

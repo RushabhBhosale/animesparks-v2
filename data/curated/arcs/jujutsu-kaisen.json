@@ -1,0 +1,38 @@
+{
+  "slug": "jujutsu-kaisen",
+  "arcs": [
+    {
+      "name": "Fearsome Womb",
+      "episodeStart": 1,
+      "episodeEnd": 8
+    },
+    {
+      "name": "Vs. Mahito Arc",
+      "episodeStart": 9,
+      "episodeEnd": 13
+    },
+    {
+      "name": "Kyoto Goodwill Event",
+      "episodeStart": 14,
+      "episodeEnd": 21
+    },
+    {
+      "name": "Death Painting",
+      "episodeStart": 22,
+      "episodeEnd": 24
+    }
+  ],
+  "sources": [
+    {
+      "name": "Jujutsu Kaisen Wiki on Fandom (CC BY-SA)",
+      "url": "https://jujutsu-kaisen.fandom.com/wiki/Episode_1"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Jujutsu Kaisen Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "slug": "hunter-x-hunter",
+  "arcs": [
+    {
+      "name": "Hunter Exam Arc",
+      "episodeStart": 1,
+      "episodeEnd": 26
+    },
+    {
+      "name": "Heavens Arena Arc",
+      "episodeStart": 27,
+      "episodeEnd": 36
+    },
+    {
+      "name": "Yorknew City Arc",
+      "episodeStart": 37,
+      "episodeEnd": 58
+    },
+    {
+      "name": "Greed Island Arc",
+      "episodeStart": 59,
+      "episodeEnd": 75
+    },
+    {
+      "name": "Chimera Ant Arc",
+      "episodeStart": 76,
+      "episodeEnd": 136
+    },
+    {
+      "name": "13th Hunter Chairman Election Arc",
+      "episodeStart": 137,
+      "episodeEnd": 148
+    }
+  ],
+  "sources": [
+    {
+      "name": "Hunterpedia on Fandom (CC BY-SA)",
+      "url": "https://hunterxhunter.fandom.com/wiki/Episode_1_(2011)"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Hunterpedia",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

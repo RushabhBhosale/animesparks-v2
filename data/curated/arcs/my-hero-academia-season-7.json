@@ -1,0 +1,43 @@
+{
+  "slug": "my-hero-academia-season-7",
+  "arcs": [
+    {
+      "name": "Star and Stripe",
+      "episodeStart": 1,
+      "episodeEnd": 1
+    },
+    {
+      "name": "Star and Stripe Arc",
+      "episodeStart": 2,
+      "episodeEnd": 2
+    },
+    {
+      "name": "U.A. Traitor",
+      "episodeStart": 3,
+      "episodeEnd": 4
+    },
+    {
+      "name": "U.A. Traitor Arc",
+      "episodeStart": 5,
+      "episodeEnd": 5
+    },
+    {
+      "name": "Final War",
+      "episodeStart": 6,
+      "episodeEnd": 21
+    }
+  ],
+  "sources": [
+    {
+      "name": "My Hero Academia Wiki on Fandom (CC BY-SA)",
+      "url": "https://myheroacademia.fandom.com/wiki/Episode_139"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from My Hero Academia Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

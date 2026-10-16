@@ -1,0 +1,88 @@
+{
+  "slug": "black-clover",
+  "arcs": [
+    {
+      "name": "Magic Knights Entrance Arc",
+      "episodeStart": 1,
+      "episodeEnd": 13
+    },
+    {
+      "name": "Dungeon Exploration Arc",
+      "episodeStart": 14,
+      "episodeEnd": 16
+    },
+    {
+      "name": "Arc 2",
+      "episodeStart": 17,
+      "episodeEnd": 17
+    },
+    {
+      "name": "Dungeon Exploration Arc",
+      "episodeStart": 18,
+      "episodeEnd": 19
+    },
+    {
+      "name": "Royal Capital Arc",
+      "episodeStart": 20,
+      "episodeEnd": 27
+    },
+    {
+      "name": "Eye of the Midnight Sun Arc",
+      "episodeStart": 28,
+      "episodeEnd": 39
+    },
+    {
+      "name": "Seabed Temple Arc",
+      "episodeStart": 40,
+      "episodeEnd": 50
+    },
+    {
+      "name": "Seabed Temple Arc Witches' Forest Arc",
+      "episodeStart": 51,
+      "episodeEnd": 51
+    },
+    {
+      "name": "Witches' Forest Arc",
+      "episodeStart": 52,
+      "episodeEnd": 65
+    },
+    {
+      "name": "Royal Knights Arc",
+      "episodeStart": 66,
+      "episodeEnd": 95
+    },
+    {
+      "name": "Royal Knights Arc Elf Reincarnation Arc",
+      "episodeStart": 96,
+      "episodeEnd": 96
+    },
+    {
+      "name": "Elf Reincarnation Arc",
+      "episodeStart": 97,
+      "episodeEnd": 157
+    },
+    {
+      "name": "Heart Kingdom Joint Struggle Arc",
+      "episodeStart": 158,
+      "episodeEnd": 167
+    },
+    {
+      "name": "Spade Kingdom Raid Arc",
+      "episodeStart": 168,
+      "episodeEnd": 170
+    }
+  ],
+  "sources": [
+    {
+      "name": "Black Clover Wiki on Fandom (CC BY-SA)",
+      "url": "https://blackclover.fandom.com/wiki/Episode_1"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Black Clover Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

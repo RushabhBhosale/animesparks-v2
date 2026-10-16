@@ -1,0 +1,198 @@
+---
+import ToolPage from '../../../components/tools/ToolPage.astro';
+import { getBuildData } from '../../../lib/content/build-data';
+import { relatedArticles } from '../../../lib/tools/build-data';
+import { getToolsExtras, type FillerView } from '../../../lib/tools/build-extras';
+import { CANON_LABELS, fillerFreeEpisodes, formatRanges, toRanges, typeRuns } from '../../../lib/tools/episodes';
+import { formatDuration, formatLabel } from '../../../lib/tools/normalize';
+import type { CanonType } from '../../../lib/tools/types';
+
+export const prerender = true;
+export async function getStaticPaths() {
+  const { filler } = await getToolsExtras((await getBuildData()).english);
+  return filler.map(view => ({ params: { slug: view.slug }, props: { view } }));
+}
+
+const { view } = Astro.props as { view: FillerView };
+const { english } = await getBuildData();
+const path = `/tools/anime-filler-checker/${view.slug}`;
+const { summary } = view;
+const skippable = summary.skippable;
+const types = (Object.keys(CANON_LABELS) as CanonType[]).filter(type => summary.counts[type] > 0);
+const rangesFor = (type: CanonType) => formatRanges(toRanges(view.episodes.filter(episode => episode.type === type).map(episode => episode.n)));
+const watchList = fillerFreeEpisodes(view.episodes);
+const watchListText = formatRanges(toRanges(watchList));
+const saved = view.durationMinutes ? skippable * view.durationMinutes : 0;
+const runs = typeRuns(view.episodes);
+const providerBasis = view.basis === 'provider';
+const title = `${view.title} Filler List — ${skippable ? `${skippable} Filler & Recap Episodes to Skip` : 'Every Episode Checked'} | AnimeSparks`;
+const description = providerBasis
+  ? `${view.title} filler list: ${summary.counts.filler} filler and ${summary.counts.recap} recap episodes out of ${summary.total} (${summary.fillerPercent}%), per MyAnimeList. Get a filler-free watch order and track what you've watched.`
+  : `${view.title} filler list from a verified source: canon, mixed and filler episodes across all ${summary.total} episodes, with a filler-free watch order.`;
+const faq = [
+  { question: `How many filler episodes does ${view.title} have?`, answer: providerBasis
+    ? `MyAnimeList marks ${summary.counts.filler} of ${summary.total} episodes as filler and ${summary.counts.recap} as recaps, ${summary.fillerPercent}% in total.`
+    : `${summary.counts.filler} filler episodes and ${summary.counts.mixed} mixed canon/filler episodes out of ${summary.total}, based on a verified list.` },
+  { question: `Which ${view.title} episodes can I skip?`, answer: skippable ? `The filler and recap episodes: ${formatRanges(toRanges(view.episodes.filter(episode => episode.type === 'filler' || episode.type === 'recap').map(episode => episode.n)))}.` : 'None are flagged as filler or recap, so watch every episode.' },
+  { question: 'Should I skip filler?', answer: 'Skipping filler saves time and keeps the main story moving. Some filler arcs are fan favourites, though, so skim the episode titles before you decide.' },
+];
+const typeLabel = (type: CanonType) => providerBasis && type === 'canon' ? 'Canon (not flagged)' : CANON_LABELS[type];
+---
+<ToolPage
+  path={path} title={title} socialTitle={`${view.title} Filler List`} description={description.slice(0, 300)}
+  name={`${view.title} filler list`} crumb={view.title} parent={['Filler Checker', '/tools/anime-filler-checker']}
+  kicker="Filler checker" heading={`${view.title} filler list`}
+  deck={skippable
+    ? `${skippable} of ${summary.total} episodes are filler or recaps${providerBasis ? ' according to MyAnimeList' : ''}. Skip them with the filler-free list below and tick episodes off as you go.`
+    : `None of the ${summary.total} episodes are flagged as filler or recap${providerBasis ? ' on MyAnimeList' : ''}.`}
+  facts={[[String(summary.total), 'episodes'], [`${summary.fillerPercent}%`, 'filler & recap'], ...(saved ? [[formatDuration(saved), 'saved by skipping'] as [string, string]] : [])]}
+  faq={faq} related={relatedArticles(english, view.titleKeys, 6)} relatedHeading={`More on ${view.title}`}
+  credit="Episode list" robotsNoindex={!view.indexable} application={false} image={view.poster}
+>
+  <div data-filler={view.slug} data-total={summary.total}>
+    <dl class="stat-row">
+      <div><dt>Episodes</dt><dd>{summary.total}</dd></div>
+      <div><dt>Filler</dt><dd class="is-accent">{summary.counts.filler}</dd></div>
+      <div><dt>Recap</dt><dd>{summary.counts.recap}</dd></div>
+      <div><dt>Filler %</dt><dd>{summary.fillerPercent}%</dd></div>
+    </dl>
+
+    <div class="type-bar" role="img" aria-label={`Episode overview: ${types.map(type => `${summary.counts[type]} ${typeLabel(type).toLowerCase()}`).join(', ')}`}>
+      {runs.map(run => <span data-type={run.type} style={`flex: ${run.end - run.start + 1}`} title={`${run.start === run.end ? run.start : `${run.start}–${run.end}`}: ${typeLabel(run.type)}`}></span>)}
+    </div>
+    <ul class="type-legend">{types.map(type => <li><span class="type-dot" data-type={type}></span>{typeLabel(type)} · {summary.counts[type]}</li>)}</ul>
+
+    {providerBasis && (
+      <p class="tool-note tool-note--muted" style="margin-top: var(--sp-5)">
+        Based on MyAnimeList’s per-episode filler and recap flags. MAL doesn’t separate manga canon from anime-original canon or mark mixed episodes, so unflagged episodes are shown as “Canon (not flagged)”.
+      </p>
+    )}
+    {!providerBasis && (
+      <p class="tool-note tool-note--muted" style="margin-top: var(--sp-5)">
+        Verified{view.verifiedAt && ` on ${view.verifiedAt}`} against: {view.sources.map((source, index) => <>{index > 0 && ', '}<a href={source.url} rel="nofollow noopener" target="_blank">{source.name}</a></>)}.
+      </p>
+    )}
+
+    <section class="tool-section" aria-labelledby="ranges-title">
+      <h2 id="ranges-title">Episode ranges</h2>
+      <div class="tool-panel">
+        <table class="range-table">
+          <tbody>
+            {types.map(type => <tr><th scope="row"><span class="type-badge" data-type={type}>{typeLabel(type)}</span></th><td>{rangesFor(type)}</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="tool-section" aria-labelledby="watchlist-title">
+      <h2 id="watchlist-title">Filler-free watch order</h2>
+      <p class="tool-hero__deck" style="margin-bottom: var(--sp-4)">{watchList.length} episodes{view.durationMinutes ? `, about ${formatDuration(watchList.length * view.durationMinutes)}` : ''}. Episodes of unknown type are kept so you don’t miss anything.</p>
+      <div class="copy-box"><code data-watchlist>{watchListText}</code><button type="button" class="tool-button" data-copy>Copy</button></div>
+    </section>
+
+    <section class="tool-section" aria-labelledby="episodes-title">
+      <h2 id="episodes-title">Every episode</h2>
+      <div class="order-toolbar">
+        <div class="tool-segment" role="group" aria-label="Show episodes" data-filter>
+          <button type="button" data-value="all" aria-pressed="true">All</button>
+          {types.map(type => <button type="button" data-value={type} aria-pressed="false">{typeLabel(type).replace(' (not flagged)', '')}</button>)}
+          <button type="button" data-value="unwatched" aria-pressed="false">Unwatched</button>
+        </div>
+        <form class="tool-chips" data-mark-upto style="align-items:center">
+          <label class="tool-legend" for="upto">Watched up to</label>
+          <input id="upto" class="tool-input" style="width:90px;min-height:34px" type="number" min="0" max={summary.total} inputmode="numeric" />
+          <button type="submit">Mark</button>
+        </form>
+      </div>
+      <div class="order-progress" aria-live="polite">
+        <div class="order-progress__bar"><span data-progress-bar></span></div>
+        <p><span data-progress-count>0 of {summary.total} watched</span><span data-progress-left></span></p>
+      </div>
+      <ol class="episode-list" data-minutes={view.durationMinutes || ''}>
+        {view.episodes.map(episode => (
+          <li class="episode-row" data-n={episode.n} data-type={episode.type}>
+            <span class="episode-row__n">{episode.n}</span>
+            <span class="episode-row__t">{episode.t || `Episode ${episode.n}`}{episode.a && <small>{episode.a}</small>}</span>
+            <span class="type-badge" data-type={episode.type}>{typeLabel(episode.type).replace(' (not flagged)', '')}</span>
+            <label class="order-done"><input type="checkbox" data-ep={episode.n} aria-label={`Episode ${episode.n} watched`} /></label>
+          </li>
+        ))}
+      </ol>
+    </section>
+    {view.franchiseSlug && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-6)">Watching the whole franchise? See the <a href={`/tools/anime-watch-order/${view.franchiseSlug}`}>watch order</a> or plan it with the <a href={`/tools/anime-binge-calculator?anime=${view.slug}`}>Binge Calculator</a>.</p>}
+  </div>
+
+  <Fragment slot="guide">
+    <h2>About this filler list</h2>
+    <p>{formatLabel(view.format)} · {view.year || 'year unknown'} · {view.status === 'airing' ? 'still airing; only aired episodes are listed' : 'complete'}. {providerBasis ? 'Filler and recap flags come from MyAnimeList’s episode list, which AnimeSparks refreshes regularly.' : 'This classification comes from a verified, sourced list maintained by AnimeSparks editors.'}</p>
+    <p>Filler episodes tell stories that aren’t in the source material, usually because the anime caught up with the manga. Recaps summarise earlier episodes. Skipping both is the fastest way through the main story.</p>
+  </Fragment>
+</ToolPage>
+
+<script>
+  import { formatDuration } from '../../../lib/tools/normalize';
+  import { formatRanges, toRanges } from '../../../lib/tools/episodes';
+  import { readLocal, writeLocal } from '../../../scripts/tools/storage';
+
+  const root = document.querySelector<HTMLElement>('[data-filler]');
+  if (root) {
+    const key = `filler:${root.dataset.filler}`;
+    const total = Number(root.dataset.total);
+    const minutes = Number(root.querySelector<HTMLElement>('[data-minutes]')?.dataset.minutes || 0);
+    // Stored as compact ranges ("1-24, 30") to stay small for long series.
+    const parse = (text: string) => {
+      const set = new Set<number>();
+      for (const part of text.split(',')) {
+        const [a, b] = part.trim().split('-').map(Number);
+        if (!Number.isFinite(a)) continue;
+        for (let n = a; n <= (Number.isFinite(b) ? b : a) && n <= total; n++) set.add(n);
+      }
+      return set;
+    };
+    const done = parse(readLocal<string>(key, ''));
+    const rows = [...root.querySelectorAll<HTMLElement>('.episode-row')];
+    let filter = 'all';
+    const save = () => writeLocal(key, formatRanges(toRanges([...done])));
+    const render = () => {
+      for (const row of rows) {
+        const n = Number(row.dataset.n);
+        const isDone = done.has(n);
+        row.classList.toggle('is-done', isDone);
+        row.querySelector<HTMLInputElement>('input')!.checked = isDone;
+        row.hidden = filter === 'unwatched' ? isDone : filter !== 'all' && row.dataset.type !== filter;
+      }
+      const watchable = rows.filter(row => !['filler', 'recap'].includes(row.dataset.type || ''));
+      const left = watchable.filter(row => !done.has(Number(row.dataset.n))).length;
+      root.querySelector<HTMLElement>('[data-progress-bar]')!.style.width = `${(done.size / total) * 100}%`;
+      root.querySelector('[data-progress-count]')!.textContent = `${done.size} of ${total} watched`;
+      root.querySelector('[data-progress-left]')!.textContent = left ? `${left} non-filler episodes left${minutes ? ` · ${formatDuration(left * minutes)}` : ''}` : 'All caught up';
+    };
+    root.querySelector('.episode-list')!.addEventListener('change', event => {
+      const box = event.target as HTMLInputElement;
+      const n = Number(box.dataset.ep);
+      if (box.checked) done.add(n); else done.delete(n);
+      save(); render();
+    });
+    root.querySelector<HTMLElement>('[data-filter]')!.addEventListener('click', event => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
+      if (!button) return;
+      filter = button.dataset.value || 'all';
+      root.querySelectorAll<HTMLButtonElement>('[data-filter] button').forEach(other => other.setAttribute('aria-pressed', String(other === button)));
+      render();
+    });
+    root.querySelector<HTMLFormElement>('[data-mark-upto]')!.addEventListener('submit', event => {
+      event.preventDefault();
+      const value = Math.min(total, Math.max(0, Number((event.currentTarget as HTMLFormElement).querySelector('input')!.value)));
+      done.clear();
+      for (let n = 1; n <= value; n++) done.add(n);
+      save(); render();
+    });
+    root.querySelector<HTMLButtonElement>('[data-copy]')!.addEventListener('click', async event => {
+      const button = event.currentTarget as HTMLButtonElement;
+      try { await navigator.clipboard.writeText(root.querySelector('[data-watchlist]')!.textContent || ''); button.textContent = 'Copied'; }
+      catch { button.textContent = 'Copy failed'; }
+      setTimeout(() => { button.textContent = 'Copy'; }, 1500);
+    });
+    render();
+  }
+</script>

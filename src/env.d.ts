@@ -58,5 +58,7 @@ declare module 'cloudflare:workers' {
     GA_PROPERTY_ID?: string;
     GA_CLIENT_EMAIL?: string;
     GA_PRIVATE_KEY?: string;
+    TOOLS_LIVE_LOOKUP?: string;
+    TENRAI_SERVER_KEY?: string;
   };
 }

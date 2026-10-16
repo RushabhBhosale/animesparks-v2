@@ -3,11 +3,15 @@ import { getBuildData } from '../lib/content/build-data';
 import { SITE } from '../lib/content/seo';
 import { escapeXml, xmlDate } from '../lib/content/xml';
 import { tagIndexability } from '../lib/content/tag-seo';
+import { getToolsBuildData } from '../lib/tools/build-data';
+import { getToolsExtras } from '../lib/tools/build-extras';
+import { LIVE_TOOLS, toolPath } from '../lib/tools/registry';
 
 const staticPaths = ['/', '/blogs', '/blogs/es', '/my-anime-list', '/categories', '/trending', '/contact', '/about', '/privacy', '/sitemap'];
 export const prerender = true;
 export const GET: APIRoute = async () => {
-  const { sitemapArticles: articles, categories, primaryTags, english: englishCards, spanish: spanishCards } = await getBuildData();
+  const [{ sitemapArticles: articles, categories, primaryTags, english: englishCards, spanish: spanishCards }, tools] = await Promise.all([getBuildData(), getToolsBuildData()]);
+  const toolExtras = await getToolsExtras(englishCards);
   const cards = [...englishCards, ...spanishCards];
   const tagStatus = tagIndexability(primaryTags, cards);
   const tags = primaryTags.filter(tag => tagStatus.get(tag));
@@ -16,6 +20,15 @@ export const GET: APIRoute = async () => {
   const rows: Array<{ url: string; modified?: string; alternates?: Array<[string, string]> }> = [
     ...staticPaths.map(path => ({ url: `${SITE}${path}` })),
     ...categories.map(category => ({ url: `${SITE}/categories/${category.slug}` })),
+    { url: `${SITE}/tools` },
+    // A tool still waiting for verified data is noindex and stays out.
+    ...LIVE_TOOLS.filter(tool => !tool.awaitingData || (tool.slug === 'anime-arc-explorer' && toolExtras.verifiedArcCount > 0)).map(tool => ({ url: `${SITE}${toolPath(tool)}` })),
+    ...toolExtras.filler.filter(view => view.indexable).map(view => ({ url: `${SITE}/tools/anime-filler-checker/${view.slug}`, modified: xmlDate(view.fetchedAt) })),
+    // Only franchises with an editor-verified order are indexable.
+    ...tools.franchises.filter(franchise => franchise.indexable).map(franchise => ({
+      url: `${SITE}/tools/anime-watch-order/${franchise.slug}`,
+      modified: xmlDate(franchise.curated.map(order => order.verifiedAt || '').sort().at(-1)),
+    })),
     ...tags.map(tag => ({ url: `${SITE}/tags/${encodeURIComponent(tag)}` })),
     ...articles.map(article => {
       const url = `${SITE}${article.language === 'es' ? '/es' : ''}/blog/${article.slug}`;

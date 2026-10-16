@@ -1,0 +1,38 @@
+{
+  "slug": "spy-x-family-part-2",
+  "arcs": [
+    {
+      "name": "Doggy Crisis Arc",
+      "episodeStart": 1,
+      "episodeEnd": 3
+    },
+    {
+      "name": "Midterm Exams Arc",
+      "episodeStart": 4,
+      "episodeEnd": 7
+    },
+    {
+      "name": "Campbelldon Tennis Arc",
+      "episodeStart": 8,
+      "episodeEnd": 12
+    },
+    {
+      "name": "Imperial Scholars Mixer Arc",
+      "episodeStart": 13,
+      "episodeEnd": 13
+    }
+  ],
+  "sources": [
+    {
+      "name": "Spy × Family Wiki on Fandom (CC BY-SA)",
+      "url": "https://spy-x-family.fandom.com/wiki/Episode_13"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Spy × Family Wiki",
+    "verifiedAt": "2026-10-16",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

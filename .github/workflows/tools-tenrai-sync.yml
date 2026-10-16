@@ -1,0 +1,43 @@
+name: AnimeSparks tools data sync
+
+# Refreshes the tool* MongoDB collections from the Tenrai API once a day.
+# It never builds or deploys: the existing MongoDB rebuild workflow detects
+# the changed content fingerprint and rebuilds on its normal schedule.
+#
+# Disabled until the repository variable TOOLS_SYNC_ENABLED is "true".
+# Requires the secret TOOLS_SYNC_MONGODB_URI: a MongoDB user that can write
+# the tool* collections (the existing MONGODB_URI secret is read-only).
+# Optional secret TENRAI_SERVER_KEY raises Tenrai rate limits.
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: animesparks-tools-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    if: vars.TOOLS_SYNC_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Sync Tenrai data into MongoDB
+        env:
+          TOOLS_SYNC_MONGODB_URI: ${{ secrets.TOOLS_SYNC_MONGODB_URI }}
+          TENRAI_SERVER_KEY: ${{ secrets.TENRAI_SERVER_KEY }}
+          MONGODB_DB_NAME: animesparks
+        run: node scripts/tools/sync-tenrai.mjs --top-pages=20 --franchise-roots=250 --max-requests=1800
