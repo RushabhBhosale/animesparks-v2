@@ -6,15 +6,19 @@
 /** Filler Checker pages promoted as landing pages (always indexable when built). */
 export const FILLER_LANDINGS = ['naruto', 'naruto-shippuden', 'bleach', 'one-piece', 'dragon-ball-z'];
 
-/**
- * Watch-order franchises indexed on the strength of their MyAnimeList
- * release order (5+ entries with real air dates). "fate" is deliberately
- * absent: MAL links the Fate series as alternative versions, so a data-only
- * order would not answer the "Fate watch order" question.
- */
+/** Featured watch-order franchises shown on the tools hub. */
 export const WATCH_ORDER_LANDINGS = [
   'one-piece', 'naruto', 'bleach', 'monogatari', 'attack-on-titan', 'jujutsu-kaisen', 'demon-slayer-kimetsu-no-yaiba', 'my-hero-academia',
 ];
+
+/** Stable database slugs for franchises whose public URLs were renamed. */
+const FRANCHISE_SLUG_ALIASES: Record<string, string> = {
+  bakemonogatari: 'monogatari',
+};
+
+export function canonicalFranchiseSlug(slug: string): string {
+  return FRANCHISE_SLUG_ALIASES[slug] || slug;
+}
 
 export interface MangaLanding {
   slug: string;

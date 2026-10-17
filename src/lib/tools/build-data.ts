@@ -8,7 +8,7 @@ import { isPublishable } from './curated.ts';
 import { compareRelease, sumWatchTime, watchableTime } from './franchise.ts';
 import { compactKey } from './normalize.ts';
 import { buildSearchKey } from './search.ts';
-import { WATCH_ORDER_LANDINGS } from './landings.ts';
+import { canonicalFranchiseSlug } from './landings.ts';
 import type { AnimeIndexEntry, FranchiseIndexEntry, FranchiseRole, ToolAnimeDocument, ToolFranchiseDocument, ToolWatchOrderDocument, WatchOrderKind } from './types.ts';
 
 declare const process: { env: Record<string, string | undefined> };
@@ -88,6 +88,7 @@ async function loadToolsData() {
     };
     const publishable = orders.filter(isPublishable);
     const franchiseViews: FranchiseView[] = franchises.map(franchise => {
+      const publicSlug = canonicalFranchiseSlug(franchise.slug);
       const members = franchise.members
         .map(member => ({ member, item: bySlug.get(member.slug) }))
         .filter((pair): pair is { member: typeof pair.member; item: AnimeSnapshot } => Boolean(pair.item));
@@ -98,7 +99,7 @@ async function loadToolsData() {
         ))
         .map(({ member, item }) => view(item, member.role));
       const roleBySlug = new Map(releaseOrder.map(entry => [entry.slug, entry.role]));
-      const curated = publishable.filter(order => order.franchiseSlug === franchise.slug).map(order => ({
+      const curated = publishable.filter(order => canonicalFranchiseSlug(order.franchiseSlug) === publicSlug).map(order => ({
         kind: order.kind,
         summary: order.summary,
         sources: order.sources,
@@ -115,7 +116,7 @@ async function loadToolsData() {
         .filter((value): value is string => Boolean(value)).map(compactKey).filter(key => key.length > 2));
       titleKeys.add(compactKey(franchise.titleOverride || franchise.title));
       return {
-        slug: franchise.slug,
+        slug: publicSlug,
         title: franchise.titleOverride || franchise.title,
         releaseOrder,
         curated,
@@ -123,9 +124,9 @@ async function loadToolsData() {
         totals: { all: sumWatchTime(releaseOrder), main: sumWatchTime(releaseOrder.filter(entry => entry.role === 'main')) },
         popularity,
         poster: releaseOrder.find(entry => entry.role === 'main' && entry.poster)?.poster,
-        // Index franchises with an editor-verified order, plus the editorial
-        // landing list (large franchises whose release order is the answer).
-        indexable: curated.length > 0 || (WATCH_ORDER_LANDINGS.includes(franchise.slug) && releaseOrder.length >= 5),
+        // Every generated franchise page has at least three linked entries
+        // and is public content intended to be searchable.
+        indexable: true,
         updatedAt: franchise.updatedAt,
         fetchedAt: franchise.provenance?.fetchedAt || franchise.updatedAt,
         titleKeys,
@@ -150,7 +151,9 @@ async function loadToolsData() {
         d: item.durationMinutes || undefined,
         p: item.images?.posterSmall || item.images?.poster,
         r: item.popularity || undefined,
-        fr: item.franchiseSlug && franchiseTitle.has(item.franchiseSlug) ? item.franchiseSlug : undefined,
+        fr: item.franchiseSlug && franchiseTitle.has(canonicalFranchiseSlug(item.franchiseSlug))
+          ? canonicalFranchiseSlug(item.franchiseSlug)
+          : undefined,
         m: item.externalIds?.mal,
       }));
     const franchiseIndex: FranchiseIndexEntry[] = franchiseViews.map(franchise => ({

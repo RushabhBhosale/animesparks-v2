@@ -5,7 +5,7 @@
 import type { ArticleCard } from '../content/types';
 import { getToolsBuildData } from './build-data';
 import { getToolsExtras } from './build-extras';
-import { MANGA_LANDINGS } from './landings.ts';
+import { canonicalFranchiseSlug, MANGA_LANDINGS } from './landings.ts';
 import { compactKey } from './normalize.ts';
 
 export interface ArticleToolLink {
@@ -40,7 +40,7 @@ async function createLinker(english: ArticleCard[]) {
       if (fillerView && fillerView.summary.skippable > 0) {
         links.push({ href: `/tools/anime-filler-checker/${item.slug}`, label: `${item.title} filler list`, note: `${fillerView.summary.skippable} filler and recap episodes you can skip` });
       }
-      const franchise = item.franchiseSlug ? franchiseBySlug.get(item.franchiseSlug) : undefined;
+      const franchise = item.franchiseSlug ? franchiseBySlug.get(canonicalFranchiseSlug(item.franchiseSlug)) : undefined;
       if (franchise) links.push({ href: `/tools/anime-watch-order/${franchise.slug}`, label: `${franchise.title} watch order`, note: 'every season, movie and special in order' });
       const manga = mangaBySlug.get(item.slug);
       if (manga) links.push({ href: `/tools/anime-manga-chapter-finder/${manga.slug}`, label: `Where the ${manga.name} anime ends in the manga`, note: 'the chapter to continue from' });

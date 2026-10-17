@@ -29,7 +29,7 @@ export const GET: APIRoute = async () => {
       url: `${SITE}/tools/anime-manga-chapter-finder/${landing.slug}`,
       modified: xmlDate(landing.entries.map(slug => toolExtras.source[slug]?.mapping?.verifiedAt || '').sort().at(-1)),
     })),
-    // Only franchises with an editor-verified order are indexable.
+    // Every generated franchise page has a crawlable release-order guide.
     ...tools.franchises.filter(franchise => franchise.indexable).map(franchise => ({
       url: `${SITE}/tools/anime-watch-order/${franchise.slug}`,
       modified: xmlDate(franchise.curated.map(order => order.verifiedAt || '').sort().at(-1) || franchise.fetchedAt),

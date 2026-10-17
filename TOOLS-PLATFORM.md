@@ -84,7 +84,7 @@ Phase 3: Release Calendar, Watchlist. Phase 4: Recommendations, Tier List, Daily
 ### SEO rules applied
 
 - Tool pages: unique title/description, production canonical, BreadcrumbList + WebApplication JSON-LD, FAQ, crawlable explanatory copy, related articles.
-- Franchise pages are prerendered for every derived franchise. They are `noindex, follow` and stay out of the sitemap **until a verified curated order exists**. A release list built only from relations is not enough unique content to index.
+- Franchise pages are prerendered for every derived franchise with at least three linked entries. They are public release-order guides, use `index, follow`, and appear in the sitemap. Featured franchises receive additional editorial detail on the tools hub.
 - Query-string states (`?anime=...`) are served by the same static page, whose canonical has no parameters.
 - `/api/` is already disallowed in robots.txt. JSON indexes send `X-Robots-Tag: noindex`.
 - Existing routes, canonicals, robots, hreflang, sitemap rows, RSS and verification scripts are unchanged except for the added tool rows.

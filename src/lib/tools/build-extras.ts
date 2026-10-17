@@ -7,7 +7,7 @@ import type { ArticleCard } from '../content/types';
 import { getToolsBuildData, relatedArticles, type AnimeSnapshot } from './build-data';
 import { isPublishable } from './curated.ts';
 import { classifyEpisodes, summarize, typeRuns, type ClassifiedEpisode } from './episodes.ts';
-import { FILLER_LANDINGS } from './landings.ts';
+import { canonicalFranchiseSlug, FILLER_LANDINGS } from './landings.ts';
 import { compactKey } from './normalize.ts';
 import type { RecEntry } from './recommend.ts';
 import { buildSearchKey } from './search.ts';
@@ -139,7 +139,7 @@ async function loadExtras(english: ArticleCard[]) {
       sources: curated ? curated.sources : [{ name: 'MyAnimeList episode list', url: list?.provenance.sourceUrl || 'https://myanimelist.net' }],
       verifiedAt: curated?.verification.verifiedAt,
       fetchedAt: list?.updatedAt || curated?.updatedAt || new Date(now).toISOString(),
-      popularity: item.popularity, franchiseSlug: item.franchiseSlug,
+      popularity: item.popularity, franchiseSlug: item.franchiseSlug ? canonicalFranchiseSlug(item.franchiseSlug) : undefined,
       // Index only pages that say something: a verified list, or flagged filler/recaps.
       indexable: Boolean(curated) || summary.skippable > 0 || FILLER_LANDINGS.includes(slug),
       titleKeys: titleKeysOf(item),
@@ -160,7 +160,7 @@ async function loadExtras(english: ArticleCard[]) {
     if (!work && !mapping && !arcList) continue;
     source[item.slug] = {
       slug: item.slug, title: item.title, sourceMaterial: item.sourceMaterial, episodes: item.episodes ?? item.episodesAired ?? null, status: item.status,
-      franchiseSlug: item.franchiseSlug,
+      franchiseSlug: item.franchiseSlug ? canonicalFranchiseSlug(item.franchiseSlug) : undefined,
       manga: work ? {
         title: work.title, type: work.type, status: work.status, chapters: work.chapters, volumes: work.volumes,
         publishedFrom: work.publishedFrom, publishedTo: work.publishedTo, authors: work.authors, serializations: work.serializations, url: work.provenance.sourceUrl,
