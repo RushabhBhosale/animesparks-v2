@@ -14,8 +14,8 @@
   "routes": [{ "pattern": "admin.animesparks.blog", "custom_domain": true }],
   "vars": {
     "MONGODB_DB_NAME": "animesparks",
-    // Keep all admin database and R2 mutations disabled during pre-production.
-    "ADMIN_WRITES_ENABLED": "false",
+    // Enable authenticated admin CMS edits against the staging Worker.
+    "ADMIN_WRITES_ENABLED": "true",
     "PUBLISHING_WRITES_ENABLED": "false",
     // Search falls back to a live Tenrai lookup for titles missing from the
     // catalogue and saves them to toolAnime (insert-only). "false" disables it.
