@@ -115,7 +115,7 @@ jobs:
           NODE
       - name: Deploy existing animesparks-v2 Worker
         if: >-
-          (github.event_name == 'workflow_dispatch' && inputs.deploy_production == true && needs.detect.outputs.changed == 'true') ||
+          (github.event_name == 'workflow_dispatch' && inputs.deploy_production == true) ||
           (vars.ANIMESPARKS_AUTO_DEPLOY_APPROVED == 'true' &&
           ((github.event_name == 'schedule' && needs.detect.outputs.changed == 'true') || github.event_name == 'push'))
         id: deploy
