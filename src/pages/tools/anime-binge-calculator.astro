@@ -5,12 +5,13 @@ import AdUnit from '../../components/AdUnit.astro';
 import ToolHero from '../../components/tools/ToolHero.astro';
 import ToolFaq from '../../components/tools/ToolFaq.astro';
 import AnimePicker from '../../components/tools/AnimePicker.astro';
+import RelatedTools from '../../components/tools/RelatedTools.astro';
 import RelatedReading from '../../components/tools/RelatedReading.astro';
 import { getBuildData } from '../../lib/content/build-data';
 import { SITE } from '../../lib/content/seo';
 import { getToolsBuildData, relatedArticles } from '../../lib/tools/build-data';
 import { compactKey } from '../../lib/tools/normalize';
-import { faqPage, toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../lib/tools/seo';
+import { toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../lib/tools/seo';
 
 export const prerender = true;
 const path = '/tools/anime-binge-calculator';
@@ -38,7 +39,6 @@ const faq = [
 const jsonLd = [
   toolBreadcrumbs([['Anime Binge Calculator', path]]),
   toolApplication('Anime Binge Calculator', description, path),
-  faqPage(faq),
 ];
 ---
 <SiteLayout title={title} socialTitle="Anime Binge Calculator" description={description} canonical={`${SITE}${path}`} image={TOOLS_IMAGE} jsonLd={jsonLd} showFooterAd>
@@ -169,6 +169,7 @@ const jsonLd = [
       </section>
 
       <ToolFaq faq={faq} />
+      <RelatedTools current="anime-binge-calculator" />
       <RelatedReading articles={related} heading="Reading for long series" />
 
       <p class="tool-credit">

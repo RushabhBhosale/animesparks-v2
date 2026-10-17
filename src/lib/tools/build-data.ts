@@ -2,12 +2,13 @@
 // from MongoDB once per build and prerendered into static pages and JSON.
 // Visitors never cause a MongoDB or provider request.
 
-import { withDatabase } from '../content/mongodb';
+import { withDatabaseRetry } from '../content/mongodb';
 import type { ArticleCard } from '../content/types';
 import { isPublishable } from './curated.ts';
 import { compareRelease, sumWatchTime, watchableTime } from './franchise.ts';
 import { compactKey } from './normalize.ts';
 import { buildSearchKey } from './search.ts';
+import { WATCH_ORDER_LANDINGS } from './landings.ts';
 import type { AnimeIndexEntry, FranchiseIndexEntry, FranchiseRole, ToolAnimeDocument, ToolFranchiseDocument, ToolWatchOrderDocument, WatchOrderKind } from './types.ts';
 
 declare const process: { env: Record<string, string | undefined> };
@@ -62,7 +63,7 @@ export type AnimeSnapshot = Pick<ToolAnimeDocument, 'slug' | 'title' | 'titleEng
 async function loadToolsData() {
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error('MONGODB_URI is required for public prerendering');
-  return withDatabase(uri, async db => {
+  return withDatabaseRetry(uri, async db => {
     const [anime, franchises, orders, lastRun] = await Promise.all([
       db.collection<ToolAnimeDocument>('toolAnime').find({}, { projection: {
         _id: 0, slug: 1, title: 1, titleEnglish: 1, titleRomaji: 1, synonyms: 1, format: 1, status: 1, episodes: 1, episodesAired: 1,
@@ -112,18 +113,19 @@ async function loadToolsData() {
       const popularity = memberItems.reduce<number | null>((best, item) => item.popularity && (!best || item.popularity < best) ? item.popularity : best, null);
       const titleKeys = new Set(memberItems.flatMap(item => [item.title, item.titleEnglish, item.titleRomaji, ...(item.synonyms || []), ...(item.legacy?.articleAnimeNames || [])])
         .filter((value): value is string => Boolean(value)).map(compactKey).filter(key => key.length > 2));
-      titleKeys.add(compactKey(franchise.title));
+      titleKeys.add(compactKey(franchise.titleOverride || franchise.title));
       return {
         slug: franchise.slug,
-        title: franchise.title,
+        title: franchise.titleOverride || franchise.title,
         releaseOrder,
         curated,
         truncated: franchise.truncated,
         totals: { all: sumWatchTime(releaseOrder), main: sumWatchTime(releaseOrder.filter(entry => entry.role === 'main')) },
         popularity,
         poster: releaseOrder.find(entry => entry.role === 'main' && entry.poster)?.poster,
-        // Release lists alone are not enough unique content to index.
-        indexable: curated.length > 0,
+        // Index franchises with an editor-verified order, plus the editorial
+        // landing list (large franchises whose release order is the answer).
+        indexable: curated.length > 0 || (WATCH_ORDER_LANDINGS.includes(franchise.slug) && releaseOrder.length >= 5),
         updatedAt: franchise.updatedAt,
         fetchedAt: franchise.provenance?.fetchedAt || franchise.updatedAt,
         titleKeys,

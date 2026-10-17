@@ -5,13 +5,13 @@
       "episodeStart": 1,
       "episodeEnd": 1,
       "chapterStart": 65,
-      "chapterEnd": 76
+      "chapterEnd": 66
     },
     {
       "episodeStart": 2,
       "episodeEnd": 2,
       "chapterStart": 67,
-      "chapterEnd": 74
+      "chapterEnd": 69
     },
     {
       "episodeStart": 3,
@@ -34,7 +34,7 @@
     {
       "episodeStart": 6,
       "episodeEnd": 6,
-      "chapterStart": 64,
+      "chapterStart": 79,
       "chapterEnd": 80
     },
     {
@@ -82,7 +82,7 @@
     {
       "episodeStart": 14,
       "episodeEnd": 14,
-      "chapterStart": 102,
+      "chapterStart": 106,
       "chapterEnd": 111
     },
     {
@@ -119,7 +119,7 @@
       "episodeStart": 20,
       "episodeEnd": 20,
       "chapterStart": 126,
-      "chapterEnd": 133
+      "chapterEnd": 128
     },
     {
       "episodeStart": 21,
@@ -151,7 +151,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from Jujutsu Kaisen Wiki",
-    "verifiedAt": "2026-10-16",
+    "verifiedAt": "2026-10-17",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

@@ -90,6 +90,21 @@ const heroDimensions = r2ImageDimensions(featured?.mainImage);
         </section>
       )}
 
+      <!-- Tools -->
+      <HomeTools />
+
+      <!-- Trending Section -->
+        <section class="editorial-section" aria-labelledby="trending-heading" data-ga-ranking-panel="trending" hidden>
+          <div class="section-header">
+            <div>
+              <p class="kicker">In Focus</p>
+              <h2 id="trending-heading">Trending Now<span class="text-accent">.</span></h2>
+            </div>
+            <a class="section-header__link" href="/trending">All trending ↗</a>
+          </div>
+          <div class="card-grid card-grid--3" data-ga-rankings="trending"></div>
+        </section>
+
       <!-- Editor's Picks -->
       {data.editorsPicks.length > 0 && (
         <section class="editorial-section" aria-labelledby="editors-heading">
@@ -170,9 +185,6 @@ const heroDimensions = r2ImageDimensions(featured?.mainImage);
 
       <AdUnit slot="horizontal2" />
 
-      <!-- Tools -->
-      <HomeTools />
-
       <!-- Anime Series In Focus (Clusters) -->
       {data.animeClusters.length > 0 && (
         <section class="editorial-section" aria-labelledby="clusters-heading">
@@ -215,18 +227,6 @@ const heroDimensions = r2ImageDimensions(featured?.mainImage);
           </div>
         </section>
       )}
-
-      <!-- Trending Section -->
-        <section class="editorial-section" aria-labelledby="trending-heading" data-ga-ranking-panel="trending" hidden>
-          <div class="section-header">
-            <div>
-              <p class="kicker">In Focus</p>
-              <h2 id="trending-heading">Trending Now<span class="text-accent">.</span></h2>
-            </div>
-            <a class="section-header__link" href="/trending">All trending ↗</a>
-          </div>
-          <div class="card-grid card-grid--3" data-ga-rankings="trending"></div>
-        </section>
 
       <!-- Spanish Content Section (if available) -->
       {data.spanish.length > 0 && (

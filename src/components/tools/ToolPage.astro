@@ -8,9 +8,11 @@ import AdUnit from '../AdUnit.astro';
 import ToolHero from './ToolHero.astro';
 import ToolFaq from './ToolFaq.astro';
 import RelatedReading from './RelatedReading.astro';
+import RelatedTools from './RelatedTools.astro';
 import { SITE } from '../../lib/content/seo';
 import type { ArticleCard } from '../../lib/content/types';
-import { faqPage, toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../lib/tools/seo';
+import { toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../lib/tools/seo';
+import { clampDescription } from '../../lib/tools/landings';
 
 interface Props {
   path: string;
@@ -32,20 +34,22 @@ interface Props {
   image?: string;
   jsonLd?: unknown[];
   application?: boolean;
+  /** Registry slug of the tool, for related-tool links. */
+  toolSlug: string;
 }
 const {
   path, title, socialTitle, description, name, crumb, kicker, heading, deck, faq, related = [], relatedHeading, credit, facts,
-  robotsNoindex = false, parent, image = TOOLS_IMAGE, jsonLd = [], application = true,
+  robotsNoindex = false, parent, image = TOOLS_IMAGE, jsonLd = [], application = true, toolSlug,
 } = Astro.props;
+const metaDescription = clampDescription(description);
 const crumbs: Array<[string, string?]> = [['Home', '/'], ['Tools', '/tools'], ...(parent ? [parent] : []), [crumb]];
 const structured = [
   toolBreadcrumbs([...(parent ? [parent] : []), [name, path]]),
-  ...(application ? [toolApplication(name, description, path)] : []),
-  ...(faq.length ? [faqPage(faq)] : []),
+  ...(application ? [toolApplication(name, metaDescription, path)] : []),
   ...jsonLd,
 ];
 ---
-<SiteLayout title={title} socialTitle={socialTitle} description={description} canonical={`${SITE}${path}`} image={image} jsonLd={structured} robotsNoindex={robotsNoindex} showFooterAd>
+<SiteLayout title={title} socialTitle={socialTitle} description={metaDescription} canonical={`${SITE}${path}`} image={image} jsonLd={structured} robotsNoindex={robotsNoindex} showFooterAd>
   <main>
     <ToolHero crumbs={crumbs} kicker={kicker} title={heading} deck={deck} facts={facts} />
     <div class="shell tool-main">
@@ -55,6 +59,8 @@ const structured = [
         <slot name="guide" />
       </section>
       {faq.length > 0 && <ToolFaq faq={faq} />}
+      <slot name="after-faq" />
+      <RelatedTools current={toolSlug} />
       <RelatedReading articles={related} heading={relatedHeading} />
       <p class="tool-credit">
         {credit || 'Anime data'}: <a href="https://myanimelist.net" rel="nofollow noopener" target="_blank">MyAnimeList</a>, provided by the <a href="https://tenrai.org" rel="nofollow noopener" target="_blank">Tenrai API</a> and refreshed daily. AnimeSparks is not affiliated with MyAnimeList or Tenrai.

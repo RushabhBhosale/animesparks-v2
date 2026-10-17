@@ -2,6 +2,7 @@
 import '../styles/site.css';
 import AdUnit from '../components/AdUnit.astro';
 import { getUiCopy } from '../lib/content/locales';
+import { FEATURED_GUIDES } from '../lib/tools/landings';
 const {
   title,
   description,
@@ -137,6 +138,12 @@ const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003
         <a href="/my-anime-list">{lang === 'es' ? 'Mi lista de anime' : 'My anime list'}</a>
         <a href="/tools">{lang === 'es' ? 'Herramientas de anime' : 'Anime tools'}</a>
         <a href="/blogs/es" hreflang="es">{copy.spanishEdition}</a>
+      </nav>
+
+      <nav class="footer-nav" aria-label="Anime guides">
+        <h2>{lang === 'es' ? 'Guías de anime' : 'Anime guides'}</h2>
+        {[0, 2, 5, 7, 9, 10].map(index => FEATURED_GUIDES[index]).map(guide => <a href={guide.href}>{guide.label}</a>)}
+        <a href="/tools">{lang === 'es' ? 'Todas las herramientas' : 'All anime tools'}</a>
       </nav>
 
       <nav class="footer-nav" aria-label={copy.publication}>

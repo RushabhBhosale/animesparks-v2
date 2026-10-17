@@ -91,6 +91,9 @@ export interface FranchiseMember {
 export interface ToolFranchiseDocument {
   slug: string;
   title: string;
+  /** Editorial display name; the sync never overwrites it. */
+  titleOverride?: string;
+  previousSlugs?: string[];
   anchorMalId: number;
   members: FranchiseMember[];
   /** True when the relation crawl hit its node cap. */

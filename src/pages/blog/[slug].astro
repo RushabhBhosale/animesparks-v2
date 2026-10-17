@@ -1,12 +1,14 @@
 ---
 import ArticleDetail from '../../components/ArticleDetail.astro';
 import { getBuildData } from '../../lib/content/build-data';
+import { getArticleToolLinker } from '../../lib/tools/article-links';
 export const prerender = true;
 export async function getStaticPaths() {
   const data = await getBuildData();
+  const toolLinks = await getArticleToolLinker(data.english);
   return data.articlePages.filter(article => article.language === 'en')
-    .map(article => ({ params: { slug: article.slug }, props: { article, related: data.related(article) } }));
+    .map(article => ({ params: { slug: article.slug }, props: { article, related: data.related(article), toolLinks: toolLinks(article) } }));
 }
-const { article, related } = Astro.props;
+const { article, related, toolLinks } = Astro.props;
 ---
-<ArticleDetail article={article} related={related} />
+<ArticleDetail article={article} related={related} toolLinks={toolLinks} />

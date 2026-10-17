@@ -1,0 +1,22 @@
+---
+import type { ArticleToolLink } from '../lib/tools/article-links';
+interface Props { links: ArticleToolLink[] }
+const { links } = Astro.props;
+---
+{links.length > 0 && (
+  <aside class="article-tools" aria-labelledby="article-tools-heading">
+    <h2 id="article-tools-heading">Plan your watch</h2>
+    <ul>
+      {links.map(link => <li><a href={link.href}>{link.label}</a> <span>· {link.note}</span></li>)}
+    </ul>
+  </aside>
+)}
+
+<style>
+  .article-tools { margin-top: var(--sp-10); padding: var(--sp-5) var(--sp-6); border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--surface); }
+  .article-tools h2 { margin: 0 0 var(--sp-3); font-size: var(--text-xs); font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--ink-3); }
+  .article-tools ul { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--sp-2); }
+  .article-tools li { font-size: var(--text-base); line-height: 1.5; }
+  .article-tools a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--accent); }
+  .article-tools span { color: var(--ink-2); font-size: var(--text-sm); }
+</style>

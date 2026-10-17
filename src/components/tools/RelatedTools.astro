@@ -1,0 +1,26 @@
+---
+// Crawlable links to the tools most useful after this one.
+import { TOOLS, toolPath } from '../../lib/tools/registry';
+
+interface Props {
+  current: string;
+  heading?: string;
+}
+const { current, heading = 'More tools for your next step' } = Astro.props;
+const tool = TOOLS.find(item => item.slug === current);
+const related = (tool?.related || []).map(slug => TOOLS.find(item => item.slug === slug)).filter((item): item is NonNullable<typeof item> => Boolean(item?.live));
+---
+{related.length > 0 && (
+  <section class="tool-section" aria-labelledby="related-tools-title">
+    <h2 id="related-tools-title">{heading}</h2>
+    <div class="related-tools">
+      {related.map(item => (
+        <a class="related-tools__card" href={toolPath(item)}>
+          <span class="tool-card__glyph" aria-hidden="true">{item.glyph}</span>
+          <span><strong>{item.name}</strong><small>{item.description}</small></span>
+        </a>
+      ))}
+    </div>
+    <p class="related-tools__all"><a href="/tools">Browse all 10 anime tools →</a></p>
+  </section>
+)}

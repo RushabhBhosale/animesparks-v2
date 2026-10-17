@@ -307,7 +307,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from One Piece Wiki",
-    "verifiedAt": "2026-10-16",
+    "verifiedAt": "2026-10-17",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

@@ -3,6 +3,8 @@ import { Image } from 'astro:assets';
 import SiteLayout from '../layouts/SiteLayout.astro';
 import Card from './Card.astro';
 import AdUnit from './AdUnit.astro';
+import ArticleToolLinks from './ArticleToolLinks.astro';
+import type { ArticleToolLink } from '../lib/tools/article-links';
 import type { ArticleCard, ArticlePageData } from '../lib/content/types';
 import { r2ImageDimensions, r2ImageUrl } from '../lib/content/images';
 import { articleSeo, SITE } from '../lib/content/seo';
@@ -12,9 +14,10 @@ import { articleTypeLabel, categoryLabel, getUiCopy } from '../lib/content/local
 export interface Props {
   article: ArticlePageData;
   related: ArticleCard[];
+  toolLinks?: ArticleToolLink[];
 }
 
-const { article, related } = Astro.props;
+const { article, related, toolLinks = [] } = Astro.props;
 const es = article.language === 'es';
 const seo = articleSeo(article);
 const hero = r2ImageUrl(article.mainImage);
@@ -214,6 +217,8 @@ const locale = getUiCopy(article.language);
             ? <Fragment set:html={part} />
             : <AdUnit slot={part as 'inblog' | 'inblog2' | 'inbetween'} />)}
         </div>
+
+        <ArticleToolLinks links={toolLinks} />
 
         <!-- Tags -->
         {article.tags && article.tags.length > 0 && (

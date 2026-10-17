@@ -202,7 +202,7 @@
     {
       "episodeStart": 35,
       "episodeEnd": 35,
-      "chapterStart": 285,
+      "chapterStart": 291,
       "chapterEnd": 291
     },
     {
@@ -334,7 +334,7 @@
     {
       "episodeStart": 71,
       "episodeEnd": 71,
-      "chapterStart": 312,
+      "chapterStart": 316,
       "chapterEnd": 316
     },
     {
@@ -346,7 +346,7 @@
     {
       "episodeStart": 73,
       "episodeEnd": 73,
-      "chapterStart": 314,
+      "chapterStart": 318,
       "chapterEnd": 318
     },
     {
@@ -442,7 +442,7 @@
     {
       "episodeStart": 89,
       "episodeEnd": 89,
-      "chapterStart": 342,
+      "chapterStart": 346,
       "chapterEnd": 346
     },
     {
@@ -550,14 +550,14 @@
     {
       "episodeStart": 127,
       "episodeEnd": 127,
-      "chapterStart": 376,
+      "chapterStart": 381,
       "chapterEnd": 381
     },
     {
       "episodeStart": 128,
       "episodeEnd": 128,
       "chapterStart": 369,
-      "chapterEnd": 382
+      "chapterEnd": 376
     },
     {
       "episodeStart": 129,
@@ -592,7 +592,7 @@
     {
       "episodeStart": 134,
       "episodeEnd": 134,
-      "chapterStart": 366,
+      "chapterStart": 380,
       "chapterEnd": 383
     },
     {
@@ -640,7 +640,7 @@
     {
       "episodeStart": 142,
       "episodeEnd": 142,
-      "chapterStart": 403,
+      "chapterStart": 408,
       "chapterEnd": 411
     },
     {
@@ -653,7 +653,7 @@
       "episodeStart": 152,
       "episodeEnd": 152,
       "chapterStart": 403,
-      "chapterEnd": 416
+      "chapterEnd": 405
     },
     {
       "episodeStart": 153,
@@ -778,7 +778,7 @@
     {
       "episodeStart": 175,
       "episodeEnd": 175,
-      "chapterStart": 426,
+      "chapterStart": 449,
       "chapterEnd": 450
     },
     {
@@ -856,8 +856,8 @@
     {
       "episodeStart": 204,
       "episodeEnd": 204,
-      "chapterStart": 419,
-      "chapterEnd": 470
+      "chapterStart": 465,
+      "chapterEnd": 466
     },
     {
       "episodeStart": 205,
@@ -928,7 +928,7 @@
     {
       "episodeStart": 216,
       "episodeEnd": 216,
-      "chapterStart": 482,
+      "chapterStart": 486,
       "chapterEnd": 487
     },
     {
@@ -1198,7 +1198,7 @@
     {
       "episodeStart": 300,
       "episodeEnd": 300,
-      "chapterStart": 548,
+      "chapterStart": 552,
       "chapterEnd": 556
     },
     {
@@ -1252,7 +1252,7 @@
     {
       "episodeStart": 326,
       "episodeEnd": 326,
-      "chapterStart": 553,
+      "chapterStart": 567,
       "chapterEnd": 568
     },
     {
@@ -1384,7 +1384,7 @@
     {
       "episodeStart": 351,
       "episodeEnd": 351,
-      "chapterStart": 624,
+      "chapterStart": 648,
       "chapterEnd": 648
     },
     {
@@ -1439,7 +1439,7 @@
       "episodeStart": 369,
       "episodeEnd": 369,
       "chapterStart": 625,
-      "chapterEnd": 648
+      "chapterEnd": 626
     },
     {
       "episodeStart": 370,
@@ -1759,7 +1759,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from Narutopedia",
-    "verifiedAt": "2026-10-16",
+    "verifiedAt": "2026-10-17",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

@@ -27,11 +27,3 @@ export function toolApplication(name: string, description: string, path: string)
     publisher: { '@type': 'Organization', name: 'AnimeSparks', url: SITE, '@id': `${SITE}/#organization` },
   };
 }
-
-export function faqPage(faq: Array<{ question: string; answer: string }>) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faq.map(item => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })),
-  };
-}

@@ -1,4 +1,4 @@
-import { withDatabase } from './mongodb';
+import { withDatabaseRetry } from './mongodb';
 import { getHomepage } from './homepage';
 import { getPublishedArticles, hydrateCards, isLive } from './articles';
 import { getAnimeEntries, getCategories, getCategoriesWithArticles, getSitemapArticles } from './public';
@@ -15,7 +15,7 @@ function buildUri(): string {
 }
 
 async function loadBuildData() {
-  return withDatabase(buildUri(), async db => {
+  return withDatabaseRetry(buildUri(), async db => {
     const [fullDocuments, rawEnglish, rawSpanish, categories, categorySummaries, anime, rawHome, rawSitemapArticles] = await Promise.all([
       db.collection<ArticleDocument & { sourceDocument?: { publishedAt?: string; updatedAt?: string } }>('articles').find(
         { publicationState: 'published', language: { $in: ['en', 'es'] } },

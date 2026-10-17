@@ -593,7 +593,7 @@
       "episodeStart": 107,
       "episodeEnd": 107,
       "chapterStart": 173,
-      "chapterEnd": 184
+      "chapterEnd": 175
     },
     {
       "episodeStart": 108,
@@ -793,7 +793,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from Narutopedia",
-    "verifiedAt": "2026-10-16",
+    "verifiedAt": "2026-10-17",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

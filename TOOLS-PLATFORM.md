@@ -173,3 +173,19 @@ Collections created: `toolAnime` (2,474 docs), `toolFranchises` (122 docs, 118 a
 **Still curated-only / not covered:** chronological and beginner watch orders, manga-canon vs anime-canon filler splits, chapter maps and arcs for series not listed above, and schedule delay notices.
 
 **Tests:** 68 automated tests (`npm test`). `astro check` reports 0 errors. Production build passes; 0 existing pages or sitemap URLs removed, 103 sitemap URLs added.
+
+## 7. SEO pass (2026-10-17, branch `feature/tools-seo`)
+
+**Audit findings fixed:** 193 tool titles over 75 characters (filler/watch-order titles now fit about 65), 48 over-long descriptions (now clamped to 158), flagship watch-order pages that were `noindex`, no per-series Manga Finder pages, no article→tool links and no tool→tool links. FAQPage JSON-LD is removed from all tools; the FAQs stay visible. Remaining structured data: BreadcrumbList, WebApplication (tool pages) and ItemList (watch orders).
+
+**Landing pages (indexable, in the sitemap):**
+- Filler: naruto, naruto-shippuden, bleach, one-piece, dragon-ball-z. Added longest filler stretches, an arc-by-arc filler table (arcs from wikis), and links to the watch order, manga guide and filler-free binge plan.
+- Watch order: one-piece, naruto, bleach, monogatari (renamed from `bakemonogatari`, with a 301), attack-on-titan, jujutsu-kaisen, demon-slayer-kimetsu-no-yaiba, my-hero-academia. Added a "main story in release order" list, a by-format table and filler links per entry.
+- Manga (new route `/tools/anime-manga-chapter-finder/[slug]`): jujutsu-kaisen, demon-slayer, chainsaw-man, solo-leveling (newly imported from its wiki), frieren, my-hero-academia, spy-x-family, naruto. Each has a season table, per-episode chapter tables, a preselected lookup and a "continue from chapter N" answer.
+- Skipped: `fate`. MAL links Fate entries as alternative versions, so a data-derived order can't answer "Fate watch order" without editorial curation.
+
+**Linking:** "Popular anime guides" on `/tools`; related-tools cards on every tool; a "Plan your watch" box on English articles (only existing, indexable tool pages for that article's anime; Release Calendar on premiere/schedule news); a share box with copy-link and HTML-link snippet on landing pages.
+
+**Build robustness:** snapshot loaders retry transient MongoDB/DNS failures (4 attempts, backoff, build-time only).
+
+**Not verified:** the production build. Atlas and local DNS were unstable during this session: replica set without a primary, SRV lookups failing. Astro completed one full build, but the post-build fingerprint step failed, so the generated HTML, sitemap and articles were not inspected after these changes.

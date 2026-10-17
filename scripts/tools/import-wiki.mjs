@@ -45,6 +45,8 @@ const WIKIS = [
     groups: [{ slugs: ['black-clover'], match: () => true }] },
   { key: 'spy-x-family', host: 'spy-x-family.fandom.com', name: 'Spy × Family Wiki', template: 'Template:Infobox episode',
     groups: [{ slugs: ['spy-x-family', 'spy-x-family-part-2', 'spy-x-family-season-2', 'spy-x-family-season-3'], match: () => true }] },
+  { key: 'solo-leveling', host: 'solo-leveling.fandom.com', name: 'Solo Leveling Wiki', template: 'Template:Infobox episode',
+    groups: [{ slugs: ['solo-leveling', 'solo-leveling-season-2-arise-from-the-shadow'], match: () => true }] },
   { key: 'jjk', host: 'jujutsu-kaisen.fandom.com', name: 'Jujutsu Kaisen Wiki', template: 'Template:Episode Infobox',
     groups: [{ slugs: ['jujutsu-kaisen', 'jujutsu-kaisen-season-2', 'jujutsu-kaisen-the-culling-game-part-1'], match: () => true }] },
 ];
@@ -114,9 +116,14 @@ export function episodeNumber(params, title = '') {
 
 /** Chapter numbers from fields like "[[Chapter 2]] (p. 2-3)<br>[[Chapter 1]]" or "1-3". */
 export function chapterNumbers(params) {
-  const fields = Object.entries(params).filter(([key]) => /^(chapters?|adapted( from)?( \d+)?|manga)$/.test(key)).map(([, value]) => value);
+  const fields = Object.entries(params).filter(([key]) => /^(chapters?|adapted ?(from)?( \d+)?|manga)$/.test(key)).map(([, value]) => value);
   const numbers = new Set();
   for (const field of fields) {
+    // "[[Chapter 14]] - [[Chapter 17]]" is a range: expand it first.
+    for (const range of field.matchAll(/\[\[\s*Chapter\s+(\d+)[^\]]*\]\]\s*[-–]\s*\[\[\s*Chapter\s+(\d+)/gi)) {
+      const [start, end] = [Number(range[1]), Number(range[2])];
+      if (end > start && end - start < 60) for (let value = start; value <= end; value++) numbers.add(value);
+    }
     const linked = [...field.matchAll(/\[\[\s*Chapter\s+(\d+)/gi)].map(match => Number(match[1]));
     if (linked.length) { linked.forEach(value => numbers.add(value)); continue; }
     // Links to anything else ("Extra Mission 1", bonus stories) are not chapters.
@@ -132,15 +139,33 @@ export function chapterNumbers(params) {
 }
 
 export function arcName(params) {
-  const raw = params.arc || '';
+  // An episode spanning two arcs links both; it belongs to the first.
+  const raw = (params.arc || '').match(/^\s*\[\[[^\]]*\]\]/)?.[0] || params.arc || '';
   return raw ? strip(raw).replace(/\s*\(arc\)$/i, ' Arc').replace(/\s+arc$/i, ' Arc') || null : null;
+}
+
+/**
+ * An episode may also cite flashback chapters far from what it adapts
+ * (e.g. 1, 4-5 and 14-17). Group chapters that are within 3 of each other
+ * and keep the largest group (the later one on a tie).
+ */
+export function mainChapterRun(chapters) {
+  const runs = [];
+  for (const chapter of [...chapters].sort((a, b) => a - b)) {
+    const last = runs.at(-1);
+    if (last && chapter - last.at(-1) <= 3) last.push(chapter);
+    else runs.push([chapter]);
+  }
+  const best = runs.reduce((winner, run) => run.length >= winner.length ? run : winner, []);
+  return [best[0], best.at(-1)];
 }
 
 /** Turns per-episode records into mapping ranges and arcs (episode numbers relative to the entry). */
 export function buildDatasets(records) {
-  const ranges = records.filter(record => record.chapters.length).map(record => ({
-    episodeStart: record.n, episodeEnd: record.n, chapterStart: record.chapters[0], chapterEnd: record.chapters.at(-1),
-  }));
+  const ranges = records.filter(record => record.chapters.length).map(record => {
+    const [chapterStart, chapterEnd] = mainChapterRun(record.chapters);
+    return { episodeStart: record.n, episodeEnd: record.n, chapterStart, chapterEnd };
+  });
   const arcs = [];
   for (const record of records) {
     if (!record.arc) continue;
@@ -247,7 +272,7 @@ async function main() {
     }
     for (const group of wiki.groups) {
       // Wikis number either per season or overall; sort by season then number, de-duplicate.
-      const season = record => Number(String(record.params['season number'] || record.params.season || '1').match(/\d+/)?.[0] || 1);
+      const season = record => Number(String(record.params['season number'] || record.params.season || record.params.partofseason || '1').match(/\d+/)?.[0] || 1);
       const seen = new Set();
       const ordered = records.filter(record => group.match(record.params))
         .sort((a, b) => season(a) - season(b) || a.n - b.n)

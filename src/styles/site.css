@@ -279,7 +279,7 @@ body.menu-open { overflow: hidden; }
 }
 .site-footer__top {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: var(--sp-12);
   padding: var(--sp-16) 0 var(--sp-12);
 }

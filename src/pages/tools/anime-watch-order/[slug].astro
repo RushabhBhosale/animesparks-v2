@@ -4,6 +4,10 @@ import '../../../styles/tools.css';
 import AdUnit from '../../../components/AdUnit.astro';
 import ToolHero from '../../../components/tools/ToolHero.astro';
 import RelatedReading from '../../../components/tools/RelatedReading.astro';
+import RelatedTools from '../../../components/tools/RelatedTools.astro';
+import ShareBox from '../../../components/tools/ShareBox.astro';
+import { getToolsExtras } from '../../../lib/tools/build-extras';
+import { MANGA_LANDINGS, clampDescription, fitTitle } from '../../../lib/tools/landings';
 import { getBuildData } from '../../../lib/content/build-data';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData, relatedArticles, type FranchiseEntryView, type FranchiseView } from '../../../lib/tools/build-data';
@@ -23,8 +27,17 @@ const count = franchise.releaseOrder.length;
 const mainCount = franchise.releaseOrder.filter(entry => entry.role === 'main').length;
 const allTime = franchise.totals.all;
 const mainTime = franchise.totals.main;
-const title = `${franchise.title} Watch Order — All ${count} Entries in Order | AnimeSparks`;
-const description = `How to watch ${franchise.title} in order: ${count} seasons, movies and specials in release order${allTime.minutes ? `, about ${formatHours(allTime.minutes)} in total` : ''}. Track your progress as you go.`.slice(0, 300);
+const title = fitTitle([`${franchise.title} Watch Order: All ${count} Seasons, Movies & OVAs`, `${franchise.title} Watch Order: All ${count} Entries in Order`, `${franchise.title} Watch Order`]);
+const mainEntries = franchise.releaseOrder.filter(entry => entry.role === 'main');
+const description = clampDescription(`How to watch ${franchise.title} in order: ${mainEntries.length} main-story entries and ${count - mainEntries.length} side stories, movies and recaps in release order${allTime.minutes ? `, about ${formatHours(allTime.minutes)} in total` : ''}.`);
+const { filler: fillerViews } = await getToolsExtras(english);
+const fillerPages = new Set(fillerViews.filter(view => view.indexable).map(view => view.slug));
+const mangaLanding = MANGA_LANDINGS.find(landing => franchise.releaseOrder.some(entry => landing.entries.includes(entry.slug)));
+// Totals by format for the "at a glance" table.
+const formatRows = [...new Set(franchise.releaseOrder.map(entry => entry.format))].map(format => {
+  const entries = franchise.releaseOrder.filter(entry => entry.format === format);
+  return { label: formatLabel(format), count: entries.length, episodes: entries.reduce((sum, entry) => sum + (entry.watchEpisodes || 0), 0), minutes: entries.reduce((sum, entry) => sum + (entry.watchMinutes || 0), 0) };
+}).sort((a, b) => b.count - a.count);
 const related = relatedArticles(english, franchise.titleKeys, 6);
 const orderLabels: Record<string, string> = { chronological: 'Chronological', beginner: 'Beginner-friendly' };
 const roleLabels: Record<string, string> = { main: 'Main story', side: 'Side story', recap: 'Recap' };
@@ -78,6 +91,12 @@ const missingKinds = ['chronological', 'beginner'].filter(kind => !franchise.cur
       <div class="tool-layout">
         <div data-franchise={franchise.slug}>
           <h2 class="sr-only">{franchise.title} viewing order</h2>
+          <section aria-labelledby="main-route-title" style="margin-bottom: var(--sp-6)">
+            <h2 id="main-route-title" class="tool-legend" style="display:block;margin:0 0 var(--sp-3)">Main story in release order</h2>
+            <ol class="tool-guide" style="margin:0;padding-left:1.4em;max-width:none">
+              {mainEntries.map(entry => <li><strong>{entry.title}</strong> ({[formatLabel(entry.format), entry.year].filter(Boolean).join(', ')}{entry.watchEpisodes && entry.watchEpisodes > 1 ? `, ${entry.watchEpisodes} episodes` : ''})</li>)}
+            </ol>
+          </section>
           <div class="order-toolbar">
             <div class="tool-segment" role="tablist" aria-label="Viewing order">
               {lists.map((list, index) => <button type="button" role="tab" id={`tab-${list.id}`} aria-controls={`list-${list.id}`} aria-selected={index === 0 ? 'true' : 'false'} data-order-tab={list.id}>{list.label}</button>)}
@@ -111,6 +130,7 @@ const missingKinds = ['chronological', 'beginner'].filter(kind => !franchise.cur
                         {meta(entry).map(part => <span>{part}</span>)}
                       </p>
                       {entry.note && <p class="order-item__note">{entry.note}</p>}
+                      {fillerPages.has(entry.slug) && <p class="order-item__note"><a href={`/tools/anime-filler-checker/${entry.slug}`}>{entry.title} filler list →</a></p>}
                     </div>
                     <label class="order-done"><input type="checkbox" data-done={entry.slug} aria-label={`Mark ${entry.title} as watched`} /><span>Watched</span></label>
                   </li>
@@ -148,12 +168,28 @@ const missingKinds = ['chronological', 'beginner'].filter(kind => !franchise.cur
         </aside>
       </div>
 
+      <section class="tool-section" aria-labelledby="glance-title">
+        <h2 id="glance-title">{franchise.title} at a glance</h2>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th scope="col">Type</th><th scope="col">Entries</th><th scope="col">Episodes</th><th scope="col">Watch time</th></tr></thead>
+            <tbody>
+              {formatRows.map(row => <tr><td><strong>{row.label}</strong></td><td>{row.count}</td><td>{row.episodes || '—'}</td><td>{row.minutes ? formatDuration(row.minutes) : '—'}</td></tr>)}
+              <tr><td><strong>Total</strong></td><td>{count}</td><td>{allTime.episodes}</td><td>{allTime.minutes ? formatDuration(allTime.minutes) : '—'}</td></tr>
+            </tbody>
+          </table>
+        </div>
+        {mangaLanding && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">Reading the manga too? See the <a href={`/tools/anime-manga-chapter-finder/${mangaLanding.slug}`}>{mangaLanding.name} anime to manga guide</a>.</p>}
+      </section>
+
       <section class="tool-section tool-guide" aria-labelledby="franchise-method">
         <h2 id="franchise-method">How this list is built</h2>
         <p>Entries are gathered from MyAnimeList’s sequel, prequel, side-story and summary links, starting from {franchise.releaseOrder[0]?.title}. They are then sorted by original premiere date. Main-story entries are joined by sequel and prequel links. Everything else is marked as a side story or recap so you can skip it.</p>
         <p>Watch time uses each entry’s listed runtime. Ongoing series count only the episodes aired so far, and unannounced entries count as zero until they premiere.</p>
       </section>
 
+      {franchise.indexable && <ShareBox url={`${SITE}${path}`} title={`${franchise.title} watch order`} anchor={`${franchise.title} watch order`} />}
+      <RelatedTools current="anime-watch-order" />
       <RelatedReading articles={related} heading={`More on ${franchise.title}`} />
 
       <p class="tool-credit">

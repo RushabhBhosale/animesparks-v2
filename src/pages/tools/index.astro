@@ -4,8 +4,19 @@ import '../../styles/tools.css';
 import { SITE } from '../../lib/content/seo';
 import { TOOLS, TOOL_CATEGORIES, LIVE_TOOLS, toolPath } from '../../lib/tools/registry';
 import { TOOLS_IMAGE } from '../../lib/tools/seo';
+import { getBuildData } from '../../lib/content/build-data';
+import { getToolsBuildData } from '../../lib/tools/build-data';
+import { getToolsExtras } from '../../lib/tools/build-extras';
+import { FILLER_LANDINGS, MANGA_LANDINGS, WATCH_ORDER_LANDINGS } from '../../lib/tools/landings';
 
 export const prerender = true;
+const [{ franchises }, { filler, source }] = await Promise.all([getToolsBuildData(), getToolsExtras((await getBuildData()).english)]);
+// Crawlable entry points to the anime-specific landing pages.
+const guideGroups = [
+  { heading: 'Filler lists', links: FILLER_LANDINGS.map(slug => filler.find(view => view.slug === slug)).filter(view => view?.indexable).map(view => ({ href: `/tools/anime-filler-checker/${view!.slug}`, label: `${view!.title} filler list` })) },
+  { heading: 'Watch orders', links: WATCH_ORDER_LANDINGS.map(slug => franchises.find(item => item.slug === slug)).filter(item => item?.indexable).map(item => ({ href: `/tools/anime-watch-order/${item!.slug}`, label: `${item!.title} watch order` })) },
+  { heading: 'Anime to manga', links: MANGA_LANDINGS.filter(landing => landing.entries.every(slug => source[slug]?.mapping)).map(landing => ({ href: `/tools/anime-manga-chapter-finder/${landing.slug}`, label: `${landing.name} manga guide` })) },
+].filter(group => group.links.length);
 const title = 'Anime Tools — Watch Order, Filler Lists, Calendar & More | AnimeSparks';
 const description = 'Free anime tools from AnimeSparks: watch orders, filler lists, binge time, release calendar, watchlist, recommendations, tier lists and a daily guessing game.';
 const canonical = `${SITE}/tools`;
@@ -61,6 +72,19 @@ const jsonLd = [
           </section>
         );
       })}
+      {guideGroups.length > 0 && (
+        <section class="tool-section" aria-labelledby="guides-title">
+          <h2 id="guides-title" style="font-family:var(--font-body);font-size:clamp(26px,3vw,34px);letter-spacing:-.04em;margin:0 0 var(--sp-5)">Popular anime guides</h2>
+          <div class="related-tools">
+            {guideGroups.map(group => (
+              <div class="tool-aside-card">
+                <p class="kicker red">{group.heading}</p>
+                <ul>{group.links.map(link => <li><a href={link.href}>{link.label}</a></li>)}</ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       <p class="tools-empty" id="tools-empty" hidden>No tool matches that search yet. Try “order”, “time” or “filler”.</p>
 
       <section class="tool-section tool-guide" aria-labelledby="tools-about">

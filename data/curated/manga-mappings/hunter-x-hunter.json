@@ -220,7 +220,7 @@
     {
       "episodeStart": 39,
       "episodeEnd": 39,
-      "chapterStart": 67,
+      "chapterStart": 83,
       "chapterEnd": 83
     },
     {
@@ -280,7 +280,7 @@
     {
       "episodeStart": 49,
       "episodeEnd": 49,
-      "chapterStart": 80,
+      "chapterStart": 89,
       "chapterEnd": 91
     },
     {
@@ -442,7 +442,7 @@
     {
       "episodeStart": 76,
       "episodeEnd": 76,
-      "chapterStart": 1,
+      "chapterStart": 185,
       "chapterEnd": 186
     },
     {
@@ -467,7 +467,7 @@
       "episodeStart": 80,
       "episodeEnd": 80,
       "chapterStart": 189,
-      "chapterEnd": 204
+      "chapterEnd": 190
     },
     {
       "episodeStart": 81,
@@ -485,7 +485,7 @@
       "episodeStart": 83,
       "episodeEnd": 83,
       "chapterStart": 194,
-      "chapterEnd": 288
+      "chapterEnd": 196
     },
     {
       "episodeStart": 84,
@@ -508,7 +508,7 @@
     {
       "episodeStart": 87,
       "episodeEnd": 87,
-      "chapterStart": 197,
+      "chapterStart": 202,
       "chapterEnd": 204
     },
     {
@@ -742,7 +742,7 @@
     {
       "episodeStart": 126,
       "episodeEnd": 126,
-      "chapterStart": 292,
+      "chapterStart": 296,
       "chapterEnd": 298
     },
     {
@@ -827,7 +827,7 @@
       "episodeStart": 140,
       "episodeEnd": 140,
       "chapterStart": 324,
-      "chapterEnd": 339
+      "chapterEnd": 325
     },
     {
       "episodeStart": 141,
@@ -889,7 +889,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from Hunterpedia",
-    "verifiedAt": "2026-10-16",
+    "verifiedAt": "2026-10-17",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

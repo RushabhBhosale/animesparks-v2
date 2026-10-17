@@ -4,12 +4,14 @@ import AnimePicker from '../../components/tools/AnimePicker.astro';
 import { getBuildData } from '../../lib/content/build-data';
 import { getToolsBuildData } from '../../lib/tools/build-data';
 import { getToolsExtras } from '../../lib/tools/build-extras';
+import { MANGA_LANDINGS } from '../../lib/tools/landings';
 
 export const prerender = true;
 const { english } = await getBuildData();
 const [{ bySlug }, extras] = await Promise.all([getToolsBuildData(), getToolsExtras(english)]);
 const entries = Object.values(extras.source);
 const verified = entries.filter(entry => entry.mapping);
+const guides = MANGA_LANDINGS.filter(landing => landing.entries.every(slug => extras.source[slug]?.mapping));
 const popular = entries
   .filter(entry => entry.manga)
   .sort((a, b) => (bySlug.get(a.slug)?.popularity || Infinity) - (bySlug.get(b.slug)?.popularity || Infinity))
@@ -25,7 +27,8 @@ const faq = [
 ];
 ---
 <ToolPage
-  path="/tools/anime-manga-chapter-finder" title="Anime to Manga Chapter Finder — Where Does the Anime End? | AnimeSparks" socialTitle="Episode-to-Manga Finder"
+  toolSlug="anime-manga-chapter-finder"
+  path="/tools/anime-manga-chapter-finder" title="Anime to Manga Chapter Finder: Where the Anime Ends | AnimeSparks" socialTitle="Episode-to-Manga Finder"
   description="Find which manga chapter an anime episode adapts and where to continue reading after the anime. See the source manga's status, chapters and volumes."
   name="Episode-to-Manga Finder" crumb="Manga Finder" kicker="Watch smarter" heading="Episode-to-Manga Finder"
   deck="Finished the anime and want more? Find the source manga, its publication status and, where a verified guide exists, the exact chapter to continue from."
@@ -68,7 +71,9 @@ const faq = [
         <p>Chapter numbers come from each series’ fan wiki or an editor-checked guide, never estimates. Series without one still show the source manga’s status, chapters and volumes.</p>
       </div>
       <div class="tool-aside-card">
-        <p class="kicker">Series with chapter guides</p>
+        <p class="kicker">Full series guides</p>
+        {guides.length > 0 && <ul style="margin-bottom:var(--sp-3)">{guides.map(landing => <li><a href={`/tools/anime-manga-chapter-finder/${landing.slug}`}>{landing.name}</a></li>)}</ul>}
+        <p class="kicker">Episode lookups available for</p>
         {verified.length
           ? <ul>{verified.map(entry => <li>{entry.title}</li>)}</ul>
           : <p>No series has a verified episode-to-chapter guide yet. New guides are added as they’re checked.</p>}

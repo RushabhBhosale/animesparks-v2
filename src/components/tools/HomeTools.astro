@@ -2,6 +2,8 @@
 // Homepage strip promoting the tools. Text-only (no images), so it adds no
 // layout shift and almost no weight to the homepage.
 import { TOOLS, toolPath } from '../../lib/tools/registry';
+import { FEATURED_GUIDES } from '../../lib/tools/landings';
+const groups = [...new Set(FEATURED_GUIDES.map(guide => guide.group))];
 
 const featuredSlugs = ['anime-watch-order', 'anime-filler-checker', 'anime-binge-calculator', 'anime-release-calendar', 'daily-anime-game', 'anime-tier-list'];
 const featured = featuredSlugs.map(slug => TOOLS.find(tool => tool.slug === slug)).filter((tool): tool is NonNullable<typeof tool> => Boolean(tool && tool.live));
@@ -23,6 +25,14 @@ const featured = featuredSlugs.map(slug => TOOLS.find(tool => tool.slug === slug
       </a>
     ))}
   </div>
+  <div class="home-tools__guides">
+    {groups.map(group => (
+      <div>
+        <p class="kicker">{group}</p>
+        <ul>{FEATURED_GUIDES.filter(guide => guide.group === group).map(guide => <li><a href={guide.href}>{guide.label}</a></li>)}</ul>
+      </div>
+    ))}
+  </div>
 </section>
 
 <style>
@@ -32,6 +42,12 @@ const featured = featuredSlugs.map(slug => TOOLS.find(tool => tool.slug === slug
   .home-tools__glyph { grid-row: span 2; display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line-2); color: var(--accent); font-size: 18px; }
   .home-tools__card strong { font-family: var(--font-body); font-size: var(--text-xl); letter-spacing: -.02em; color: var(--ink); line-height: 1.2; }
   .home-tools__card span:last-child { color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
+  .home-tools__guides { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-6); margin-top: var(--sp-6); padding: var(--sp-5) var(--sp-6); border: 1px solid var(--line); background: var(--bg); }
+  .home-tools__guides .kicker { margin-bottom: var(--sp-2); color: var(--accent); }
+  .home-tools__guides ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+  .home-tools__guides a { color: var(--ink); font-size: var(--text-sm); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+  .home-tools__guides a:hover { text-decoration-color: var(--accent); }
+  @media (max-width: 700px) { .home-tools__guides { grid-template-columns: 1fr; gap: var(--sp-4); padding: var(--sp-4); } }
   @media (max-width: 960px) { .home-tools__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 700px) { .home-tools__grid { grid-template-columns: 1fr; } .home-tools__card { padding: var(--sp-4); } }
 </style>

@@ -1,0 +1,169 @@
+---
+import ToolPage from '../../../components/tools/ToolPage.astro';
+import ShareBox from '../../../components/tools/ShareBox.astro';
+import { getBuildData } from '../../../lib/content/build-data';
+import { SITE } from '../../../lib/content/seo';
+import { getToolsBuildData, relatedArticles } from '../../../lib/tools/build-data';
+import { getToolsExtras, type SourceEntry } from '../../../lib/tools/build-extras';
+import { MANGA_LANDINGS, fitTitle, type MangaLanding } from '../../../lib/tools/landings';
+import { compactKey } from '../../../lib/tools/normalize';
+
+export const prerender = true;
+export async function getStaticPaths() {
+  const { source } = await getToolsExtras((await getBuildData()).english);
+  // Only series where every listed season has an imported chapter map.
+  return MANGA_LANDINGS
+    .filter(landing => landing.entries.every(slug => source[slug]?.mapping?.ranges.length))
+    .map(landing => ({ params: { slug: landing.slug }, props: { landing } }));
+}
+
+const { landing } = Astro.props as { landing: MangaLanding };
+const { english } = await getBuildData();
+const [{ bySlug, franchises }, extras] = await Promise.all([getToolsBuildData(), getToolsExtras(english)]);
+const seasons = landing.entries.map(slug => extras.source[slug]).filter((entry): entry is SourceEntry & { mapping: NonNullable<SourceEntry['mapping']> } => Boolean(entry?.mapping));
+const latest = seasons.at(-1)!;
+const manga = seasons.find(season => season.manga)?.manga;
+const path = `/tools/anime-manga-chapter-finder/${landing.slug}`;
+const chapterSpan = (season: (typeof seasons)[number]) => {
+  const starts = season.mapping.ranges.map(range => range.chapterStart);
+  const ends = season.mapping.ranges.map(range => range.chapterEnd);
+  return [Math.min(...starts), Math.max(...ends)] as const;
+};
+const rows = seasons.map(season => {
+  const [first, last] = chapterSpan(season);
+  const episodes = season.episodes || season.mapping.ranges.at(-1)!.episodeEnd;
+  return { season, first, last, episodes, covered: season.mapping.ranges.reduce((sum, range) => sum + range.episodeEnd - range.episodeStart + 1, 0) };
+});
+const continueFrom = latest.mapping.continueFromChapter;
+const sources = [...new Map(seasons.flatMap(season => season.mapping.sources).map(source => [source.url.split('/wiki/')[0], source])).values()];
+const fillerSlugs = new Set(extras.filler.filter(view => view.indexable).map(view => view.slug));
+const franchise = franchises.find(item => item.slug === bySlug.get(seasons[0].slug)?.franchiseSlug && item.indexable);
+const keys = new Set(seasons.flatMap(season => { const item = bySlug.get(season.slug); return item ? [item.title, item.titleEnglish, item.titleRomaji, ...(item.legacy?.articleAnimeNames || [])] : []; })
+  .filter((value): value is string => Boolean(value)).map(compactKey).filter(key => key.length > 2));
+const isAiring = latest.status === 'airing';
+const statusText: Record<string, string> = { publishing: 'still publishing', finished: 'finished', hiatus: 'on hiatus', discontinued: 'discontinued' };
+const title = fitTitle([`${landing.name} Anime to Manga: Where to Continue Reading`, `${landing.name} Anime to Manga Chapter Guide`, `${landing.name} Manga Chapter Guide`]);
+const description = `Where the ${landing.name} anime ends in the manga: ${seasons.length > 1 ? `all ${seasons.length} seasons` : 'every episode'} matched to the chapters they adapt${continueFrom ? `, and why to continue from chapter ${continueFrom}` : ''}.`;
+const faq = [
+  ...(continueFrom ? [{ question: `What chapter should I read after the ${landing.name} anime?`, answer: `Start at chapter ${continueFrom}. ${latest.title}, the latest ${isAiring ? 'season (still airing)' : 'season'}, adapts up to chapter ${continueFrom - 1}.` }] : []),
+  ...rows.slice(0, -1).map(row => ({ question: `Where does ${row.season.title} end in the manga?`, answer: `${row.season.title} covers chapters ${row.first}–${row.last}. The next season picks up from there.` })),
+  ...(manga ? [{ question: `Is the ${landing.name} manga finished?`, answer: `The manga is ${statusText[manga.status] || 'listed with an unknown status'} on MyAnimeList${manga.chapters ? `, with ${manga.chapters} chapters` : ''}${manga.volumes ? ` in ${manga.volumes} volumes` : ''}.` }] : []),
+].slice(0, 5);
+const mappingsJson = JSON.stringify(seasons.map(season => ({ slug: season.slug, title: season.title, ranges: season.mapping.ranges, continueFromChapter: season.mapping.continueFromChapter }))).replace(/</g, '\\u003c');
+---
+<ToolPage
+  toolSlug="anime-manga-chapter-finder"
+  path={path} title={title} socialTitle={`${landing.name}: anime to manga guide`} description={description}
+  name={`${landing.name} anime to manga guide`} crumb={landing.name} parent={['Manga Finder', '/tools/anime-manga-chapter-finder']}
+  kicker="Episode-to-manga guide" heading={`${landing.name}: where the anime ends in the manga`}
+  deck={`Every ${landing.name} episode matched to the manga chapters it adapts${seasons.length > 1 ? `, across ${seasons.length} seasons` : ''}. Plus the chapter to start reading from once you’ve caught up.`}
+  facts={[
+    [String(seasons.length), seasons.length === 1 ? 'season' : 'seasons'],
+    ...(continueFrom ? [[`Ch. ${continueFrom}`, 'to continue from'] as [string, string]] : []),
+    ...(manga?.chapters ? [[String(manga.chapters), 'manga chapters'] as [string, string]] : []),
+  ]}
+  faq={faq} related={relatedArticles(english, keys, 6)} relatedHeading={`More on ${landing.name}`}
+  credit="Anime and manga details" application={false} image={bySlug.get(seasons[0].slug)?.images?.poster}
+>
+  <ShareBox slot="after-faq" url={`${SITE}${path}`} title={`${landing.name} anime to manga guide`} anchor={`${landing.name} anime to manga guide`} />
+
+  {continueFrom && (
+    <p class="tool-note" style="font-size: var(--text-lg)">
+      <strong>Caught up with the anime?</strong> {latest.title} {isAiring ? 'is still airing and has' : ''} adapt{isAiring ? 'ed' : 's'} up to chapter {continueFrom - 1}, so <strong>start the manga at chapter {continueFrom}</strong>.
+    </p>
+  )}
+
+  <section class="tool-section" aria-labelledby="seasons-title">
+    <h2 id="seasons-title">Every season and the chapters it covers</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th scope="col">Season</th><th scope="col">Episodes</th><th scope="col">Manga chapters</th><th scope="col">Next chapter</th></tr></thead>
+        <tbody>
+          {rows.map(row => <tr><td><strong>{row.season.title}</strong></td><td>{row.episodes}</td><td>{row.first}–{row.last}</td><td>{row.last + 1}</td></tr>)}
+        </tbody>
+      </table>
+    </div>
+    <p class="order-sources">Chapter ranges come from the episodes’ “adapted from” fields. Anime-original episodes have no chapters, and an episode can revisit earlier chapters, so ranges may overlap slightly between seasons.</p>
+  </section>
+
+  <section class="tool-panel tool-section" aria-labelledby="lookup-title" data-manga-lookup>
+    <script type="application/json" data-mappings set:html={mappingsJson}></script>
+    <div class="tool-panel__head"><h2 id="lookup-title">Look up an episode</h2></div>
+    <form class="tool-panel__body tool-grid tool-grid--3" data-lookup-form>
+      <label class="tool-field"><span>Season</span>
+        <select class="tool-select" name="season">{seasons.map((season, index) => <option value={index} selected={index === seasons.length - 1}>{season.title}</option>)}</select>
+      </label>
+      <label class="tool-field"><span>Episode</span><input class="tool-input" name="episode" type="number" min="1" inputmode="numeric" value={latest.mapping.ranges.at(-1)!.episodeEnd} /></label>
+      <div class="tool-field" style="justify-content:flex-end"><button class="tool-button tool-button--primary" type="submit">Find chapters</button></div>
+    </form>
+    <p class="tool-note" style="margin: 0 var(--sp-6) var(--sp-6)" data-lookup-result aria-live="polite">
+      Episode {latest.mapping.ranges.at(-1)!.episodeEnd} of {latest.title} adapts chapters {latest.mapping.ranges.at(-1)!.chapterStart}–{latest.mapping.ranges.at(-1)!.chapterEnd}.
+    </p>
+  </section>
+
+  <section class="tool-section" aria-labelledby="episodes-title">
+    <h2 id="episodes-title">Episode-by-episode chapters</h2>
+    {seasons.map((season, index) => (
+      <details class="season-details" open={index === seasons.length - 1}>
+        <summary>{season.title}<span>{season.mapping.ranges.length} episodes mapped</span></summary>
+        <div class="table-wrap" style="border:0;border-top:1px solid var(--line)">
+          <table class="data-table">
+            <thead><tr><th scope="col">Episode</th><th scope="col">Chapters</th></tr></thead>
+            <tbody>{season.mapping.ranges.map(range => <tr><td>{range.episodeStart === range.episodeEnd ? range.episodeStart : `${range.episodeStart}–${range.episodeEnd}`}</td><td>{range.chapterStart === range.chapterEnd ? range.chapterStart : `${range.chapterStart}–${range.chapterEnd}`}</td></tr>)}</tbody>
+          </table>
+        </div>
+      </details>
+    ))}
+  </section>
+
+  {manga && (
+    <section class="tool-section" aria-labelledby="manga-title">
+      <h2 id="manga-title">About the {landing.name} manga</h2>
+      <dl class="stat-row">
+        <div><dt>Status</dt><dd>{(statusText[manga.status] || 'Unknown').replace(/^./, char => char.toUpperCase())}</dd></div>
+        <div><dt>Chapters</dt><dd>{manga.chapters || (manga.status === 'publishing' ? 'Ongoing' : '—')}</dd></div>
+        <div><dt>Volumes</dt><dd>{manga.volumes || (manga.status === 'publishing' ? 'Ongoing' : '—')}</dd></div>
+        <div><dt>Since</dt><dd>{manga.publishedFrom?.slice(0, 4) || '—'}</dd></div>
+      </dl>
+      <p class="tool-hero__deck" style="margin-top: var(--sp-4); font-size: var(--text-sm)">{manga.title}{manga.authors.length > 0 && ` by ${manga.authors.join(' & ')}`}{manga.serializations[0] && `, serialised in ${manga.serializations[0]}`}. Publication details from MyAnimeList.</p>
+    </section>
+  )}
+
+  <section class="tool-section" aria-labelledby="plan-title">
+    <h2 id="plan-title">More {landing.name} guides</h2>
+    <ul class="tool-guide" style="margin:0;padding-left:1.2em">
+      {franchise && <li><a href={`/tools/anime-watch-order/${franchise.slug}`}>{franchise.title} watch order</a>: every season, movie and special in release order.</li>}
+      {seasons.filter(season => fillerSlugs.has(season.slug)).map(season => <li><a href={`/tools/anime-filler-checker/${season.slug}`}>{season.title} filler list</a>: which episodes you can skip.</li>)}
+      <li><a href={`/tools/anime-binge-calculator?anime=${seasons[0].slug}`}>How long it takes to watch {seasons[0].title}</a>, at your pace.</li>
+    </ul>
+  </section>
+
+  <Fragment slot="guide">
+    <h2>How this guide is built</h2>
+    <p>Each episode’s chapters come from the “adapted from” field on {sources.map((source, index) => <>{index > 0 && ', '}<a href={source.url} rel="nofollow noopener" target="_blank">{source.name}</a></>)}. AnimeSparks reads those fields through the wiki’s official API and doesn’t copy any of the wiki’s text. Where an episode cites flashback chapters far from what it adapts, the guide uses the chapters the episode mainly covers.</p>
+    <p>Wikis are written by fans, so a chapter boundary can occasionally be off by one. If you spot a mistake, <a href="/contact">let us know</a>.</p>
+  </Fragment>
+</ToolPage>
+
+<script>
+  import { chapterForEpisode } from '../../../lib/tools/episodes';
+  type Season = { slug: string; title: string; ranges: Array<{ episodeStart: number; episodeEnd: number; chapterStart: number; chapterEnd: number }>; continueFromChapter?: number };
+  const root = document.querySelector<HTMLElement>('[data-manga-lookup]');
+  if (root) {
+    const seasons = JSON.parse(root.querySelector('[data-mappings]')!.textContent || '[]') as Season[];
+    const form = root.querySelector<HTMLFormElement>('[data-lookup-form]')!;
+    const result = root.querySelector<HTMLElement>('[data-lookup-result]')!;
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const season = seasons[Number((form.elements.namedItem('season') as HTMLSelectElement).value)];
+      const episode = Number((form.elements.namedItem('episode') as HTMLInputElement).value);
+      if (!season || !episode) { result.textContent = 'Enter an episode number.'; return; }
+      const lookup = chapterForEpisode(season, episode);
+      result.textContent = lookup.kind === 'found'
+        ? `Episode ${episode} of ${season.title} adapts chapters ${lookup.chapterStart}–${lookup.chapterEnd}. Next up: chapter ${lookup.nextChapter}.`
+        : lookup.kind === 'after-anime'
+          ? `That’s past the last episode of ${season.title}.${season.continueFromChapter ? ` Continue from chapter ${season.continueFromChapter}.` : ''}`
+          : `Episode ${episode} of ${season.title} has no source chapters listed. It’s usually an anime-original or recap episode.`;
+    });
+  }
+</script>

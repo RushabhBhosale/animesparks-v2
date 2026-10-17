@@ -28,7 +28,7 @@
     {
       "episodeStart": 5,
       "episodeEnd": 5,
-      "chapterStart": 147,
+      "chapterStart": 153,
       "chapterEnd": 155
     },
     {
@@ -85,7 +85,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from Jujutsu Kaisen Wiki",
-    "verifiedAt": "2026-10-16",
+    "verifiedAt": "2026-10-17",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

@@ -64,3 +64,15 @@ test('arc names decode HTML entities and normalise "(Arc)"', () => {
   assert.equal(arcName({ arc: 'Prologue &mdash; Land of Waves' }), 'Prologue — Land of Waves');
   assert.equal(arcName({ arc: 'Chūnin Exams (Arc)' }), 'Chūnin Exams Arc');
 });
+
+test('linked chapter ranges expand and flashback chapters are ignored', async () => {
+  const { mainChapterRun } = await import('../../scripts/tools/import-wiki.mjs');
+  assert.deepEqual(chapterNumbers({ adaptedfrom: '[[Chapter 1]] - [[Chapter 4]] {{WB}}' }), [1, 2, 3, 4]);
+  assert.deepEqual(mainChapterRun([1, 4, 5, 14, 15, 16, 17]), [14, 17]);
+  assert.deepEqual(mainChapterRun([67, 69]), [67, 69], 'small gaps stay one range');
+  assert.deepEqual(mainChapterRun([1, 2]), [1, 2]);
+});
+
+test('episodes spanning two arcs take the first', () => {
+  assert.equal(arcName({ arc: '[[Hunters Guild Gate Arc]]<br>[[Return to Demon Castle Arc]]' }), 'Hunters Guild Gate Arc');
+});

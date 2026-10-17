@@ -5,6 +5,10 @@ export default defineConfig({
   output: 'server',
   session: false,
   site: 'https://www.animesparks.blog',
+  // Tool URLs renamed after launch (franchise slug made editorial).
+  redirects: {
+    '/tools/anime-watch-order/bakemonogatari': '/tools/anime-watch-order/monogatari',
+  },
   adapter: cloudflare({ imageService: 'compile' }),
   image: {
     remotePatterns: [{ protocol: 'https', hostname: 'images.animesparks.blog' }],

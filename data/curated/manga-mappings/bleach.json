@@ -88,7 +88,7 @@
     {
       "episodeStart": 15,
       "episodeEnd": 15,
-      "chapterStart": 26,
+      "chapterStart": 50,
       "chapterEnd": 52
     },
     {
@@ -316,13 +316,13 @@
     {
       "episodeStart": 54,
       "episodeEnd": 54,
-      "chapterStart": 88,
+      "chapterStart": 149,
       "chapterEnd": 152
     },
     {
       "episodeStart": 55,
       "episodeEnd": 55,
-      "chapterStart": 88,
+      "chapterStart": 153,
       "chapterEnd": 155
     },
     {
@@ -569,7 +569,7 @@
       "episodeStart": 153,
       "episodeEnd": 153,
       "chapterStart": 254,
-      "chapterEnd": 263
+      "chapterEnd": 256
     },
     {
       "episodeStart": 154,
@@ -616,7 +616,7 @@
     {
       "episodeStart": 161,
       "episodeEnd": 161,
-      "chapterStart": 265,
+      "chapterStart": 269,
       "chapterEnd": 270
     },
     {
@@ -658,7 +658,7 @@
     {
       "episodeStart": 190,
       "episodeEnd": 190,
-      "chapterStart": 178,
+      "chapterStart": 286,
       "chapterEnd": 287
     },
     {
@@ -814,7 +814,7 @@
     {
       "episodeStart": 266,
       "episodeEnd": 266,
-      "chapterStart": 313,
+      "chapterStart": 339,
       "chapterEnd": 339
     },
     {
@@ -1109,13 +1109,13 @@
       "episodeStart": 351,
       "episodeEnd": 351,
       "chapterStart": 441,
-      "chapterEnd": 471
+      "chapterEnd": 442
     },
     {
       "episodeStart": 352,
       "episodeEnd": 352,
       "chapterStart": 442,
-      "chapterEnd": 471
+      "chapterEnd": 444
     },
     {
       "episodeStart": 353,
@@ -1207,7 +1207,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from Bleach Wiki",
-    "verifiedAt": "2026-10-16",
+    "verifiedAt": "2026-10-17",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

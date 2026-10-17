@@ -6,6 +6,7 @@ import { tagIndexability } from '../lib/content/tag-seo';
 import { getToolsBuildData } from '../lib/tools/build-data';
 import { getToolsExtras } from '../lib/tools/build-extras';
 import { LIVE_TOOLS, toolPath } from '../lib/tools/registry';
+import { MANGA_LANDINGS } from '../lib/tools/landings';
 
 const staticPaths = ['/', '/blogs', '/blogs/es', '/my-anime-list', '/categories', '/trending', '/contact', '/about', '/privacy', '/sitemap'];
 export const prerender = true;
@@ -24,10 +25,14 @@ export const GET: APIRoute = async () => {
     // A tool still waiting for verified data is noindex and stays out.
     ...LIVE_TOOLS.filter(tool => !tool.awaitingData || (tool.slug === 'anime-arc-explorer' && toolExtras.verifiedArcCount > 0)).map(tool => ({ url: `${SITE}${toolPath(tool)}` })),
     ...toolExtras.filler.filter(view => view.indexable).map(view => ({ url: `${SITE}/tools/anime-filler-checker/${view.slug}`, modified: xmlDate(view.fetchedAt) })),
+    ...MANGA_LANDINGS.filter(landing => landing.entries.every(slug => toolExtras.source[slug]?.mapping)).map(landing => ({
+      url: `${SITE}/tools/anime-manga-chapter-finder/${landing.slug}`,
+      modified: xmlDate(landing.entries.map(slug => toolExtras.source[slug]?.mapping?.verifiedAt || '').sort().at(-1)),
+    })),
     // Only franchises with an editor-verified order are indexable.
     ...tools.franchises.filter(franchise => franchise.indexable).map(franchise => ({
       url: `${SITE}/tools/anime-watch-order/${franchise.slug}`,
-      modified: xmlDate(franchise.curated.map(order => order.verifiedAt || '').sort().at(-1)),
+      modified: xmlDate(franchise.curated.map(order => order.verifiedAt || '').sort().at(-1) || franchise.fetchedAt),
     })),
     ...tags.map(tag => ({ url: `${SITE}/tags/${encodeURIComponent(tag)}` })),
     ...articles.map(article => {

@@ -1,0 +1,40 @@
+---
+// Lets readers share the page and gives bloggers a ready-made link.
+interface Props {
+  url: string;
+  title: string;
+  anchor: string;
+}
+const { url, title, anchor } = Astro.props;
+const snippet = `<a href="${url}">${anchor.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</a>`;
+---
+<section class="tool-section share-box" aria-labelledby="share-title" data-share-box data-url={url} data-title={title}>
+  <h2 id="share-title">Share or cite this guide</h2>
+  <p>Free to link to. No sign-up needed to use it, and the link always opens this exact page.</p>
+  <div class="tool-results__actions">
+    <button type="button" class="tool-button tool-button--primary" data-share-native>Share</button>
+    <button type="button" class="tool-button" data-copy={url}>Copy link</button>
+    <button type="button" class="tool-button" data-copy={snippet}>Copy HTML link</button>
+  </div>
+  <code class="share-box__snippet">{snippet}</code>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-share-box]').forEach(box => {
+    const flash = (button: HTMLButtonElement, text: string) => {
+      const label = button.textContent;
+      button.textContent = text;
+      setTimeout(() => { button.textContent = label; }, 1500);
+    };
+    box.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach(button => button.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(button.dataset.copy || ''); flash(button, 'Copied'); } catch { flash(button, 'Copy failed'); }
+    }));
+    box.querySelector<HTMLButtonElement>('[data-share-native]')?.addEventListener('click', async event => {
+      const button = event.currentTarget as HTMLButtonElement;
+      if (navigator.share) {
+        try { await navigator.share({ title: box.dataset.title, url: box.dataset.url }); return; } catch (error) { if ((error as Error).name === 'AbortError') return; }
+      }
+      try { await navigator.clipboard.writeText(box.dataset.url || ''); flash(button, 'Link copied'); } catch { flash(button, 'Copy failed'); }
+    });
+  });
+</script>

@@ -5,16 +5,17 @@ import AdUnit from '../../../components/AdUnit.astro';
 import ToolHero from '../../../components/tools/ToolHero.astro';
 import ToolFaq from '../../../components/tools/ToolFaq.astro';
 import AnimePicker from '../../../components/tools/AnimePicker.astro';
+import RelatedTools from '../../../components/tools/RelatedTools.astro';
 import RelatedReading from '../../../components/tools/RelatedReading.astro';
 import { getBuildData } from '../../../lib/content/build-data';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData, relatedArticles } from '../../../lib/tools/build-data';
-import { faqPage, toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../../lib/tools/seo';
+import { toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../../lib/tools/seo';
 
 export const prerender = true;
 const path = '/tools/anime-watch-order';
-const title = 'Anime Watch Order Guide — Seasons, Movies & OVAs in Order | AnimeSparks';
-const description = 'Find the right order to watch any anime franchise. See every season, movie, OVA and special in release order, with total watch time and progress tracking.';
+const title = 'Anime Watch Order Guide: Seasons, Movies & OVAs | AnimeSparks';
+const description = 'Find the right order to watch any anime franchise: every season, movie, OVA and special in release order, with total watch time and progress tracking.';
 const [{ english }, tools] = await Promise.all([getBuildData(), getToolsBuildData()]);
 const featured = tools.franchises.slice(0, 24);
 const curatedCount = tools.franchises.filter(franchise => franchise.indexable).length;
@@ -31,7 +32,6 @@ const faq = [
 const jsonLd = [
   toolBreadcrumbs([['Watch Order Guide', path]]),
   toolApplication('Anime Watch Order Guide', description, path),
-  faqPage(faq),
 ];
 ---
 <SiteLayout title={title} socialTitle="Anime Watch Order Guide" description={description} canonical={`${SITE}${path}`} image={TOOLS_IMAGE} jsonLd={jsonLd} showFooterAd>
@@ -83,6 +83,7 @@ const jsonLd = [
       </section>
 
       <ToolFaq faq={faq} />
+      <RelatedTools current="anime-watch-order" />
       <RelatedReading articles={related} />
 
       <p class="tool-credit">

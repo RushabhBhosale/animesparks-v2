@@ -2,11 +2,12 @@
 // curated mappings and arcs, recommendations, the calendar and the daily
 // game. Read once per build from MongoDB, like the rest of the site.
 
-import { withDatabase } from '../content/mongodb';
+import { withDatabaseRetry } from '../content/mongodb';
 import type { ArticleCard } from '../content/types';
 import { getToolsBuildData, relatedArticles, type AnimeSnapshot } from './build-data';
 import { isPublishable } from './curated.ts';
-import { classifyEpisodes, summarize, type ClassifiedEpisode } from './episodes.ts';
+import { classifyEpisodes, summarize, typeRuns, type ClassifiedEpisode } from './episodes.ts';
+import { FILLER_LANDINGS } from './landings.ts';
 import { compactKey } from './normalize.ts';
 import type { RecEntry } from './recommend.ts';
 import { buildSearchKey } from './search.ts';
@@ -36,6 +37,11 @@ export interface FillerView {
   franchiseSlug?: string;
   indexable: boolean;
   titleKeys: Set<string>;
+  /** Story arcs (when a sourced arc list exists) with their filler counts. */
+  arcs: Array<{ name: string; start: number; end: number; filler: number; recap: number }>;
+  arcSource?: { name: string; url: string };
+  /** Longest consecutive filler/recap stretches, longest first. */
+  stretches: Array<{ start: number; end: number }>;
 }
 
 export interface SourceEntry {
@@ -81,7 +87,7 @@ async function loadExtras(english: ArticleCard[]) {
   if (!uri) throw new Error('MONGODB_URI is required for public prerendering');
   const base = await getToolsBuildData();
   const now = Date.now();
-  const raw = await withDatabase(uri, async db => {
+  const raw = await withDatabaseRetry(uri, async db => {
     const fromDate = new Date(now - 2 * 86400000).toISOString().slice(0, 10);
     const [episodeLists, fillerLists, manga, mappings, arcs, notices, games] = await Promise.all([
       db.collection<ToolEpisodeListDocument>('toolEpisodeLists').find({}, { projection: { _id: 0 } }).toArray(),
@@ -116,6 +122,16 @@ async function loadExtras(english: ArticleCard[]) {
     const episodes = classifyEpisodes(flags, limit, curated);
     if (episodes.length < 12) continue;
     const summary = summarize(episodes);
+    const arcList = verifiedArcs.get(slug);
+    const arcs = (arcList?.arcs || []).map(arc => {
+      const inArc = episodes.filter(episode => episode.n >= arc.episodeStart && episode.n <= arc.episodeEnd);
+      return { name: arc.name, start: arc.episodeStart, end: arc.episodeEnd, filler: inArc.filter(episode => episode.type === 'filler').length, recap: inArc.filter(episode => episode.type === 'recap').length };
+    }).filter(arc => arc.start <= episodes.length);
+    const stretches = typeRuns(episodes.map(episode => ({ ...episode, type: episode.type === 'recap' ? 'filler' : episode.type })))
+      .filter(run => run.type === 'filler' && run.end - run.start >= 2)
+      .sort((a, b) => (b.end - b.start) - (a.end - a.start) || a.start - b.start)
+      .slice(0, 5)
+      .map(({ start, end }) => ({ start, end }));
     filler.push({
       slug, title: item.title, titleRomaji: item.titleRomaji !== item.title ? item.titleRomaji : undefined,
       poster: item.images?.poster, format: item.format, status: item.status, year: item.year, durationMinutes: item.durationMinutes,
@@ -125,8 +141,11 @@ async function loadExtras(english: ArticleCard[]) {
       fetchedAt: list?.updatedAt || curated?.updatedAt || new Date(now).toISOString(),
       popularity: item.popularity, franchiseSlug: item.franchiseSlug,
       // Index only pages that say something: a verified list, or flagged filler/recaps.
-      indexable: Boolean(curated) || summary.skippable > 0,
+      indexable: Boolean(curated) || summary.skippable > 0 || FILLER_LANDINGS.includes(slug),
       titleKeys: titleKeysOf(item),
+      arcs,
+      arcSource: arcList?.sources[0],
+      stretches,
     });
   }
   filler.sort((a, b) => (a.popularity || Infinity) - (b.popularity || Infinity));
