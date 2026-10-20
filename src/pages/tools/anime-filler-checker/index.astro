@@ -51,7 +51,7 @@ const faq = [
 
   <GuideDirectory
     id="filler-all" heading="All anime filler lists A–Z" alphabetical
-    links={indexed.map(view => ({ href: `/tools/anime-filler-checker/${view.slug}`, label: `${view.title} filler list`, meta: view.summary.skippable ? `${view.summary.skippable} to skip` : 'no filler' }))}
+    links={filler.map(view => ({ href: `/tools/anime-filler-checker/${view.slug}`, label: `${view.title} filler list`, meta: view.summary.skippable ? `${view.summary.skippable} to skip` : 'no filler' }))}
   />
 
   <Fragment slot="guide">

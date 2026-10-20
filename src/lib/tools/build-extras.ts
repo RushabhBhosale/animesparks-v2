@@ -7,7 +7,7 @@ import type { ArticleCard } from '../content/types';
 import { getToolsBuildData, relatedArticles, type AnimeSnapshot } from './build-data';
 import { isPublishable } from './curated.ts';
 import { classifyEpisodes, summarize, typeRuns, type ClassifiedEpisode } from './episodes.ts';
-import { ANIME_DISPLAY_TITLES, canonicalFranchiseSlug } from './landings.ts';
+import { ANIME_DISPLAY_TITLES, canonicalFranchiseSlug, FILLER_LANDINGS, NO_FILLER_INDEXED } from './landings.ts';
 import { compactKey } from './normalize.ts';
 import type { RecEntry } from './recommend.ts';
 import { buildSearchKey } from './search.ts';
@@ -140,8 +140,8 @@ async function loadExtras(english: ArticleCard[]) {
       verifiedAt: curated?.verification.verifiedAt,
       fetchedAt: list?.updatedAt || curated?.updatedAt || new Date(now).toISOString(),
       popularity: item.popularity, franchiseSlug: item.franchiseSlug ? canonicalFranchiseSlug(item.franchiseSlug) : undefined,
-      // Every list is indexed: a series with no flagged filler answers "does X have filler?".
-      indexable: true,
+      // Lists with filler are indexed; a no-filler list only when people search for it.
+      indexable: Boolean(curated) || summary.skippable > 0 || FILLER_LANDINGS.includes(slug) || NO_FILLER_INDEXED.includes(slug),
       titleKeys: titleKeysOf(item),
       arcs,
       arcSource: arcList?.sources[0],

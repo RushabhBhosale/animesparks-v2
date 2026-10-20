@@ -6,6 +6,19 @@
 /** Filler Checker pages featured on the tools hub. */
 export const FILLER_LANDINGS = ['naruto', 'naruto-shippuden', 'bleach', 'one-piece', 'dragon-ball-z', 'dragon-ball-super', 'pokemon'];
 
+/**
+ * Series with no flagged filler whose "X filler" searches have real demand
+ * (Google Autocomplete, 2026-10-20). Other no-filler lists stay live but noindex.
+ */
+export const NO_FILLER_INDEXED = [
+  'attack-on-titan', 'death-note', 'demon-slayer-kimetsu-no-yaiba', 'sword-art-online', 'jujutsu-kaisen', 'the-seven-deadly-sins',
+  'haikyu', 'cowboy-bebop', 'neon-genesis-evangelion', 'dr-stone', 'kill-la-kill', 'the-rising-of-the-shield-hero', 'fire-force',
+  'tokyo-revengers', 'dororo', 'fate-stay-night', 'fire-force-season-2', 'blue-lock', 'vinland-saga-season-2', 'my-hero-academia-season-6',
+  'gintama-season-4', 'dragon-ball-gt', 'fruits-basket', 'gachiakuta', 'shangri-la-frontier', 'baki', 'dragon-ball-z-kai',
+  'inuyasha-the-final-act', 'shaman-king-2021', 'yu-gi-oh-1998', 'kingdom', 'shugo-chara', 'dragon-ball-z-kai-the-final-chapters',
+  'tougen-anki', 'sailor-moon-s', 'rurouni-kenshin-2023', 'mobile-suit-gundam', 'ace-attorney',
+];
+
 /** Featured watch-order franchises shown on the tools hub. */
 export const WATCH_ORDER_LANDINGS = [
   'one-piece', 'naruto', 'bleach', 'monogatari', 'attack-on-titan', 'jujutsu-kaisen', 'demon-slayer-kimetsu-no-yaiba', 'my-hero-academia',
