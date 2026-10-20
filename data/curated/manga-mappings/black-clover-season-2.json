@@ -1,0 +1,26 @@
+{
+  "slug": "black-clover-season-2",
+  "ranges": [
+    {
+      "episodeStart": 1,
+      "episodeEnd": 1,
+      "chapterStart": 270,
+      "chapterEnd": 275
+    }
+  ],
+  "continueFromChapter": 276,
+  "continueNote": "This is the chapter after the last one this season adapts.",
+  "sources": [
+    {
+      "name": "Black Clover Wiki on Fandom (CC BY-SA)",
+      "url": "https://blackclover.fandom.com/wiki/Episode_171"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Black Clover Wiki",
+    "verifiedAt": "2026-10-20",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

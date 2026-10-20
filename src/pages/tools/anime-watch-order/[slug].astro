@@ -6,6 +6,7 @@ import ToolHero from '../../../components/tools/ToolHero.astro';
 import RelatedReading from '../../../components/tools/RelatedReading.astro';
 import RelatedTools from '../../../components/tools/RelatedTools.astro';
 import ShareBox from '../../../components/tools/ShareBox.astro';
+import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
 import { getToolsExtras } from '../../../lib/tools/build-extras';
 import { MANGA_LANDINGS, clampDescription, fitTitle } from '../../../lib/tools/landings';
 import { getBuildData } from '../../../lib/content/build-data';
@@ -33,6 +34,12 @@ const description = clampDescription(`How to watch ${franchise.title} in order: 
 const { filler: fillerViews } = await getToolsExtras(english);
 const fillerPages = new Set(fillerViews.filter(view => view.indexable).map(view => view.slug));
 const mangaLanding = MANGA_LANDINGS.find(landing => franchise.releaseOrder.some(entry => landing.entries.includes(entry.slug)));
+// Neighbours by popularity, so every franchise links to (and from) related ones.
+const { franchises: allFranchises } = await getToolsBuildData();
+const indexedFranchises = allFranchises.filter(item => item.indexable);
+const position = indexedFranchises.findIndex(item => item.slug === franchise.slug);
+const start = Math.max(0, Math.min((position < 0 ? 0 : position) - 4, indexedFranchises.length - 9));
+const moreOrders = indexedFranchises.slice(start, start + 9).filter(item => item.slug !== franchise.slug).slice(0, 8);
 // Totals by format for the "at a glance" table.
 const formatRows = [...new Set(franchise.releaseOrder.map(entry => entry.format))].map(format => {
   const entries = franchise.releaseOrder.filter(entry => entry.format === format);
@@ -187,6 +194,11 @@ const missingKinds = ['chronological', 'beginner'].filter(kind => !franchise.cur
         <p>Entries are gathered from MyAnimeList’s sequel, prequel, side-story and summary links, starting from {franchise.releaseOrder[0]?.title}. They are then sorted by original premiere date. Main-story entries are joined by sequel and prequel links. Everything else is marked as a side story or recap so you can skip it.</p>
         <p>Watch time uses each entry’s listed runtime. Ongoing series count only the episodes aired so far, and unannounced entries count as zero until they premiere.</p>
       </section>
+
+      <GuideDirectory
+        id="more-orders" heading="More anime watch orders"
+        links={[...moreOrders.map(item => ({ href: `/tools/anime-watch-order/${item.slug}`, label: `${item.title} watch order`, meta: `${item.releaseOrder.length} entries` })), { href: '/tools/anime-watch-order#order-all', label: 'All watch orders A–Z' }]}
+      />
 
       {franchise.indexable && <ShareBox url={`${SITE}${path}`} title={`${franchise.title} watch order`} anchor={`${franchise.title} watch order`} />}
       <RelatedTools current="anime-watch-order" />

@@ -1,0 +1,98 @@
+{
+  "slug": "bleach-thousand-year-blood-war-the-separation",
+  "ranges": [
+    {
+      "episodeStart": 1,
+      "episodeEnd": 1,
+      "chapterStart": 542,
+      "chapterEnd": 546
+    },
+    {
+      "episodeStart": 2,
+      "episodeEnd": 2,
+      "chapterStart": 547,
+      "chapterEnd": 551
+    },
+    {
+      "episodeStart": 3,
+      "episodeEnd": 3,
+      "chapterStart": 552,
+      "chapterEnd": 554
+    },
+    {
+      "episodeStart": 4,
+      "episodeEnd": 4,
+      "chapterStart": 555,
+      "chapterEnd": 560
+    },
+    {
+      "episodeStart": 5,
+      "episodeEnd": 5,
+      "chapterStart": 560,
+      "chapterEnd": 565
+    },
+    {
+      "episodeStart": 6,
+      "episodeEnd": 6,
+      "chapterStart": 565,
+      "chapterEnd": 570
+    },
+    {
+      "episodeStart": 7,
+      "episodeEnd": 7,
+      "chapterStart": 571,
+      "chapterEnd": 579
+    },
+    {
+      "episodeStart": 8,
+      "episodeEnd": 8,
+      "chapterStart": 579,
+      "chapterEnd": 586
+    },
+    {
+      "episodeStart": 9,
+      "episodeEnd": 9,
+      "chapterStart": 587,
+      "chapterEnd": 591
+    },
+    {
+      "episodeStart": 10,
+      "episodeEnd": 10,
+      "chapterStart": 592,
+      "chapterEnd": 597
+    },
+    {
+      "episodeStart": 11,
+      "episodeEnd": 11,
+      "chapterStart": 597,
+      "chapterEnd": 604
+    },
+    {
+      "episodeStart": 12,
+      "episodeEnd": 12,
+      "chapterStart": 601,
+      "chapterEnd": 606
+    },
+    {
+      "episodeStart": 13,
+      "episodeEnd": 13,
+      "chapterStart": 604,
+      "chapterEnd": 609
+    }
+  ],
+  "continueFromChapter": 610,
+  "continueNote": "This is the chapter after the last one this season adapts.",
+  "sources": [
+    {
+      "name": "Bleach Wiki on Fandom (CC BY-SA)",
+      "url": "https://bleach.fandom.com/wiki/THE_LAST_9DAYS_(episode)"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Bleach Wiki",
+    "verifiedAt": "2026-10-20",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

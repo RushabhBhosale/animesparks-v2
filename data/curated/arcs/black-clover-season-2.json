@@ -1,0 +1,23 @@
+{
+  "slug": "black-clover-season-2",
+  "arcs": [
+    {
+      "name": "Spade Kingdom Raid Arc",
+      "episodeStart": 1,
+      "episodeEnd": 1
+    }
+  ],
+  "sources": [
+    {
+      "name": "Black Clover Wiki on Fandom (CC BY-SA)",
+      "url": "https://blackclover.fandom.com/wiki/Episode_171"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Black Clover Wiki",
+    "verifiedAt": "2026-10-20",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

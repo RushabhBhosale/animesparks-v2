@@ -31,6 +31,9 @@ const WIKIS = [
     ] },
   { key: 'bleach', host: 'bleach.fandom.com', name: 'Bleach Wiki', template: 'Template:Bleach Wiki:Episode Template',
     groups: [{ slugs: ['bleach'], match: p => Number(p.episodenumber) <= 366 }] },
+  // Thousand-Year Blood War episodes (367 onwards) use their own infobox.
+  { key: 'bleach-tybw', host: 'bleach.fandom.com', name: 'Bleach Wiki', template: 'Template:Bleach Wiki:TYBW Episode Template',
+    groups: [{ slugs: ['bleach-thousand-year-blood-war', 'bleach-thousand-year-blood-war-the-separation', 'bleach-thousand-year-blood-war-the-conflict', 'bleach-thousand-year-blood-war-the-calamity'], match: p => Number(p.episodenumber) > 366 }] },
   { key: 'demon-slayer', host: 'kimetsu-no-yaiba.fandom.com', name: 'Kimetsu no Yaiba Wiki', template: 'Template:Episode',
     groups: [{ slugs: ['demon-slayer-kimetsu-no-yaiba', 'demon-slayer-kimetsu-no-yaiba-mugen-train-arc', 'demon-slayer-kimetsu-no-yaiba-entertainment-district-arc', 'demon-slayer-kimetsu-no-yaiba-swordsmith-village-arc', 'demon-slayer-kimetsu-no-yaiba-hashira-training-arc'], match: () => true }] },
   { key: 'mha', host: 'myheroacademia.fandom.com', name: 'My Hero Academia Wiki', template: 'Template:Episode Infobox',
@@ -42,7 +45,7 @@ const WIKIS = [
   { key: 'frieren', host: 'frieren.fandom.com', name: 'Frieren Wiki', template: 'Template:Episode Infobox',
     groups: [{ slugs: ['frieren-beyond-journeys-end', 'frieren-beyond-journeys-end-season-2'], match: () => true }] },
   { key: 'black-clover', host: 'blackclover.fandom.com', name: 'Black Clover Wiki', template: 'Template:Infobox/Episode',
-    groups: [{ slugs: ['black-clover'], match: () => true }] },
+    groups: [{ slugs: ['black-clover', 'black-clover-season-2'], match: () => true }] },
   { key: 'spy-x-family', host: 'spy-x-family.fandom.com', name: 'Spy × Family Wiki', template: 'Template:Infobox episode',
     groups: [{ slugs: ['spy-x-family', 'spy-x-family-part-2', 'spy-x-family-season-2', 'spy-x-family-season-3'], match: () => true }] },
   { key: 'solo-leveling', host: 'solo-leveling.fandom.com', name: 'Solo Leveling Wiki', template: 'Template:Infobox episode',

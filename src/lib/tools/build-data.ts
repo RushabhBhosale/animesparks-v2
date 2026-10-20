@@ -8,7 +8,7 @@ import { isPublishable } from './curated.ts';
 import { compareRelease, sumWatchTime, watchableTime } from './franchise.ts';
 import { compactKey } from './normalize.ts';
 import { buildSearchKey } from './search.ts';
-import { canonicalFranchiseSlug } from './landings.ts';
+import { canonicalFranchiseSlug, FRANCHISE_TITLES } from './landings.ts';
 import type { AnimeIndexEntry, FranchiseIndexEntry, FranchiseRole, ToolAnimeDocument, ToolFranchiseDocument, ToolWatchOrderDocument, WatchOrderKind } from './types.ts';
 
 declare const process: { env: Record<string, string | undefined> };
@@ -114,10 +114,10 @@ async function loadToolsData() {
       const popularity = memberItems.reduce<number | null>((best, item) => item.popularity && (!best || item.popularity < best) ? item.popularity : best, null);
       const titleKeys = new Set(memberItems.flatMap(item => [item.title, item.titleEnglish, item.titleRomaji, ...(item.synonyms || []), ...(item.legacy?.articleAnimeNames || [])])
         .filter((value): value is string => Boolean(value)).map(compactKey).filter(key => key.length > 2));
-      titleKeys.add(compactKey(franchise.titleOverride || franchise.title));
+      titleKeys.add(compactKey(FRANCHISE_TITLES[publicSlug] || franchise.titleOverride || franchise.title));
       return {
         slug: publicSlug,
-        title: franchise.titleOverride || franchise.title,
+        title: FRANCHISE_TITLES[publicSlug] || franchise.titleOverride || franchise.title,
         releaseOrder,
         curated,
         truncated: franchise.truncated,

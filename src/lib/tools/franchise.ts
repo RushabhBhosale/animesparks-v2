@@ -30,7 +30,16 @@ const ANCHOR_FORMATS: AnimeFormat[] = ['tv', 'ona', 'movie'];
 const FORMAT_ORDER: AnimeFormat[] = ['tv', 'ona', 'movie', 'ova', 'tv-special', 'special', 'music', 'other'];
 
 export const FRANCHISE_MIN_MEMBERS = 3;
-export const FRANCHISE_MAX_MEMBERS = 80;
+export const FRANCHISE_MAX_MEMBERS = 200;
+/**
+ * Crossovers that would fuse two separate franchises into one (MAL IDs).
+ * They are left out of every franchise rather than joining both.
+ */
+export const FRANCHISE_BRIDGES: ReadonlySet<number> = new Set([
+  6115, // Lupin III vs. Detective Conan
+  18429, // Lupin III vs. Detective Conan: The Movie
+  1369, // Detective Conan OVA 01: Conan vs. Kid vs. Yaiba
+]);
 
 function airedTime(value: string | null): number {
   const time = Date.parse(value || '');
@@ -55,10 +64,10 @@ function buildAdjacency(nodes: Map<number, FranchiseInputNode>) {
     map.get(b)!.add(a);
   };
   for (const node of nodes.values()) {
-    if (!WATCHABLE_FORMATS.has(node.format)) continue;
+    if (!WATCHABLE_FORMATS.has(node.format) || FRANCHISE_BRIDGES.has(node.malId)) continue;
     for (const relation of node.relations || []) {
       const target = relation.externalIds.mal;
-      if (!target || target === node.malId || !FRANCHISE_RELATIONS.has(relation.kind)) continue;
+      if (!target || target === node.malId || !FRANCHISE_RELATIONS.has(relation.kind) || FRANCHISE_BRIDGES.has(target)) continue;
       // "Full story" points from a recap to the original; "summary" points to the recap.
       if (relation.kind === 'full-story') recaps.add(node.malId);
       if (relation.kind === 'summary' && nodes.has(target)) recaps.add(target);

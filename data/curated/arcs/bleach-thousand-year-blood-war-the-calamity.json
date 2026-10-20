@@ -1,0 +1,23 @@
+{
+  "slug": "bleach-thousand-year-blood-war-the-calamity",
+  "arcs": [
+    {
+      "name": "Thousand-Year Blood War Arc",
+      "episodeStart": 1,
+      "episodeEnd": 8
+    }
+  ],
+  "sources": [
+    {
+      "name": "Bleach Wiki on Fandom (CC BY-SA)",
+      "url": "https://bleach.fandom.com/wiki/GOD_OF_THUNDER_(episode)"
+    }
+  ],
+  "verification": {
+    "status": "verified",
+    "verifiedBy": "Imported from Bleach Wiki",
+    "verifiedAt": "2026-10-20",
+    "method": "wiki-import",
+    "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
+  }
+}

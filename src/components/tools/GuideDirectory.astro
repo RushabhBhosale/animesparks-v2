@@ -1,0 +1,31 @@
+---
+// Plain-link list of guide pages. With `alphabetical`, links are grouped
+// A–Z so hub pages can link every indexable guide without a wall of cards.
+interface Link { href: string; label: string; meta?: string }
+interface Props { id: string; heading: string; intro?: string; links: Link[]; alphabetical?: boolean }
+
+const { id, heading, intro, links, alphabetical = false } = Astro.props as Props;
+const letterOf = (label: string) => {
+  const first = label.normalize('NFD').replace(/[^\p{L}\p{N}]/gu, '').charAt(0).toUpperCase();
+  return /[A-Z]/.test(first) ? first : '#';
+};
+const sorted = alphabetical ? [...links].sort((a, b) => a.label.localeCompare(b.label, 'en', { sensitivity: 'base' })) : links;
+const groups = alphabetical
+  ? [...sorted.reduce((map, link) => map.set(letterOf(link.label), [...(map.get(letterOf(link.label)) || []), link]), new Map<string, Link[]>())]
+    .sort(([a], [b]) => (a === '#' ? -1 : b === '#' ? 1 : a.localeCompare(b)))
+  : [['', sorted] as [string, Link[]]];
+---
+{links.length > 0 && (
+  <section class="tool-section guide-directory" aria-labelledby={id}>
+    <h2 id={id}>{heading}</h2>
+    {intro && <p class="tool-note tool-note--muted">{intro}</p>}
+    {groups.map(([letter, items]) => (
+      <div class="guide-directory__group">
+        {letter && <h3 class="guide-directory__letter">{letter}</h3>}
+        <ul class="guide-directory__list">
+          {items.map(link => <li><a href={link.href}>{link.label}</a>{link.meta && <span> · {link.meta}</span>}</li>)}
+        </ul>
+      </div>
+    ))}
+  </section>
+)}

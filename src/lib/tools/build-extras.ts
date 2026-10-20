@@ -7,7 +7,7 @@ import type { ArticleCard } from '../content/types';
 import { getToolsBuildData, relatedArticles, type AnimeSnapshot } from './build-data';
 import { isPublishable } from './curated.ts';
 import { classifyEpisodes, summarize, typeRuns, type ClassifiedEpisode } from './episodes.ts';
-import { canonicalFranchiseSlug, FILLER_LANDINGS } from './landings.ts';
+import { ANIME_DISPLAY_TITLES, canonicalFranchiseSlug } from './landings.ts';
 import { compactKey } from './normalize.ts';
 import type { RecEntry } from './recommend.ts';
 import { buildSearchKey } from './search.ts';
@@ -133,15 +133,15 @@ async function loadExtras(english: ArticleCard[]) {
       .slice(0, 5)
       .map(({ start, end }) => ({ start, end }));
     filler.push({
-      slug, title: item.title, titleRomaji: item.titleRomaji !== item.title ? item.titleRomaji : undefined,
+      slug, title: ANIME_DISPLAY_TITLES[slug] || item.title, titleRomaji: item.titleRomaji !== item.title ? item.titleRomaji : undefined,
       poster: item.images?.poster, format: item.format, status: item.status, year: item.year, durationMinutes: item.durationMinutes,
       episodes, summary, basis: curated ? 'curated' : 'provider',
       sources: curated ? curated.sources : [{ name: 'MyAnimeList episode list', url: list?.provenance.sourceUrl || 'https://myanimelist.net' }],
       verifiedAt: curated?.verification.verifiedAt,
       fetchedAt: list?.updatedAt || curated?.updatedAt || new Date(now).toISOString(),
       popularity: item.popularity, franchiseSlug: item.franchiseSlug ? canonicalFranchiseSlug(item.franchiseSlug) : undefined,
-      // Index only pages that say something: a verified list, or flagged filler/recaps.
-      indexable: Boolean(curated) || summary.skippable > 0 || FILLER_LANDINGS.includes(slug),
+      // Every list is indexed: a series with no flagged filler answers "does X have filler?".
+      indexable: true,
       titleKeys: titleKeysOf(item),
       arcs,
       arcSource: arcList?.sources[0],

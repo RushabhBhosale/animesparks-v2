@@ -5,6 +5,7 @@ import AdUnit from '../../../components/AdUnit.astro';
 import ToolHero from '../../../components/tools/ToolHero.astro';
 import ToolFaq from '../../../components/tools/ToolFaq.astro';
 import AnimePicker from '../../../components/tools/AnimePicker.astro';
+import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
 import RelatedTools from '../../../components/tools/RelatedTools.astro';
 import RelatedReading from '../../../components/tools/RelatedReading.astro';
 import { getBuildData } from '../../../lib/content/build-data';
@@ -18,7 +19,7 @@ const title = 'Anime Watch Order Guide: Seasons, Movies & OVAs | AnimeSparks';
 const description = 'Find the right order to watch any anime franchise: every season, movie, OVA and special in release order, with total watch time and progress tracking.';
 const [{ english }, tools] = await Promise.all([getBuildData(), getToolsBuildData()]);
 const featured = tools.franchises.slice(0, 24);
-const curatedCount = tools.franchises.filter(franchise => franchise.indexable).length;
+const curatedCount = tools.franchises.filter(franchise => franchise.curated.length > 0).length;
 const featuredKeys = new Set(featured.flatMap(franchise => [...franchise.titleKeys]));
 const related = relatedArticles(english, featuredKeys, 6);
 
@@ -68,6 +69,11 @@ const jsonLd = [
           </div>
         </section>
       )}
+
+      <GuideDirectory
+        id="order-all" heading="All anime watch orders A–Z" alphabetical
+        links={tools.franchises.filter(franchise => franchise.indexable).map(franchise => ({ href: `${path}/${franchise.slug}`, label: `${franchise.title} watch order`, meta: `${franchise.releaseOrder.length} entries` }))}
+      />
 
       <div class="tool-ad-slot"><AdUnit slot="horizontal1" /></div>
 

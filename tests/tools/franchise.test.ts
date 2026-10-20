@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { deriveFranchises, franchiseTitle, sumWatchTime, uniqueSlug, watchableTime, type FranchiseInputNode } from '../../src/lib/tools/franchise.ts';
+import { deriveFranchises, FRANCHISE_BRIDGES, franchiseTitle, sumWatchTime, uniqueSlug, watchableTime, type FranchiseInputNode } from '../../src/lib/tools/franchise.ts';
 import type { AnimeFormat, RelationKind } from '../../src/lib/tools/types.ts';
 
 function node(malId: number, format: AnimeFormat, airedFrom: string | null, relations: Array<[RelationKind, number]> = []): FranchiseInputNode {
@@ -35,6 +35,23 @@ test('alternative versions and music videos are not merged', () => {
   const ids = deriveFranchises(graph)[0].members.map(member => member.malId);
   assert.ok(!ids.includes(9));
   assert.ok(!ids.includes(10));
+});
+
+test('crossover bridges never fuse two franchises', () => {
+  const bridge = [...FRANCHISE_BRIDGES][0];
+  const triple = (base: number, extra: Array<[RelationKind, number]> = []) => [
+    [base, node(base, 'tv', '2000-01-01', [['sequel', base + 1], ['side-story', base + 2], ...extra])],
+    [base + 1, node(base + 1, 'tv', '2001-01-01', [['prequel', base]])],
+    [base + 2, node(base + 2, 'movie', '2002-01-01', [['parent-story', base]])],
+  ] as Array<[number, FranchiseInputNode]>;
+  const nodes = new Map([
+    ...triple(100, [['side-story', bridge]]),
+    ...triple(200, [['side-story', bridge]]),
+    [bridge, node(bridge, 'tv-special', '2009-03-27', [['parent-story', 100], ['parent-story', 200]])],
+  ]);
+  const franchises = deriveFranchises(nodes);
+  assert.deepEqual(franchises.map(franchise => franchise.anchorMalId), [100, 200]);
+  assert.ok(franchises.every(franchise => !franchise.members.some(member => member.malId === bridge)));
 });
 
 test('members are in release order and small groups are dropped', () => {

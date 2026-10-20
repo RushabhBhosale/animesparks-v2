@@ -1,6 +1,7 @@
 ---
 import ToolPage from '../../../components/tools/ToolPage.astro';
 import ShareBox from '../../../components/tools/ShareBox.astro';
+import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData } from '../../../lib/tools/build-data';
 import { MANGA_LANDINGS, fitTitle } from '../../../lib/tools/landings';
@@ -19,6 +20,12 @@ export async function getStaticPaths() {
 
 const { view } = Astro.props as { view: FillerView };
 const { english } = await getBuildData();
+const { filler: allFiller } = await getToolsExtras(english);
+// Neighbours by popularity, so every list links to (and from) related lists.
+const indexedFiller = allFiller.filter(item => item.indexable);
+const position = indexedFiller.findIndex(item => item.slug === view.slug);
+const start = Math.max(0, Math.min((position < 0 ? 0 : position) - 4, indexedFiller.length - 9));
+const moreFiller = indexedFiller.slice(start, start + 9).filter(item => item.slug !== view.slug).slice(0, 8);
 const path = `/tools/anime-filler-checker/${view.slug}`;
 const { summary } = view;
 const skippable = summary.skippable;
@@ -31,15 +38,20 @@ const runs = typeRuns(view.episodes);
 const providerBasis = view.basis === 'provider';
 const title = fitTitle(skippable
   ? [`${view.title} Filler List: ${skippable} Filler & Recap Episodes to Skip`, `${view.title} Filler List: ${skippable} Episodes to Skip`, `${view.title} Filler List`]
-  : [`${view.title} Filler List: Every Episode Checked`, `${view.title} Filler List`]);
+  : [`Does ${view.title} Have Filler? Full Filler List`, `Does ${view.title} Have Filler?`, `${view.title} Filler List`]);
 const { franchises } = await getToolsBuildData();
 const franchise = franchises.find(item => item.slug === view.franchiseSlug);
 const mangaLanding = MANGA_LANDINGS.find(landing => landing.entries.includes(view.slug));
 const rangeText = (start: number, end: number) => start === end ? String(start) : `${start}–${end}`;
-const description = providerBasis
+const description = !skippable && providerBasis
+  ? `Does ${view.title} have filler? No. MyAnimeList flags none of its ${summary.total} episodes as filler or recap, so you can watch every episode in order.`
+  : providerBasis
   ? `${view.title} filler list: ${summary.counts.filler} filler and ${summary.counts.recap} recap episodes out of ${summary.total} (${summary.fillerPercent}%), per MyAnimeList. Get a filler-free watch order and track what you've watched.`
   : `${view.title} filler list from a verified source: canon, mixed and filler episodes across all ${summary.total} episodes, with a filler-free watch order.`;
 const faq = [
+  ...(!skippable ? [{ question: `Does ${view.title} have filler?`, answer: providerBasis
+    ? `No. MyAnimeList doesn't flag any of its ${summary.total} episodes as filler or recap, so every episode is worth watching.`
+    : `No. The verified list has no filler or recap episodes across all ${summary.total} episodes.` }] : []),
   { question: `How many filler episodes does ${view.title} have?`, answer: providerBasis
     ? `MyAnimeList marks ${summary.counts.filler} of ${summary.total} episodes as filler and ${summary.counts.recap} as recaps, ${summary.fillerPercent}% in total.`
     : `${summary.counts.filler} filler episodes and ${summary.counts.mixed} mixed canon/filler episodes out of ${summary.total}, based on a verified list.` },
@@ -166,6 +178,10 @@ const typeLabel = (type: CanonType) => providerBasis && type === 'canon' ? 'Cano
         <li><a href="/tools/anime-filler-checker">Check another series for filler</a>.</li>
       </ul>
     </section>
+    <GuideDirectory
+      id="more-filler" heading="More anime filler lists"
+      links={[...moreFiller.map(item => ({ href: `/tools/anime-filler-checker/${item.slug}`, label: `${item.title} filler list`, meta: item.summary.skippable ? `${item.summary.skippable} to skip` : 'no filler' })), { href: '/tools/anime-filler-checker#filler-all', label: 'All filler lists A–Z' }]}
+    />
   </div>
 
   <Fragment slot="guide">

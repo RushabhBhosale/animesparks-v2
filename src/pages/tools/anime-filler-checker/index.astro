@@ -1,6 +1,7 @@
 ---
 import ToolPage from '../../../components/tools/ToolPage.astro';
 import AnimePicker from '../../../components/tools/AnimePicker.astro';
+import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
 import { getBuildData } from '../../../lib/content/build-data';
 import { relatedArticles } from '../../../lib/tools/build-data';
 import { getToolsExtras } from '../../../lib/tools/build-extras';
@@ -8,7 +9,8 @@ import { getToolsExtras } from '../../../lib/tools/build-extras';
 export const prerender = true;
 const { english } = await getBuildData();
 const { filler } = await getToolsExtras(english);
-const featured = filler.filter(view => view.indexable).slice(0, 18);
+const indexed = filler.filter(view => view.indexable);
+const featured = indexed.slice(0, 18);
 const keys = new Set(featured.flatMap(view => [...view.titleKeys]));
 const faq = [
   { question: 'What counts as filler?', answer: 'Filler episodes tell stories that aren’t in the original manga or novel, often added when the anime caught up with its source. Recap episodes mostly replay earlier scenes.' },
@@ -46,6 +48,11 @@ const faq = [
       </div>
     </section>
   )}
+
+  <GuideDirectory
+    id="filler-all" heading="All anime filler lists A–Z" alphabetical
+    links={indexed.map(view => ({ href: `/tools/anime-filler-checker/${view.slug}`, label: `${view.title} filler list`, meta: view.summary.skippable ? `${view.summary.skippable} to skip` : 'no filler' }))}
+  />
 
   <Fragment slot="guide">
     <h2>How to use the filler checker</h2>

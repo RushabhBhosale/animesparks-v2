@@ -18,7 +18,7 @@ import {
 } from '../../src/lib/tools/providers/tenrai.ts';
 import { buildClues, pickForDate, utcDateKey } from '../../src/lib/tools/daily.ts';
 import { compactKey, slugify } from '../../src/lib/tools/normalize.ts';
-import { FRANCHISE_RELATIONS, FRANCHISE_MAX_MEMBERS, deriveFranchises, uniqueSlug } from '../../src/lib/tools/franchise.ts';
+import { FRANCHISE_BRIDGES, FRANCHISE_RELATIONS, FRANCHISE_MAX_MEMBERS, deriveFranchises, uniqueSlug } from '../../src/lib/tools/franchise.ts';
 
 const dryRun = hasFlag('dry-run');
 const topPages = Number(argValue('top-pages', '20'));
@@ -28,6 +28,42 @@ const RELATIONS_TTL_MS = hasFlag('refresh-relations') ? 0 : 7 * 24 * 3600 * 1000
 const DAY_MS = 24 * 3600 * 1000;
 const AIRED_TTL_MS = 20 * 3600 * 1000;
 const SEED_RETRY_MS = 30 * 24 * 3600 * 1000;
+// Franchises with real "watch order" search demand whose first series sits
+// outside the popularity-based roots (MAL IDs). Always crawled.
+const EXTRA_FRANCHISE_ROOTS = [
+  527, // Pokémon
+  80, // Mobile Suit Gundam
+  235, // Detective Conan (Case Closed)
+  530, // Sailor Moon
+  481, // Yu-Gi-Oh! Duel Monsters
+  45, // Rurouni Kenshin
+  263, // Hajime no Ippo (Fighting Spirit)
+  33, // Berserk (1997)
+  43, // Ghost in the Shell (1995)
+  467, // Ghost in the Shell: Stand Alone Complex
+  1254, // Saint Seiya
+  552, // Digimon Adventure
+  1088, // Super Dimension Fortress Macross
+  185, // Initial D First Stage
+  270, // Hellsing
+  5231, // Inazuma Eleven
+  4081, // Natsume's Book of Friends
+  14131, // Girls und Panzer
+  170, // Slam Dunk
+  18179, // Yowamushi Pedal
+  22, // The Prince of Tennis
+  1412, // Lupin III
+  12031, // Kingdom
+  392, // Yu Yu Hakusho
+  27989, // Sound! Euphonium
+  820, // Legend of the Galactic Heroes
+  232, // Cardcaptor Sakura
+  18689, // Ace of Diamond
+  287, // Baki the Grappler
+  34443, // Baki (2018)
+  627, // Major
+  539, // Tenchi Muyo! Ryo-Ohki
+];
 // Article anime names that describe several series or are not a title.
 const NON_TITLE_NAMES = new Set(['multipleanime', 'hololive']);
 
@@ -118,7 +154,8 @@ async function main() {
         .filter(({ anime }) => ['tv', 'ona', 'movie'].includes(anime.format) && anime.popularity)
         .sort((a, b) => a.anime.popularity - b.anime.popularity)
         .slice(0, franchiseRoots)
-        .map(({ anime }) => anime.externalIds.mal);
+        .map(({ anime }) => anime.externalIds.mal)
+        .concat(EXTRA_FRANCHISE_ROOTS);
       const visited = new Set();
       for (const root of roots) {
         if (!budgetLeft()) { status = 'partial'; errors.push('Request budget reached during the relation crawl.'); break; }
@@ -148,7 +185,7 @@ async function main() {
             }
           }
           for (const relation of relations) {
-            if (FRANCHISE_RELATIONS.has(relation.kind) && relation.externalIds.mal && !visited.has(relation.externalIds.mal)) {
+            if (FRANCHISE_RELATIONS.has(relation.kind) && relation.externalIds.mal && !visited.has(relation.externalIds.mal) && !FRANCHISE_BRIDGES.has(relation.externalIds.mal)) {
               queue.push(relation.externalIds.mal);
             }
           }
