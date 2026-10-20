@@ -34,6 +34,20 @@ test('per-episode records become mapping ranges, arcs and a continue point', () 
   assert.equal(data.continueFromChapter, 4);
 });
 
+test('arc name variants merge and placeholder arcs join their neighbours', () => {
+  assert.equal(arcName({ arc: '[[Arc 2]]' }), null);
+  const data = buildDatasets([
+    { n: 1, chapters: [], arc: 'Quirk Apprehension Test' }, { n: 2, chapters: [], arc: 'Quirk Apprehension Test Arc' },
+    { n: 3, chapters: [], arc: 'Dungeon Arc' }, { n: 4, chapters: [], arc: null }, { n: 5, chapters: [], arc: 'Dungeon Arc' },
+    { n: 6, chapters: [], arc: null }, { n: 7, chapters: [], arc: 'Royal Capital Arc' },
+  ]);
+  assert.deepEqual(data.arcs, [
+    { name: 'Quirk Apprehension Test Arc', episodeStart: 1, episodeEnd: 2 },
+    { name: 'Dungeon Arc', episodeStart: 3, episodeEnd: 5 },
+    { name: 'Royal Capital Arc', episodeStart: 7, episodeEnd: 7 },
+  ]);
+});
+
 test('One Piece arcs: nested headings, multi-segment ranges and filler arcs', () => {
   const text = `===[[East Blue Saga]]===
 ====[[Romance Dawn Arc]]====

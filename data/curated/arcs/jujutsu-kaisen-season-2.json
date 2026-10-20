@@ -7,28 +7,13 @@
       "episodeEnd": 5
     },
     {
-      "name": "Death Painting Arc Shibuya Incident Arc",
+      "name": "Death Painting Arc",
       "episodeStart": 6,
       "episodeEnd": 6
     },
     {
-      "name": "Shibuya Incident",
+      "name": "Shibuya Incident Arc",
       "episodeStart": 7,
-      "episodeEnd": 15
-    },
-    {
-      "name": "Shibuya Incident Arc",
-      "episodeStart": 16,
-      "episodeEnd": 16
-    },
-    {
-      "name": "Shibuya Incident",
-      "episodeStart": 17,
-      "episodeEnd": 22
-    },
-    {
-      "name": "Shibuya Incident Arc",
-      "episodeStart": 23,
       "episodeEnd": 23
     }
   ],
@@ -41,7 +26,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from Jujutsu Kaisen Wiki",
-    "verifiedAt": "2026-10-17",
+    "verifiedAt": "2026-10-20",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

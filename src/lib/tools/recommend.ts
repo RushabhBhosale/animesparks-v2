@@ -146,3 +146,26 @@ export function randomPick(index: RecEntry[], filters: RecFilters, exclude: stri
   const pool = index.filter(entry => !excluded.has(entry.s) && matchesFilters(entry, filters));
   return pool.length ? pool[hash32(seed) % pool.length] : null;
 }
+
+/**
+ * "Anime like X": recommendations for one seed, leaving out the seed's own
+ * franchise, adult titles and further seasons of a show already listed.
+ */
+export function similarTo(index: RecEntry[], seed: string, franchiseOf: (slug: string) => string | undefined, limit = 20): Recommendation[] {
+  const seedFranchise = franchiseOf(seed) || seed;
+  const seen = new Set([seedFranchise]);
+  // Remakes share a title but not always a franchise (Hunter x Hunter 1999 and 2011).
+  const titleKey = (title: string) => title.toLowerCase().replace(/\s*\(\d{4}\)$/, '').trim();
+  const seenTitles = new Set(index.filter(entry => entry.s === seed).map(entry => titleKey(entry.t)));
+  return recommend(index, { seeds: [seed], filters: { formats: ['tv', 'ona', 'movie'] }, limit: 200 })
+    .filter(result => !result.entry.g.some(genre => /^(hentai|erotica)$/i.test(genre)))
+    .filter(result => {
+      const group = franchiseOf(result.entry.s) || result.entry.s;
+      const title = titleKey(result.entry.t);
+      if (seen.has(group) || seenTitles.has(title)) return false;
+      seen.add(group);
+      seenTitles.add(title);
+      return true;
+    })
+    .slice(0, limit);
+}

@@ -5,7 +5,7 @@ import { getBuildData } from '../../../lib/content/build-data';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData, relatedArticles } from '../../../lib/tools/build-data';
 import { getToolsExtras, type SourceEntry } from '../../../lib/tools/build-extras';
-import { MANGA_LANDINGS, fitTitle, type MangaLanding } from '../../../lib/tools/landings';
+import { ARC_LANDINGS, MANGA_LANDINGS, fitTitle, type MangaLanding } from '../../../lib/tools/landings';
 import { compactKey } from '../../../lib/tools/normalize';
 
 export const prerender = true;
@@ -134,6 +134,7 @@ const mappingsJson = JSON.stringify(seasons.map(season => ({ slug: season.slug, 
     <ul class="tool-guide" style="margin:0;padding-left:1.2em">
       {franchise && <li><a href={`/tools/anime-watch-order/${franchise.slug}`}>{franchise.title} watch order</a>: every season, movie and special in release order.</li>}
       {seasons.filter(season => fillerSlugs.has(season.slug)).map(season => <li><a href={`/tools/anime-filler-checker/${season.slug}`}>{season.title} filler list</a>: which episodes you can skip.</li>)}
+      {ARC_LANDINGS.some(item => item.slug === landing.slug) && <li><a href={`/tools/anime-arc-explorer/${landing.slug}`}>{landing.name} arcs in order</a>: every story arc with its episodes.</li>}
       <li><a href={`/tools/anime-binge-calculator?anime=${seasons[0].slug}`}>How long it takes to watch {seasons[0].title}</a>, at your pace.</li>
     </ul>
   </section>

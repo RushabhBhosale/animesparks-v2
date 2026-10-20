@@ -2,23 +2,13 @@
   "slug": "my-hero-academia-season-7",
   "arcs": [
     {
-      "name": "Star and Stripe",
-      "episodeStart": 1,
-      "episodeEnd": 1
-    },
-    {
       "name": "Star and Stripe Arc",
-      "episodeStart": 2,
+      "episodeStart": 1,
       "episodeEnd": 2
     },
     {
-      "name": "U.A. Traitor",
-      "episodeStart": 3,
-      "episodeEnd": 4
-    },
-    {
       "name": "U.A. Traitor Arc",
-      "episodeStart": 5,
+      "episodeStart": 3,
       "episodeEnd": 5
     },
     {
@@ -36,7 +26,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from My Hero Academia Wiki",
-    "verifiedAt": "2026-10-17",
+    "verifiedAt": "2026-10-20",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

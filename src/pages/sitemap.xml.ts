@@ -6,7 +6,9 @@ import { tagIndexability } from '../lib/content/tag-seo';
 import { getToolsBuildData } from '../lib/tools/build-data';
 import { getToolsExtras } from '../lib/tools/build-extras';
 import { LIVE_TOOLS, toolPath } from '../lib/tools/registry';
-import { MANGA_LANDINGS } from '../lib/tools/landings';
+import { ARC_LANDINGS, MANGA_LANDINGS } from '../lib/tools/landings';
+import { hasMoviePage } from '../lib/tools/movies';
+import { getRecLandingPages } from '../lib/tools/rec-landings';
 
 const staticPaths = ['/', '/blogs', '/blogs/es', '/my-anime-list', '/categories', '/trending', '/contact', '/about', '/privacy', '/sitemap'];
 export const prerender = true;
@@ -29,11 +31,17 @@ export const GET: APIRoute = async () => {
       url: `${SITE}/tools/anime-manga-chapter-finder/${landing.slug}`,
       modified: xmlDate(landing.entries.map(slug => toolExtras.source[slug]?.mapping?.verifiedAt || '').sort().at(-1)),
     })),
+    ...ARC_LANDINGS.filter(landing => landing.entries.every(slug => toolExtras.source[slug]?.arcs?.arcs.length)).map(landing => ({
+      url: `${SITE}/tools/anime-arc-explorer/${landing.slug}`,
+      modified: xmlDate(landing.entries.map(slug => toolExtras.source[slug]?.arcs?.verifiedAt || '').sort().at(-1)),
+    })),
     // Every generated franchise page has a crawlable release-order guide.
     ...tools.franchises.filter(franchise => franchise.indexable).map(franchise => ({
       url: `${SITE}/tools/anime-watch-order/${franchise.slug}`,
       modified: xmlDate(franchise.curated.map(order => order.verifiedAt || '').sort().at(-1) || franchise.fetchedAt),
     })),
+    ...(await getRecLandingPages(englishCards)).map(({ landing }) => ({ url: `${SITE}/tools/anime-recommendations/${landing.slug}` })),
+    ...tools.franchises.filter(hasMoviePage).map(franchise => ({ url: `${SITE}/tools/anime-watch-order/${franchise.slug}/movies`, modified: xmlDate(franchise.fetchedAt) })),
     ...tags.map(tag => ({ url: `${SITE}/tags/${encodeURIComponent(tag)}` })),
     ...articles.map(article => {
       const url = `${SITE}${article.language === 'es' ? '/es' : ''}/blog/${article.slug}`;

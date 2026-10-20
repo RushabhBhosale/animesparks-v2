@@ -2,9 +2,10 @@
 import ToolPage from '../../../components/tools/ToolPage.astro';
 import ShareBox from '../../../components/tools/ShareBox.astro';
 import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
+import { getRecLandingPages } from '../../../lib/tools/rec-landings';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData } from '../../../lib/tools/build-data';
-import { MANGA_LANDINGS, fitTitle } from '../../../lib/tools/landings';
+import { ARC_LANDINGS, MANGA_LANDINGS, fitTitle } from '../../../lib/tools/landings';
 import { getBuildData } from '../../../lib/content/build-data';
 import { relatedArticles } from '../../../lib/tools/build-data';
 import { getToolsExtras, type FillerView } from '../../../lib/tools/build-extras';
@@ -42,6 +43,8 @@ const title = fitTitle(skippable
 const { franchises } = await getToolsBuildData();
 const franchise = franchises.find(item => item.slug === view.franchiseSlug);
 const mangaLanding = MANGA_LANDINGS.find(landing => landing.entries.includes(view.slug));
+const arcLanding = ARC_LANDINGS.find(landing => landing.entries.includes(view.slug));
+const likePage = (await getRecLandingPages(english)).map(page => page.landing).find(landing => landing.anime === view.slug);
 const rangeText = (start: number, end: number) => start === end ? String(start) : `${start}–${end}`;
 const description = !skippable && providerBasis
   ? `Does ${view.title} have filler? No. MyAnimeList flags none of its ${summary.total} episodes as filler or recap, so you can watch every episode in order.`
@@ -175,6 +178,8 @@ const typeLabel = (type: CanonType) => providerBasis && type === 'canon' ? 'Cano
         {skippable > 0 && <li><a href={`/tools/anime-binge-calculator?anime=${view.slug}&nofiller=1`}>How long {view.title} takes without filler</a>, with your own daily pace.</li>}
         {franchise && <li><a href={`/tools/anime-watch-order/${franchise.slug}`}>{franchise.title} watch order</a>: every season, movie and special in release order.</li>}
         {mangaLanding && <li><a href={`/tools/anime-manga-chapter-finder/${mangaLanding.slug}`}>{mangaLanding.name} anime to manga guide</a>: which chapters each episode adapts.</li>}
+        {arcLanding && <li><a href={`/tools/anime-arc-explorer/${arcLanding.slug}`}>{arcLanding.name} arcs in order</a>: every story arc with its episodes and filler count.</li>}
+        {likePage && <li><a href={`/tools/anime-recommendations/${likePage.slug}`}>Anime like {likePage.name}</a>: what to watch when you’re done.</li>}
         <li><a href="/tools/anime-filler-checker">Check another series for filler</a>.</li>
       </ul>
     </section>

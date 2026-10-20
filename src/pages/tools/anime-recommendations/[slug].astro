@@ -1,0 +1,110 @@
+---
+import ToolPage from '../../../components/tools/ToolPage.astro';
+import ShareBox from '../../../components/tools/ShareBox.astro';
+import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
+import { getBuildData } from '../../../lib/content/build-data';
+import { SITE } from '../../../lib/content/seo';
+import { getToolsBuildData, relatedArticles } from '../../../lib/tools/build-data';
+import { getToolsExtras } from '../../../lib/tools/build-extras';
+import { canonicalFranchiseSlug, fitTitle, type RecLanding } from '../../../lib/tools/landings';
+import { getRecLandingPages } from '../../../lib/tools/rec-landings';
+import type { Recommendation } from '../../../lib/tools/recommend';
+import { compactKey, formatLabel } from '../../../lib/tools/normalize';
+
+export const prerender = true;
+export async function getStaticPaths() {
+  const pages = await getRecLandingPages((await getBuildData()).english);
+  return pages.map(({ landing, picks }) => ({ params: { slug: landing.slug }, props: { landing, picks } }));
+}
+
+const { landing, picks } = Astro.props as { landing: RecLanding; picks: Recommendation[] };
+const { english } = await getBuildData();
+const [{ bySlug, franchises }, extras] = await Promise.all([getToolsBuildData(), getToolsExtras(english)]);
+const seed = extras.recIndex.find(entry => entry.s === landing.anime)!;
+const seedItem = bySlug.get(landing.anime);
+const name = landing.name;
+const path = `/tools/anime-recommendations/${landing.slug}`;
+const franchiseBySlug = new Map(franchises.filter(item => item.indexable).map(item => [item.slug, item]));
+const fillerPages = new Set(extras.filler.filter(view => view.indexable).map(view => view.slug));
+const recPageBySlug = new Map((await getRecLandingPages(english)).map(page => [page.landing.anime, page.landing]));
+const franchiseFor = (slug: string) => { const key = bySlug.get(slug)?.franchiseSlug; return key ? franchiseBySlug.get(canonicalFranchiseSlug(key)) : undefined; };
+const seedFranchise = franchiseFor(landing.anime);
+const tags = [...seed.g, ...seed.th];
+const fromFans = picks.filter(pick => pick.reasons.some(reason => /MyAnimeList users recommend/.test(reason)));
+const short = picks.filter(pick => pick.entry.f === 'movie' || (pick.entry.e && pick.entry.e <= 13));
+const list = (items: string[]) => items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items[0];
+const meta = (pick: Recommendation) => [formatLabel(pick.entry.f), pick.entry.y, pick.entry.f !== 'movie' && pick.entry.e ? `${pick.entry.e} eps` : pick.entry.st === 'airing' ? 'Airing' : '', pick.entry.sc ? `★ ${pick.entry.sc.toFixed(2)}` : ''].filter(Boolean).join(' · ');
+
+const title = fitTitle([`${picks.length} Anime Like ${name}: What to Watch Next`, `${picks.length} Anime Like ${name}`, `Anime Like ${name}`]);
+const description = `Loved ${name}? ${picks.length} anime like it, starting with ${list(picks.slice(0, 3).map(pick => pick.entry.t))}. Picked from MyAnimeList fan recommendations and shared ${tags.slice(0, 2).join(' and ').toLowerCase() || 'genres'}, with the reason for each.`;
+const faq = [
+  { question: `What anime is most like ${name}?`, answer: `${picks[0].entry.t}. ${picks[0].reasons[0] || `It shares the most with ${name}`}. ${picks[1] ? `${picks[1].entry.t} and ${picks[2]?.entry.t || 'others'} come next.` : ''}`.trim() },
+  ...(short.length ? [{ question: `Is there a short anime like ${name}?`, answer: `Yes: ${list(short.slice(0, 4).map(pick => `${pick.entry.t} (${pick.entry.f === 'movie' ? 'movie' : `${pick.entry.e} episodes`})`))}.` }] : []),
+  ...(fromFans.length ? [{ question: `What do ${name} fans recommend?`, answer: `MyAnimeList users who loved ${name} most often recommend ${list(fromFans.slice(0, 5).map(pick => pick.entry.t))}.` }] : []),
+  { question: 'How are these picks chosen?', answer: `With transparent rules, not AI. Shows score points when MyAnimeList users recommend them to ${name} fans and for genres, themes, demographic and studio they share with it. Score and popularity break ties, and other seasons of ${name} itself are left out.` },
+];
+const jsonLd = [{
+  '@context': 'https://schema.org', '@type': 'ItemList', name: `Anime like ${name}`, numberOfItems: picks.length,
+  itemListElement: picks.map((pick, index) => ({ '@type': 'ListItem', position: index + 1, name: pick.entry.t })),
+}];
+const built = (await getRecLandingPages(english)).map(page => page.landing);
+const position = built.findIndex(item => item.slug === landing.slug);
+const start = Math.max(0, Math.min(position - 4, built.length - 9));
+const neighbours = built.slice(start, start + 9).filter(item => item.slug !== landing.slug).slice(0, 8);
+const keys = new Set([seedItem?.title, seedItem?.titleEnglish, name].filter((value): value is string => Boolean(value)).map(compactKey));
+---
+<ToolPage
+  toolSlug="anime-recommendations"
+  path={path} title={title} socialTitle={`Anime like ${name}`} description={description}
+  name={`Anime like ${name}`} crumb={`Like ${name}`} parent={['Recommendations', '/tools/anime-recommendations']}
+  kicker="What to watch next" heading={`Anime like ${name}`}
+  deck={`Finished ${name} and want more? These ${picks.length} shows are what its fans recommend most, plus series that share its ${tags.slice(0, 3).join(', ').toLowerCase() || 'style'}. Each pick says why it’s here.`}
+  facts={[[String(picks.length), 'picks'], ...(fromFans.length ? [[String(fromFans.length), 'recommended by fans'] as [string, string]] : []), ...(short.length ? [[String(short.length), 'short picks'] as [string, string]] : [])]}
+  faq={faq} related={relatedArticles(english, keys, 6)} relatedHeading={`More on ${name}`}
+  credit="Genres, scores and user recommendations" application={false} image={seedItem?.images?.poster} jsonLd={jsonLd}
+>
+  <ShareBox slot="after-faq" url={`${SITE}${path}`} title={`Anime like ${name}`} anchor={`anime like ${name}`} />
+
+  <section class="tool-section" aria-labelledby="picks-title">
+    <h2 id="picks-title">{picks.length} anime like {name}</h2>
+    <ol class="rec-grid">
+      {picks.map((pick, index) => {
+        const franchise = franchiseFor(pick.entry.s);
+        const ownPage = recPageBySlug.get(pick.entry.s);
+        return (
+          <li class="rec-card">
+            {pick.entry.p ? <img src={pick.entry.p} alt="" width="70" height="98" loading="lazy" decoding="async" referrerpolicy="no-referrer" /> : <span class="mini-card__thumb"></span>}
+            <div>
+              <h3><span class="rec-card__rank">{index + 1}.</span> {franchise ? <a href={`/tools/anime-watch-order/${franchise.slug}`}>{pick.entry.t}</a> : pick.entry.t}</h3>
+              <p>{meta(pick)}</p>
+              <ul>{(pick.reasons.length ? pick.reasons : [`Shares ${[...pick.entry.g, ...pick.entry.th].filter(tag => tags.includes(tag)).slice(0, 3).join(', ')} with ${name}`]).map(reason => <li>{reason}</li>)}</ul>
+              {(ownPage || fillerPages.has(pick.entry.s)) && (
+                <p>
+                  {ownPage && <a href={`/tools/anime-recommendations/${ownPage.slug}`}>Anime like {ownPage.name}</a>}
+                  {ownPage && fillerPages.has(pick.entry.s) && ' · '}
+                  {fillerPages.has(pick.entry.s) && <a href={`/tools/anime-filler-checker/${pick.entry.s}`}>Filler list</a>}
+                </p>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+    <p class="order-sources">Genres, scores and fan recommendations from MyAnimeList. Picks never include other seasons or spin-offs of {name}{seedFranchise && <>; for those, see the <a href={`/tools/anime-watch-order/${seedFranchise.slug}`}>{seedFranchise.title} watch order</a></>}.</p>
+  </section>
+
+  <section class="tool-section" aria-labelledby="own-title">
+    <h2 id="own-title">Make your own list</h2>
+    <p class="tool-guide" style="margin:0">Want to mix {name} with other favourites, or filter by length, year or mood? The <a href="/tools/anime-recommendations">Recommendation Finder</a> combines up to three shows and hides anything already on your watchlist.</p>
+  </section>
+
+  <GuideDirectory
+    id="more-like" heading="More anime recommendations"
+    links={neighbours.map(item => ({ href: `/tools/anime-recommendations/${item.slug}`, label: `Anime like ${item.name}` }))}
+  />
+
+  <Fragment slot="guide">
+    <h2>How these picks are made</h2>
+    <p>No AI and no paid placements. Every show in our catalogue is scored against {name}: points when MyAnimeList users recommend it to {name} fans, and for each genre, theme, demographic and studio the two share. Score and popularity break ties. Other seasons and spin-offs of {name} are left out, and each franchise appears once.</p>
+  </Fragment>
+</ToolPage>

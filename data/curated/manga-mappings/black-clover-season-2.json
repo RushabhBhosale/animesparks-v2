@@ -6,9 +6,21 @@
       "episodeEnd": 1,
       "chapterStart": 270,
       "chapterEnd": 275
+    },
+    {
+      "episodeStart": 2,
+      "episodeEnd": 2,
+      "chapterStart": 275,
+      "chapterEnd": 279
+    },
+    {
+      "episodeStart": 3,
+      "episodeEnd": 3,
+      "chapterStart": 280,
+      "chapterEnd": 284
     }
   ],
-  "continueFromChapter": 276,
+  "continueFromChapter": 285,
   "continueNote": "This is the chapter after the last one this season adapts.",
   "sources": [
     {

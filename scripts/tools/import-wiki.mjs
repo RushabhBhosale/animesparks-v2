@@ -144,8 +144,13 @@ export function chapterNumbers(params) {
 export function arcName(params) {
   // An episode spanning two arcs links both; it belongs to the first.
   const raw = (params.arc || '').match(/^\s*\[\[[^\]]*\]\]/)?.[0] || params.arc || '';
-  return raw ? strip(raw).replace(/\s*\(arc\)$/i, ' Arc').replace(/\s+arc$/i, ' Arc') || null : null;
+  const name = raw ? strip(raw).replace(/\s*\(arc\)$/i, ' Arc').replace(/\s+arc$/i, ' Arc') : '';
+  // Placeholder links such as "[[Arc 2]]" carry no name; the episode joins its neighbours.
+  return name && !/^arc\s*\d+$/i.test(name) ? name : null;
 }
+
+/** "Shibuya Incident" and "Shibuya Incident Arc" are the same arc. */
+const arcKey = name => name.toLowerCase().replace(/\s+arc$/, '').trim();
 
 /**
  * An episode may also cite flashback chapters far from what it adapts
@@ -170,11 +175,17 @@ export function buildDatasets(records) {
     return { episodeStart: record.n, episodeEnd: record.n, chapterStart, chapterEnd };
   });
   const arcs = [];
+  let unnamedSince = null;
   for (const record of records) {
-    if (!record.arc) continue;
+    if (!record.arc) { unnamedSince ??= record.n; continue; }
     const last = arcs.at(-1);
-    if (last && last.name === record.arc && record.n === last.episodeEnd + 1) last.episodeEnd = record.n;
-    else arcs.push({ name: record.arc, episodeStart: record.n, episodeEnd: record.n });
+    // Unnamed episodes between two parts of the same arc belong to it.
+    const contiguous = last && (record.n === last.episodeEnd + 1 || unnamedSince === last.episodeEnd + 1);
+    if (last && contiguous && arcKey(last.name) === arcKey(record.arc)) {
+      last.episodeEnd = record.n;
+      if (!/ Arc$/.test(last.name) && / Arc$/.test(record.arc)) last.name = record.arc;
+    } else arcs.push({ name: record.arc, episodeStart: record.n, episodeEnd: record.n });
+    unnamedSince = null;
   }
   const maxChapter = Math.max(0, ...ranges.map(range => range.chapterEnd));
   return { ranges, arcs, continueFromChapter: maxChapter ? maxChapter + 1 : undefined };

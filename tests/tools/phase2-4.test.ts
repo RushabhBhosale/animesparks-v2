@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { chapterForEpisode, classifyEpisodes, fillerFreeEpisodes, formatRanges, summarize, toRanges, typeRuns } from '../../src/lib/tools/episodes.ts';
 import { countdownParts, nextBroadcast, parseClock, weekdayIn, weekdayIndex } from '../../src/lib/tools/schedule.ts';
 import { buildClues, emptyStats, hash32, isCorrectGuess, msUntilNextPuzzle, pickForDate, puzzleNumber, recordResult, shareGrid, utcDateKey } from '../../src/lib/tools/daily.ts';
-import { matchesFilters, randomPick, recommend, type RecEntry } from '../../src/lib/tools/recommend.ts';
+import { matchesFilters, randomPick, recommend, similarTo, type RecEntry } from '../../src/lib/tools/recommend.ts';
 import { clampWatched, completion, mergeEntries, parseImport, stats, withStatus, type WatchlistEntry } from '../../src/lib/tools/watchlist.ts';
 import { addItem, addTier, moveItem, moveTier, newTierList, removeItem, removeTier, restoreTierList } from '../../src/lib/tools/tierlist.ts';
 import { validateArcFile, validateFillerFile, validateMappingFile, validateNoticeFile } from '../../src/lib/tools/curated.ts';
@@ -153,6 +153,16 @@ test('similar titles come with reasons; seeds and exclusions are removed', () =>
   assert.ok(results[0].reasons.some(reason => /MyAnimeList users recommend/.test(reason)));
   assert.ok(results.find(result => result.entry.s === 'hxh')!.reasons.some(reason => /Same studio/.test(reason)));
   assert.ok(!slugs.includes('kon'), 'unrelated titles are not padded in');
+});
+
+test('"anime like" skips the seed franchise and repeat seasons', () => {
+  const franchise: Record<string, string> = { frieren: 'frieren', 'frieren-2': 'frieren', violet: 'violet', 'violet-movie': 'violet' };
+  const extended = [...index, { ...index.find(entry => entry.s === 'frieren')!, s: 'frieren-2', t: 'Frieren 2' }, { ...index.find(entry => entry.s === 'violet')!, s: 'violet-movie', t: 'Violet movie', f: 'movie' }];
+  const slugs = similarTo(extended, 'frieren', slug => franchise[slug]).map(result => result.entry.s);
+  assert.ok(!slugs.includes('frieren-2'), 'the seed franchise is left out');
+  assert.equal(slugs.filter(slug => slug.startsWith('violet')).length, 1, 'one entry per franchise');
+  const remake = [...index, { ...index.find(entry => entry.s === 'hxh')!, s: 'hxh-1999', r: 900 }];
+  assert.equal(similarTo(remake, 'frieren', () => undefined).filter(result => result.entry.t === 'hxh').length, 1, 'one entry per title');
 });
 
 test('random picks are deterministic per seed and respect exclusions', () => {

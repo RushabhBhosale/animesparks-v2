@@ -8,12 +8,14 @@ import RelatedTools from '../../../components/tools/RelatedTools.astro';
 import ShareBox from '../../../components/tools/ShareBox.astro';
 import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
 import { getToolsExtras } from '../../../lib/tools/build-extras';
-import { MANGA_LANDINGS, clampDescription, fitTitle } from '../../../lib/tools/landings';
+import { ARC_LANDINGS, MANGA_LANDINGS, clampDescription, fitTitle } from '../../../lib/tools/landings';
 import { getBuildData } from '../../../lib/content/build-data';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData, relatedArticles, type FranchiseEntryView, type FranchiseView } from '../../../lib/tools/build-data';
 import { formatDuration, formatHours, formatLabel, statusLabel } from '../../../lib/tools/normalize';
 import { toolBreadcrumbs, TOOLS_IMAGE } from '../../../lib/tools/seo';
+import { hasMoviePage } from '../../../lib/tools/movies';
+import { getRecLandingPages } from '../../../lib/tools/rec-landings';
 
 export const prerender = true;
 export async function getStaticPaths() {
@@ -34,6 +36,8 @@ const description = clampDescription(`How to watch ${franchise.title} in order: 
 const { filler: fillerViews } = await getToolsExtras(english);
 const fillerPages = new Set(fillerViews.filter(view => view.indexable).map(view => view.slug));
 const mangaLanding = MANGA_LANDINGS.find(landing => franchise.releaseOrder.some(entry => landing.entries.includes(entry.slug)));
+const arcLanding = ARC_LANDINGS.find(landing => franchise.releaseOrder.some(entry => landing.entries.includes(entry.slug)));
+const likePage = (await getRecLandingPages(english)).map(page => page.landing).find(landing => franchise.releaseOrder.some(entry => entry.slug === landing.anime));
 // Neighbours by popularity, so every franchise links to (and from) related ones.
 const { franchises: allFranchises } = await getToolsBuildData();
 const indexedFranchises = allFranchises.filter(item => item.indexable);
@@ -187,6 +191,9 @@ const missingKinds = ['chronological', 'beginner'].filter(kind => !franchise.cur
           </table>
         </div>
         {mangaLanding && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">Reading the manga too? See the <a href={`/tools/anime-manga-chapter-finder/${mangaLanding.slug}`}>{mangaLanding.name} anime to manga guide</a>.</p>}
+        {hasMoviePage(franchise) && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">Just the films? See <a href={`/tools/anime-watch-order/${franchise.slug}/movies`}>{franchise.title} movies in order</a>.</p>}
+        {likePage && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">Finished it all? See <a href={`/tools/anime-recommendations/${likePage.slug}`}>anime like {likePage.name}</a>.</p>}
+        {arcLanding && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">Following the story arc by arc? See <a href={`/tools/anime-arc-explorer/${arcLanding.slug}`}>{arcLanding.name} arcs in order</a>.</p>}
       </section>
 
       <section class="tool-section tool-guide" aria-labelledby="franchise-method">

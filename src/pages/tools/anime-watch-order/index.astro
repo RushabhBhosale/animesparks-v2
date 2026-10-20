@@ -12,6 +12,7 @@ import { getBuildData } from '../../../lib/content/build-data';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData, relatedArticles } from '../../../lib/tools/build-data';
 import { toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../../lib/tools/seo';
+import { hasMoviePage } from '../../../lib/tools/movies';
 
 export const prerender = true;
 const path = '/tools/anime-watch-order';
@@ -69,6 +70,11 @@ const jsonLd = [
           </div>
         </section>
       )}
+
+      <GuideDirectory
+        id="movies-all" heading="Anime movies in order"
+        links={tools.franchises.filter(hasMoviePage).map(franchise => ({ href: `${path}/${franchise.slug}/movies`, label: `${franchise.title} movies in order`, meta: `${franchise.releaseOrder.filter(entry => entry.format === 'movie').length} movies` }))}
+      />
 
       <GuideDirectory
         id="order-all" heading="All anime watch orders A–Z" alphabetical

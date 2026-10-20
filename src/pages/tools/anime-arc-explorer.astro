@@ -1,6 +1,8 @@
 ---
 import ToolPage from '../../components/tools/ToolPage.astro';
 import AnimePicker from '../../components/tools/AnimePicker.astro';
+import GuideDirectory from '../../components/tools/GuideDirectory.astro';
+import { ARC_LANDINGS } from '../../lib/tools/landings';
 import { getBuildData } from '../../lib/content/build-data';
 import { getToolsExtras } from '../../lib/tools/build-extras';
 
@@ -8,6 +10,7 @@ export const prerender = true;
 const { english } = await getBuildData();
 const extras = await getToolsExtras(english);
 const covered = Object.values(extras.source).filter(entry => entry.arcs).map(entry => ({ slug: entry.slug, title: entry.title }));
+const guides = ARC_LANDINGS.filter(landing => landing.entries.every(slug => extras.source[slug]?.arcs?.arcs.length));
 const faq = [
   { question: 'Where do the arcs come from?', answer: 'From each series’ fan wiki on Fandom (licensed CC BY-SA), imported through the official wiki API, or from guides checked by AnimeSparks editors. Arc names and episode ranges are never generated or estimated.' },
   { question: 'Does it spoil the story?', answer: 'It shows arc names and episode ranges only, with no plot summaries. Arc names can hint at what’s coming, so skim carefully if you’re avoiding spoilers.' },
@@ -41,7 +44,8 @@ const faq = [
     <aside class="tool-aside" aria-label="Covered series">
       <div class="tool-aside-card">
         <p class="kicker red">Series with arc guides</p>
-        {covered.length ? <ul>{covered.map(entry => <li>{entry.title}</li>)}</ul> : <p>None yet. Guides are published one series at a time after checking.</p>}
+        {guides.length > 0 && <ul>{guides.map(landing => <li><a href={`/tools/anime-arc-explorer/${landing.slug}`}>{landing.name} arcs in order</a></li>)}</ul>}
+        {!covered.length && <p>None yet. Guides are published one series at a time after checking.</p>}
       </div>
       <div class="tool-aside-card">
         <p class="kicker">Meanwhile</p>
@@ -49,6 +53,11 @@ const faq = [
       </div>
     </aside>
   </div>
+
+  <GuideDirectory
+    id="arc-guides" heading="Anime arcs in order"
+    links={guides.map(landing => ({ href: `/tools/anime-arc-explorer/${landing.slug}`, label: `${landing.name} arcs in order`, meta: `${landing.entries.reduce((sum, slug) => sum + (extras.source[slug]?.arcs?.arcs.length || 0), 0)} arcs` }))}
+  />
 
   <Fragment slot="guide">
     <h2>Navigate long series by story arc</h2>

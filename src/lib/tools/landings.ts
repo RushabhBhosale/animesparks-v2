@@ -37,6 +37,7 @@ export function canonicalFranchiseSlug(slug: string): string {
 
 /** Franchise names as people search them, keyed by public slug. */
 export const FRANCHISE_TITLES: Record<string, string> = {
+  'demon-slayer-kimetsu-no-yaiba': 'Demon Slayer',
   'detective-conan': 'Detective Conan',
   'hajime-no-ippo': 'Hajime no Ippo',
   'initial-d': 'Initial D',
@@ -80,6 +81,126 @@ export const MANGA_LANDINGS: MangaLanding[] = [
   { slug: 'bleach', name: 'Bleach', entries: ['bleach', 'bleach-thousand-year-blood-war', 'bleach-thousand-year-blood-war-the-separation', 'bleach-thousand-year-blood-war-the-conflict', 'bleach-thousand-year-blood-war-the-calamity'] },
   { slug: 'hunter-x-hunter', name: 'Hunter x Hunter', entries: ['hunter-x-hunter'] },
   { slug: 'black-clover', name: 'Black Clover', entries: ['black-clover', 'black-clover-season-2'] },
+];
+
+export type ArcLanding = MangaLanding;
+
+/** "Arcs in order" guides, one page per series; each entry needs an imported arc list. */
+export const ARC_LANDINGS: ArcLanding[] = [
+  { slug: 'one-piece', name: 'One Piece', entries: ['one-piece'] },
+  { slug: 'naruto', name: 'Naruto', entries: ['naruto', 'naruto-shippuden'] },
+  { slug: 'bleach', name: 'Bleach', entries: ['bleach', 'bleach-thousand-year-blood-war', 'bleach-thousand-year-blood-war-the-separation', 'bleach-thousand-year-blood-war-the-conflict', 'bleach-thousand-year-blood-war-the-calamity'] },
+  { slug: 'hunter-x-hunter', name: 'Hunter x Hunter', entries: ['hunter-x-hunter'] },
+  { slug: 'black-clover', name: 'Black Clover', entries: ['black-clover', 'black-clover-season-2'] },
+  { slug: 'jujutsu-kaisen', name: 'Jujutsu Kaisen', entries: ['jujutsu-kaisen', 'jujutsu-kaisen-season-2', 'jujutsu-kaisen-the-culling-game-part-1'] },
+  { slug: 'chainsaw-man', name: 'Chainsaw Man', entries: ['chainsaw-man'] },
+  { slug: 'my-hero-academia', name: 'My Hero Academia', entries: ['my-hero-academia', 'my-hero-academia-season-2', 'my-hero-academia-season-3', 'my-hero-academia-season-4', 'my-hero-academia-season-5', 'my-hero-academia-season-6', 'my-hero-academia-season-7', 'my-hero-academia-final-season'] },
+  { slug: 'solo-leveling', name: 'Solo Leveling', entries: ['solo-leveling', 'solo-leveling-season-2-arise-from-the-shadow'] },
+];
+
+/** "Movies in order" pages (public franchise slugs), each backed by "X movies in order" search demand. */
+export const MOVIE_LANDINGS = [
+  'pokemon', 'one-piece', 'naruto', 'dragon-ball', 'demon-slayer-kimetsu-no-yaiba', 'my-hero-academia', 'macross', 'detective-conan',
+  'yu-gi-oh', 'slam-dunk', 'made-in-abyss', 'haikyu', 'overlord', 'puella-magi-madoka-magica', 'inuyasha', 'initial-d', 'gintama',
+  'cardcaptor-sakura', 'bleach', 'jujutsu-kaisen',
+];
+/** A movies page needs at least this many movies in the franchise. */
+export const MIN_LANDING_MOVIES = 3;
+
+export interface RecLanding {
+  /** URL slug under /tools/anime-recommendations/. */
+  slug: string;
+  /** Name as people search it. */
+  name: string;
+  /** Catalogue slug of the seed anime. */
+  anime: string;
+}
+
+/** "Anime like X" pages, each backed by "anime like X" search demand and MAL user recommendations. */
+export const REC_LANDINGS: RecLanding[] = [
+  { slug: 'anime-like-attack-on-titan', name: "Attack on Titan", anime: 'attack-on-titan' },
+  { slug: 'anime-like-death-note', name: "Death Note", anime: 'death-note' },
+  { slug: 'anime-like-fullmetal-alchemist', name: "Fullmetal Alchemist", anime: 'fullmetal-alchemist-brotherhood' },
+  { slug: 'anime-like-one-punch-man', name: "One Punch Man", anime: 'one-punch-man' },
+  { slug: 'anime-like-demon-slayer', name: "Demon Slayer", anime: 'demon-slayer-kimetsu-no-yaiba' },
+  { slug: 'anime-like-my-hero-academia', name: "My Hero Academia", anime: 'my-hero-academia' },
+  { slug: 'anime-like-sword-art-online', name: "Sword Art Online", anime: 'sword-art-online' },
+  { slug: 'anime-like-hunter-x-hunter', name: "Hunter x Hunter", anime: 'hunter-x-hunter' },
+  { slug: 'anime-like-naruto', name: "Naruto", anime: 'naruto' },
+  { slug: 'anime-like-jujutsu-kaisen', name: "Jujutsu Kaisen", anime: 'jujutsu-kaisen' },
+  { slug: 'anime-like-tokyo-ghoul', name: "Tokyo Ghoul", anime: 'tokyo-ghoul' },
+  { slug: 'anime-like-your-name', name: "Your Name", anime: 'your-name' },
+  { slug: 'anime-like-steins-gate', name: "Steins;Gate", anime: 'steins-gate' },
+  { slug: 'anime-like-one-piece', name: "One Piece", anime: 'one-piece' },
+  { slug: 'anime-like-a-silent-voice', name: "A Silent Voice", anime: 'a-silent-voice' },
+  { slug: 'anime-like-re-zero', name: "Re:Zero", anime: 're-zero-starting-life-in-another-world' },
+  { slug: 'anime-like-code-geass', name: "Code Geass", anime: 'code-geass-lelouch-of-the-rebellion' },
+  { slug: 'anime-like-your-lie-in-april', name: "Your Lie in April", anime: 'your-lie-in-april' },
+  { slug: 'anime-like-toradora', name: "Toradora!", anime: 'toradora' },
+  { slug: 'anime-like-mob-psycho-100', name: "Mob Psycho 100", anime: 'mob-psycho-100' },
+  { slug: 'anime-like-noragami', name: "Noragami", anime: 'noragami' },
+  { slug: 'anime-like-erased', name: "Erased", anime: 'erased' },
+  { slug: 'anime-like-akame-ga-kill', name: "Akame ga Kill!", anime: 'akame-ga-kill' },
+  { slug: 'anime-like-bleach', name: "Bleach", anime: 'bleach' },
+  { slug: 'anime-like-angel-beats', name: "Angel Beats!", anime: 'angel-beats' },
+  { slug: 'anime-like-haikyuu', name: "Haikyuu!!", anime: 'haikyu' },
+  { slug: 'anime-like-konosuba', name: "KonoSuba", anime: 'konosuba-gods-blessing-on-this-wonderful-world' },
+  { slug: 'anime-like-the-promised-neverland', name: "The Promised Neverland", anime: 'the-promised-neverland' },
+  { slug: 'anime-like-cowboy-bebop', name: "Cowboy Bebop", anime: 'cowboy-bebop' },
+  { slug: 'anime-like-evangelion', name: "Neon Genesis Evangelion", anime: 'neon-genesis-evangelion' },
+  { slug: 'anime-like-parasyte', name: "Parasyte", anime: 'parasyte-the-maxim' },
+  { slug: 'anime-like-chainsaw-man', name: "Chainsaw Man", anime: 'chainsaw-man' },
+  { slug: 'anime-like-violet-evergarden', name: "Violet Evergarden", anime: 'violet-evergarden' },
+  { slug: 'anime-like-dr-stone', name: "Dr. Stone", anime: 'dr-stone' },
+  { slug: 'anime-like-black-clover', name: "Black Clover", anime: 'black-clover' },
+  { slug: 'anime-like-spy-x-family', name: "Spy x Family", anime: 'spy-x-family' },
+  { slug: 'anime-like-jojo', name: "JoJo's Bizarre Adventure", anime: 'jojos-bizarre-adventure-2012' },
+  { slug: 'anime-like-vinland-saga', name: "Vinland Saga", anime: 'vinland-saga' },
+  { slug: 'anime-like-fairy-tail', name: "Fairy Tail", anime: 'fairy-tail' },
+  { slug: 'anime-like-darling-in-the-franxx', name: "Darling in the Franxx", anime: 'darling-in-the-franxx' },
+  { slug: 'anime-like-another', name: "Another", anime: 'another' },
+  { slug: 'anime-like-soul-eater', name: "Soul Eater", anime: 'soul-eater' },
+  { slug: 'anime-like-shield-hero', name: "The Rising of the Shield Hero", anime: 'the-rising-of-the-shield-hero' },
+  { slug: 'anime-like-overlord', name: "Overlord", anime: 'overlord' },
+  { slug: 'anime-like-horimiya', name: "Horimiya", anime: 'horimiya' },
+  { slug: 'anime-like-slime', name: "That Time I Got Reincarnated as a Slime", anime: 'that-time-i-got-reincarnated-as-a-slime' },
+  { slug: 'anime-like-danmachi', name: "DanMachi", anime: 'is-it-wrong-to-try-to-pick-up-girls-in-a-dungeon' },
+  { slug: 'anime-like-kakegurui', name: "Kakegurui", anime: 'kakegurui' },
+  { slug: 'anime-like-mushoku-tensei', name: "Mushoku Tensei", anime: 'mushoku-tensei-jobless-reincarnation' },
+  { slug: 'anime-like-bungo-stray-dogs', name: "Bungo Stray Dogs", anime: 'bungo-stray-dogs' },
+  { slug: 'anime-like-frieren', name: "Frieren", anime: 'frieren-beyond-journeys-end' },
+  { slug: 'anime-like-classroom-of-the-elite', name: "Classroom of the Elite", anime: 'classroom-of-the-elite' },
+  { slug: 'anime-like-hyouka', name: "Hyouka", anime: 'hyouka' },
+  { slug: 'anime-like-tokyo-revengers', name: "Tokyo Revengers", anime: 'tokyo-revengers' },
+  { slug: 'anime-like-my-dress-up-darling', name: "My Dress-Up Darling", anime: 'my-dress-up-darling' },
+  { slug: 'anime-like-maid-sama', name: "Maid Sama!", anime: 'maid-sama' },
+  { slug: 'anime-like-dragon-ball', name: "Dragon Ball", anime: 'dragon-ball-z' },
+  { slug: 'anime-like-solo-leveling', name: "Solo Leveling", anime: 'solo-leveling' },
+  { slug: 'anime-like-black-lagoon', name: "Black Lagoon", anime: 'black-lagoon' },
+  { slug: 'anime-like-rent-a-girlfriend', name: "Rent-a-Girlfriend", anime: 'rent-a-girlfriend' },
+  { slug: 'anime-like-oshi-no-ko', name: "Oshi no Ko", anime: 'oshi-no-ko' },
+  { slug: 'anime-like-tower-of-god', name: "Tower of God", anime: 'tower-of-god' },
+  { slug: 'anime-like-dandadan', name: "Dandadan", anime: 'dan-da-dan' },
+  { slug: 'anime-like-komi-cant-communicate', name: "Komi Can't Communicate", anime: 'komi-cant-communicate' },
+  { slug: 'anime-like-hells-paradise', name: "Hell's Paradise", anime: 'hells-paradise' },
+  { slug: 'anime-like-fruits-basket', name: "Fruits Basket", anime: 'fruits-basket-1st-season' },
+  { slug: 'anime-like-yona-of-the-dawn', name: "Yona of the Dawn", anime: 'yona-of-the-dawn' },
+  { slug: 'anime-like-blue-lock', name: "Blue Lock", anime: 'blue-lock' },
+  { slug: 'anime-like-mushishi', name: "Mushishi", anime: 'mushi-shi' },
+  { slug: 'anime-like-the-apothecary-diaries', name: "The Apothecary Diaries", anime: 'the-apothecary-diaries' },
+  { slug: 'anime-like-the-eminence-in-shadow', name: "The Eminence in Shadow", anime: 'the-eminence-in-shadow' },
+  { slug: 'anime-like-gate', name: "Gate", anime: 'gate' },
+  { slug: 'anime-like-inuyasha', name: "InuYasha", anime: 'inuyasha' },
+  { slug: 'anime-like-trigun', name: "Trigun", anime: 'trigun' },
+  { slug: 'anime-like-mashle', name: "Mashle", anime: 'mashle-magic-and-muscles' },
+  { slug: 'anime-like-hellsing', name: "Hellsing", anime: 'hellsing' },
+  { slug: 'anime-like-berserk', name: "Berserk", anime: 'berserk' },
+  { slug: 'anime-like-kaiju-no-8', name: "Kaiju No. 8", anime: 'kaiju-no-8' },
+  { slug: 'anime-like-pokemon', name: "Pokémon", anime: 'pokemon' },
+  { slug: 'anime-like-delicious-in-dungeon', name: "Delicious in Dungeon", anime: 'delicious-in-dungeon' },
+  { slug: 'anime-like-sakamoto-days', name: "Sakamoto Days", anime: 'sakamoto-days' },
+  { slug: 'anime-like-baki', name: "Baki", anime: 'baki' },
+  { slug: 'anime-like-wind-breaker', name: "Wind Breaker", anime: 'wind-breaker' },
 ];
 
 /** Titles: keep the key phrase first and stay within ~65 characters. */

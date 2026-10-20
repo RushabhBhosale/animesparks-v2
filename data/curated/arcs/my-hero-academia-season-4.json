@@ -2,13 +2,8 @@
   "slug": "my-hero-academia-season-4",
   "arcs": [
     {
-      "name": "Shie Hassaikai",
+      "name": "Shie Hassaikai Arc",
       "episodeStart": 1,
-      "episodeEnd": 14
-    },
-    {
-      "name": "Shie Hassaikai Arc Remedial Course Arc",
-      "episodeStart": 15,
       "episodeEnd": 15
     },
     {
@@ -36,7 +31,7 @@
   "verification": {
     "status": "verified",
     "verifiedBy": "Imported from My Hero Academia Wiki",
-    "verifiedAt": "2026-10-17",
+    "verifiedAt": "2026-10-20",
     "method": "wiki-import",
     "notes": "Episode infobox fields read through the MediaWiki API; no prose copied."
   }

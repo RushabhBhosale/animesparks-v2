@@ -1,0 +1,118 @@
+---
+import ToolPage from '../../../../components/tools/ToolPage.astro';
+import ShareBox from '../../../../components/tools/ShareBox.astro';
+import GuideDirectory from '../../../../components/tools/GuideDirectory.astro';
+import { getBuildData } from '../../../../lib/content/build-data';
+import { SITE } from '../../../../lib/content/seo';
+import { getToolsBuildData, relatedArticles, type FranchiseView } from '../../../../lib/tools/build-data';
+import { getToolsExtras } from '../../../../lib/tools/build-extras';
+import { ARC_LANDINGS, MOVIE_LANDINGS, fitTitle } from '../../../../lib/tools/landings';
+import { hasMoviePage, movieTimeline } from '../../../../lib/tools/movies';
+import { formatDuration } from '../../../../lib/tools/normalize';
+
+export const prerender = true;
+export async function getStaticPaths() {
+  const { franchises } = await getToolsBuildData();
+  return MOVIE_LANDINGS
+    .map(slug => franchises.find(franchise => franchise.slug === slug))
+    .filter((franchise): franchise is FranchiseView => Boolean(franchise) && hasMoviePage(franchise!))
+    .map(franchise => ({ params: { slug: franchise.slug }, props: { franchise } }));
+}
+
+const { franchise } = Astro.props as { franchise: FranchiseView };
+const { english } = await getBuildData();
+const [{ franchises }, extras] = await Promise.all([getToolsBuildData(), getToolsExtras(english)]);
+const movies = movieTimeline(franchise.releaseOrder);
+const released = movies.filter(movie => movie.status !== 'upcoming' && movie.airedFrom);
+const upcoming = movies.filter(movie => !released.includes(movie));
+const mainMovies = movies.filter(movie => movie.role === 'main');
+const totalMinutes = released.reduce((sum, movie) => sum + (movie.watchMinutes || movie.durationMinutes || 0), 0);
+const years = released.map(movie => movie.year).filter((year): year is number => Boolean(year));
+const name = franchise.title;
+const path = `/tools/anime-watch-order/${franchise.slug}/movies`;
+const fillerPages = new Set(extras.filler.filter(view => view.indexable).map(view => view.slug));
+const fillerEntry = franchise.releaseOrder.find(entry => entry.role === 'main' && fillerPages.has(entry.slug));
+const arcLanding = ARC_LANDINGS.find(landing => franchise.releaseOrder.some(entry => landing.entries.includes(entry.slug)));
+const list = (items: string[]) => items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items[0];
+
+const title = fitTitle([`${name} Movies in Order: All ${movies.length} Movies by Release Date`, `${name} Movies in Order: All ${movies.length} Movies`, `${name} Movies in Order`]);
+const description = `All ${movies.length} ${name} movies in release order${years.length ? `, ${Math.min(...years)} to ${Math.max(...years)}` : ''}, with runtimes and which TV series each one came out alongside${totalMinutes ? `. About ${formatDuration(totalMinutes)} in total` : ''}.`;
+const faq = [
+  { question: `How many ${name} movies are there?`, answer: `${movies.length}${upcoming.length ? `: ${released.length} released and ${upcoming.length} announced` : ''}. The list includes every film MyAnimeList links to the franchise, including compilation and short films.` },
+  { question: `What order should I watch the ${name} movies in?`, answer: `Release order is the safest: each film assumes you know the TV series up to its release. Watch a movie after the series listed next to it in the table, starting with ${movies[0].title}.` },
+  ...(mainMovies.length
+    ? [{ question: `Which ${name} movies are part of the main story?`, answer: `${list(mainMovies.slice(0, 8).map(movie => movie.title))} ${mainMovies.length === 1 ? 'is' : 'are'} linked as sequels or prequels in the main storyline. The others are side stories you can watch in any order.` }]
+    : [{ question: `Are the ${name} movies canon?`, answer: `None are linked into the main storyline on MyAnimeList, so they are side stories. You can skip them or watch them in any order without missing the main plot.` }]),
+  ...(totalMinutes ? [{ question: `How long does it take to watch every ${name} movie?`, answer: `About ${formatDuration(totalMinutes)} for the ${released.length} released movies, based on their listed runtimes.` }] : []),
+];
+const jsonLd = [{
+  '@context': 'https://schema.org', '@type': 'ItemList', name: `${name} movies in order`, numberOfItems: movies.length,
+  itemListOrder: 'https://schema.org/ItemListOrderAscending',
+  itemListElement: movies.map((movie, index) => ({
+    '@type': 'ListItem', position: index + 1,
+    item: { '@type': 'Movie', name: movie.title, ...(movie.airedFrom ? { datePublished: movie.airedFrom.slice(0, 10) } : {}), ...(movie.sourceUrl ? { sameAs: movie.sourceUrl } : {}) },
+  })),
+}];
+const otherGuides = MOVIE_LANDINGS.filter(slug => slug !== franchise.slug)
+  .map(slug => franchises.find(item => item.slug === slug))
+  .filter((item): item is FranchiseView => Boolean(item) && hasMoviePage(item!));
+---
+<ToolPage
+  toolSlug="anime-watch-order"
+  path={path} title={title} socialTitle={`${name} movies in order`} description={description}
+  name={`${name} movies in order`} crumb="Movies" parent={[`${name} watch order`, `/tools/anime-watch-order/${franchise.slug}`]}
+  kicker="Movies in order" heading={`${name} movies in order`}
+  deck={`Every ${name} movie by release date, with its runtime and the TV series that was airing when it came out, so you know where each film fits.`}
+  facts={[
+    [String(movies.length), movies.length === 1 ? 'movie' : 'movies'],
+    ...(years.length ? [[`${Math.min(...years)}–${Math.max(...years)}`, 'released'] as [string, string]] : []),
+    ...(totalMinutes ? [[formatDuration(totalMinutes), 'in total'] as [string, string]] : []),
+  ]}
+  faq={faq} related={relatedArticles(english, franchise.titleKeys, 6)} relatedHeading={`More on ${name}`}
+  credit="Movie dates and runtimes" application={false} image={franchise.poster} jsonLd={jsonLd}
+>
+  <ShareBox slot="after-faq" url={`${SITE}${path}`} title={`${name} movies in order`} anchor={`${name} movies in order`} />
+
+  <section class="tool-section" aria-labelledby="movies-title">
+    <h2 id="movies-title">All {movies.length} {name} movies in release order</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th scope="col">#</th><th scope="col">Movie</th><th scope="col">Released</th><th scope="col">Runtime</th><th scope="col">Came out during</th></tr></thead>
+        <tbody>
+          {movies.map((movie, index) => (
+            <tr>
+              <td>{index + 1}</td>
+              <td>
+                {movie.sourceUrl ? <a href={movie.sourceUrl} rel="nofollow noopener" target="_blank"><strong>{movie.title}</strong></a> : <strong>{movie.title}</strong>}
+                {movie.role === 'main' && <> <span class="type-badge" data-type="manga-canon">Main story</span></>}
+              </td>
+              <td>{movie.airedFrom ? new Date(movie.airedFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : movie.year || 'TBA'}{movie.status === 'upcoming' && ' (upcoming)'}</td>
+              <td>{movie.durationMinutes ? `${Math.round(movie.durationMinutes)} min` : '—'}</td>
+              <td>{movie.during ? movie.during.title : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="order-sources">Release dates, runtimes and story links come from MyAnimeList. “Came out during” is the latest TV series that had premiered by the movie’s release; watch that series first. “Main story” movies are linked into the storyline as sequels or prequels.</p>
+  </section>
+
+  <section class="tool-section" aria-labelledby="plan-title">
+    <h2 id="plan-title">More {name} guides</h2>
+    <ul class="tool-guide" style="margin:0;padding-left:1.2em">
+      <li><a href={`/tools/anime-watch-order/${franchise.slug}`}>{name} watch order</a>: every season, movie, OVA and special ({franchise.releaseOrder.length} entries).</li>
+      {fillerEntry && <li><a href={`/tools/anime-filler-checker/${fillerEntry.slug}`}>{fillerEntry.title} filler list</a>: the episodes you can skip.</li>}
+      {arcLanding && <li><a href={`/tools/anime-arc-explorer/${arcLanding.slug}`}>{arcLanding.name} arcs in order</a>: every story arc with its episodes.</li>}
+    </ul>
+  </section>
+
+  <GuideDirectory
+    id="more-movies" heading="More anime movies in order"
+    links={otherGuides.map(item => ({ href: `/tools/anime-watch-order/${item.slug}/movies`, label: `${item.title} movies in order` }))}
+  />
+
+  <Fragment slot="guide">
+    <h2>How this list is built</h2>
+    <p>Every film MyAnimeList links to {name} as a sequel, prequel, side story or summary is listed by its original Japanese release date. Compilation films that retell the TV series are included and labelled by their own titles, so you can skip them if you’ve seen the show.</p>
+  </Fragment>
+</ToolPage>

@@ -3,9 +3,11 @@ import SiteLayout from '../layouts/SiteLayout.astro';
 import { getBuildData } from '../lib/content/build-data';
 import { SITE, homeImage } from '../lib/content/seo';
 import { LIVE_TOOLS, toolPath } from '../lib/tools/registry';
-import { MANGA_LANDINGS } from '../lib/tools/landings';
+import { ARC_LANDINGS, MANGA_LANDINGS } from '../lib/tools/landings';
 import { getToolsBuildData } from '../lib/tools/build-data';
 import { getToolsExtras } from '../lib/tools/build-extras';
+import { hasMoviePage } from '../lib/tools/movies';
+import { getRecLandingPages } from '../lib/tools/rec-landings';
 export const prerender = true;
 const { categories, sitemapArticles: articles } = await getBuildData();
 const core = [['Home', '/'], ['Blogs', '/blogs'], ['Spanish Blogs', '/blogs/es'], ['My Anime List', '/my-anime-list'], ['Categories', '/categories'], ['Trending', '/trending'], ['Anime Tools', '/tools'], ['About', '/about'], ['Contact', '/contact'], ['Privacy', '/privacy']];
@@ -16,6 +18,9 @@ const byLabel = (a: { label: string }, b: { label: string }) => a.label.localeCo
 const guideGroups = [
   { heading: 'Anime Filler Lists', links: extras.filler.filter(view => view.indexable).map(view => ({ href: `/tools/anime-filler-checker/${view.slug}`, label: `${view.title} filler list` })).sort(byLabel) },
   { heading: 'Anime Watch Orders', links: franchises.filter(franchise => franchise.indexable).map(franchise => ({ href: `/tools/anime-watch-order/${franchise.slug}`, label: `${franchise.title} watch order` })).sort(byLabel) },
+  { heading: 'Anime Like Your Favourites', links: (await getRecLandingPages((await getBuildData()).english)).map(({ landing }) => ({ href: `/tools/anime-recommendations/${landing.slug}`, label: `Anime like ${landing.name}` })).sort(byLabel) },
+  { heading: 'Anime Movies in Order', links: franchises.filter(hasMoviePage).map(franchise => ({ href: `/tools/anime-watch-order/${franchise.slug}/movies`, label: `${franchise.title} movies in order` })).sort(byLabel) },
+  { heading: 'Anime Arcs in Order', links: ARC_LANDINGS.filter(landing => landing.entries.every(slug => extras.source[slug]?.arcs?.arcs.length)).map(landing => ({ href: `/tools/anime-arc-explorer/${landing.slug}`, label: `${landing.name} arcs in order` })).sort(byLabel) },
   { heading: 'Anime to Manga Guides', links: MANGA_LANDINGS.filter(landing => landing.entries.every(slug => extras.source[slug]?.mapping)).map(landing => ({ href: `/tools/anime-manga-chapter-finder/${landing.slug}`, label: `${landing.name}: anime to manga` })).sort(byLabel) },
 ];
 ---

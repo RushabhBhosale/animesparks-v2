@@ -1,6 +1,8 @@
 ---
 import ToolPage from '../../components/tools/ToolPage.astro';
 import AnimePicker from '../../components/tools/AnimePicker.astro';
+import GuideDirectory from '../../components/tools/GuideDirectory.astro';
+import { getRecLandingPages } from '../../lib/tools/rec-landings';
 import { getBuildData } from '../../lib/content/build-data';
 import { getToolsExtras } from '../../lib/tools/build-extras';
 import { MOODS } from '../../lib/tools/recommend';
@@ -8,6 +10,7 @@ import { MOODS } from '../../lib/tools/recommend';
 export const prerender = true;
 const { english } = await getBuildData();
 const { recGenres, recIndex } = await getToolsExtras(english);
+const likePages = (await getRecLandingPages(english)).map(page => page.landing);
 const genreCounts = new Map(recGenres.map(genre => [genre, recIndex.filter(entry => entry.g.includes(genre) || entry.th.includes(genre)).length]));
 const genres = recGenres.filter(genre => (genreCounts.get(genre) || 0) >= 15 && !/^(hentai|erotica|ecchi)$/i.test(genre));
 const thisYear = new Date().getUTCFullYear();
@@ -85,6 +88,11 @@ const faq = [
     </section>
   </div>
 
+  <GuideDirectory
+    id="like-all" heading="Anime like your favourites, A–Z" alphabetical
+    links={likePages.map(landing => ({ href: `/tools/anime-recommendations/${landing.slug}`, label: `Anime like ${landing.name}` }))}
+  />
+
   <Fragment slot="guide">
     <h2>Recommendations you can see the reasoning behind</h2>
     <p>There’s no black-box AI here. Add up to three series you loved and the finder looks for titles that share their genres and themes, come from the same studio, or that MyAnimeList users recommend to fans of those shows. Without a starting series, it ranks titles that match your filters by score and popularity.</p>
@@ -92,17 +100,7 @@ const faq = [
   </Fragment>
 </ToolPage>
 
-<style is:global>
-  .rec-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); margin: var(--sp-4) 0 0; padding: 0; list-style: none; }
-  .rec-card { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: var(--sp-4); padding: var(--sp-4); border: 1px solid var(--line); background: var(--surface); }
-  .rec-card img, .rec-card .mini-card__thumb { width: 70px; height: 98px; object-fit: cover; background: var(--surface2); }
-  .rec-card h3 { margin: 0; font-size: 16px; line-height: 1.3; color: var(--ink); }
-  .rec-card p { margin: 4px 0 0; color: var(--ink-3); font-size: var(--text-xs); }
-  .rec-card ul { margin: var(--sp-2) 0 0; padding-left: 1.1em; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
-  .rec-card .tool-results__actions { margin-top: var(--sp-3); }
-  .rec-card .tool-button { min-height: 32px; padding: 0 var(--sp-3); font-size: var(--text-xs); }
-  @media (max-width: 700px) { .rec-grid { grid-template-columns: 1fr; } }
-</style>
+
 
 <script>
   import { formatLabel } from '../../lib/tools/normalize';
