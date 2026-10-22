@@ -1,6 +1,8 @@
 ---
 import ToolPage from '../../../components/tools/ToolPage.astro';
 import ShareBox from '../../../components/tools/ShareBox.astro';
+import ToolInsights from '../../../components/tools/ToolInsights.astro';
+import { mangaInsights } from '../../../lib/tools/insights';
 import { getBuildData } from '../../../lib/content/build-data';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData, relatedArticles } from '../../../lib/tools/build-data';
@@ -44,11 +46,13 @@ const isAiring = latest.status === 'airing';
 const statusText: Record<string, string> = { publishing: 'still publishing', finished: 'finished', hiatus: 'on hiatus', discontinued: 'discontinued' };
 const title = fitTitle([`${landing.name} Anime to Manga: Where to Continue Reading`, `${landing.name} Anime to Manga Chapter Guide`, `${landing.name} Manga Chapter Guide`]);
 const description = `Where the ${landing.name} anime ends in the manga: ${seasons.length > 1 ? `all ${seasons.length} seasons` : 'every episode'} matched to the chapters they adapt${continueFrom ? `, and why to continue from chapter ${continueFrom}` : ''}.`;
+const insights = mangaInsights(landing.name, rows.map(row => ({ title: row.season.title, episodes: row.episodes, first: row.first, last: row.last })), manga, continueFrom);
 const faq = [
   ...(continueFrom ? [{ question: `What chapter should I read after the ${landing.name} anime?`, answer: `Start at chapter ${continueFrom}. ${latest.title}, the latest ${isAiring ? 'season (still airing)' : 'season'}, adapts up to chapter ${continueFrom - 1}.` }] : []),
   ...rows.slice(0, -1).map(row => ({ question: `Where does ${row.season.title} end in the manga?`, answer: `${row.season.title} covers chapters ${row.first}–${row.last}. The next season picks up from there.` })),
   ...(manga ? [{ question: `Is the ${landing.name} manga finished?`, answer: `The manga is ${statusText[manga.status] || 'listed with an unknown status'} on MyAnimeList${manga.chapters ? `, with ${manga.chapters} chapters` : ''}${manga.volumes ? ` in ${manga.volumes} volumes` : ''}.` }] : []),
-].slice(0, 5);
+  ...insights.faq,
+].slice(0, 8);
 const mappingsJson = JSON.stringify(seasons.map(season => ({ slug: season.slug, title: season.title, ranges: season.mapping.ranges, continueFromChapter: season.mapping.continueFromChapter }))).replace(/</g, '\\u003c');
 ---
 <ToolPage
@@ -128,6 +132,8 @@ const mappingsJson = JSON.stringify(seasons.map(season => ({ slug: season.slug, 
       <p class="tool-hero__deck" style="margin-top: var(--sp-4); font-size: var(--text-sm)">{manga.title}{manga.authors.length > 0 && ` by ${manga.authors.join(' & ')}`}{manga.serializations[0] && `, serialised in ${manga.serializations[0]}`}. Publication details from MyAnimeList.</p>
     </section>
   )}
+
+  <ToolInsights id="manga-numbers-title" heading={`${landing.name}: how much of the manga is adapted`} insights={insights} />
 
   <section class="tool-section" aria-labelledby="plan-title">
     <h2 id="plan-title">More {landing.name} guides</h2>

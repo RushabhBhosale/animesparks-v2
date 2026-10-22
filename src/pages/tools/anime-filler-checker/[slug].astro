@@ -2,6 +2,8 @@
 import ToolPage from '../../../components/tools/ToolPage.astro';
 import ShareBox from '../../../components/tools/ShareBox.astro';
 import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
+import ToolInsights from '../../../components/tools/ToolInsights.astro';
+import { fillerInsights } from '../../../lib/tools/insights';
 import { getRecLandingPages } from '../../../lib/tools/rec-landings';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData } from '../../../lib/tools/build-data';
@@ -40,8 +42,13 @@ const providerBasis = view.basis === 'provider';
 const title = fitTitle(skippable
   ? [`${view.title} Filler List: ${skippable} Filler & Recap Episodes to Skip`, `${view.title} Filler List: ${skippable} Episodes to Skip`, `${view.title} Filler List`]
   : [`Does ${view.title} Have Filler? Full Filler List`, `Does ${view.title} Have Filler?`, `${view.title} Filler List`]);
-const { franchises } = await getToolsBuildData();
+const { franchises, bySlug } = await getToolsBuildData();
 const franchise = franchises.find(item => item.slug === view.franchiseSlug);
+const anime = bySlug.get(view.slug);
+const insights = fillerInsights(view, allFiller.map(item => ({ slug: item.slug, fillerPercent: item.summary.fillerPercent, skippable: item.summary.skippable, total: item.summary.total })), {
+  title: view.title, format: view.format, year: view.year, studios: anime?.studios, genres: anime?.genres, sourceMaterial: anime?.sourceMaterial,
+  score: anime?.score, popularity: anime?.popularity, status: view.status,
+});
 const mangaLanding = MANGA_LANDINGS.find(landing => landing.entries.includes(view.slug));
 const arcLanding = ARC_LANDINGS.find(landing => landing.entries.includes(view.slug));
 const likePage = (await getRecLandingPages(english)).map(page => page.landing).find(landing => landing.anime === view.slug);
@@ -59,7 +66,8 @@ const faq = [
     ? `MyAnimeList marks ${summary.counts.filler} of ${summary.total} episodes as filler and ${summary.counts.recap} as recaps, ${summary.fillerPercent}% in total.`
     : `${summary.counts.filler} filler episodes and ${summary.counts.mixed} mixed canon/filler episodes out of ${summary.total}, based on a verified list.` },
   { question: `Which ${view.title} episodes can I skip?`, answer: skippable ? `The filler and recap episodes: ${formatRanges(toRanges(view.episodes.filter(episode => episode.type === 'filler' || episode.type === 'recap').map(episode => episode.n)))}.` : 'None are flagged as filler or recap, so watch every episode.' },
-  { question: 'Should I skip filler?', answer: 'Skipping filler saves time and keeps the main story moving. Some filler arcs are fan favourites, though, so skim the episode titles before you decide.' },
+  ...insights.faq,
+  ...(!skippable ? [{ question: `Is ${view.title} worth watching in full?`, answer: `There is nothing to skip: every one of the ${summary.total} episodes is part of the main run${view.durationMinutes ? `, about ${formatDuration(summary.total * view.durationMinutes)} in total` : ''}.` }] : []),
 ];
 const typeLabel = (type: CanonType) => providerBasis && type === 'canon' ? 'Canon (not flagged)' : CANON_LABELS[type];
 ---
@@ -110,6 +118,8 @@ const typeLabel = (type: CanonType) => providerBasis && type === 'canon' ? 'Cano
         </table>
       </div>
     </section>
+
+    <ToolInsights id="insights-title" heading={skippable ? `${view.title} filler: where it falls` : `${view.title} episode flow`} insights={insights} />
 
     <section class="tool-section" aria-labelledby="watchlist-title">
       <h2 id="watchlist-title">Filler-free watch order</h2>

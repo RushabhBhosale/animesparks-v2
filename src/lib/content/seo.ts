@@ -14,11 +14,11 @@ const tagPresets: Record<string, [string, string]> = {
 };
 export function tagSeo(tag: string, page: number) {
   const preset = tagPresets[tag.toLowerCase()];
-  const socialTitle = preset?.[0] || `Anime Tag: ${tag} | AnimeSparks`;
+  const heading = preset?.[0] || `Anime Tag: ${tag}`;
+  const socialTitle = preset?.[0] || `${heading} | AnimeSparks`;
   const description = preset?.[1] || `Explore anime articles tagged ${tag} — reviews, opinions, lists, and news from AnimeSparks.`;
-  const title = preset
-    ? `${socialTitle}${page > 1 ? ` · Page ${page}` : ''} | AnimeSparks`
-    : `${socialTitle}${page > 1 ? ` · Page ${page}` : ''} | AnimeSparks`;
+  // The brand is appended once; the previous template added it twice for tags without a preset.
+  const title = `${heading}${page > 1 ? ` · Page ${page}` : ''} | AnimeSparks`;
   return { title, socialTitle, description };
 }
 export function articleSeo(article: ArticlePageData) {

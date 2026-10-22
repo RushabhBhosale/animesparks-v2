@@ -1,0 +1,22 @@
+---
+// Data-driven summary for a generated landing page: a facts table plus short
+// paragraphs computed from the page's own numbers (see lib/tools/insights.ts).
+import type { Insights } from '../../lib/tools/insights';
+interface Props { id: string; heading: string; insights: Insights; }
+const { id, heading, insights } = Astro.props;
+---
+{(insights.rows.length > 0 || insights.paragraphs.length > 0) && (
+  <section class="tool-section tool-guide" aria-labelledby={id}>
+    <h2 id={id}>{heading}</h2>
+    {insights.paragraphs.map(paragraph => <p>{paragraph}</p>)}
+    {insights.rows.length > 0 && (
+      <div class="table-wrap">
+        <table class="data-table">
+          <tbody>
+            {insights.rows.map(([label, value]) => <tr><th scope="row">{label}</th><td>{value}</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </section>
+)}

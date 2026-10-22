@@ -7,6 +7,9 @@ import RelatedReading from '../../../components/tools/RelatedReading.astro';
 import RelatedTools from '../../../components/tools/RelatedTools.astro';
 import ShareBox from '../../../components/tools/ShareBox.astro';
 import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
+import ToolInsights from '../../../components/tools/ToolInsights.astro';
+import ToolFaq from '../../../components/tools/ToolFaq.astro';
+import { orderInsights } from '../../../lib/tools/insights';
 import { getToolsExtras } from '../../../lib/tools/build-extras';
 import { ARC_LANDINGS, MANGA_LANDINGS, clampDescription, fitTitle } from '../../../lib/tools/landings';
 import { getBuildData } from '../../../lib/content/build-data';
@@ -39,7 +42,7 @@ const mangaLanding = MANGA_LANDINGS.find(landing => franchise.releaseOrder.some(
 const arcLanding = ARC_LANDINGS.find(landing => franchise.releaseOrder.some(entry => landing.entries.includes(entry.slug)));
 const likePage = (await getRecLandingPages(english)).map(page => page.landing).find(landing => franchise.releaseOrder.some(entry => entry.slug === landing.anime));
 // Neighbours by popularity, so every franchise links to (and from) related ones.
-const { franchises: allFranchises } = await getToolsBuildData();
+const { franchises: allFranchises, bySlug } = await getToolsBuildData();
 const indexedFranchises = allFranchises.filter(item => item.indexable);
 const position = indexedFranchises.findIndex(item => item.slug === franchise.slug);
 const start = Math.max(0, Math.min((position < 0 ? 0 : position) - 4, indexedFranchises.length - 9));
@@ -50,6 +53,11 @@ const formatRows = [...new Set(franchise.releaseOrder.map(entry => entry.format)
   return { label: formatLabel(format), count: entries.length, episodes: entries.reduce((sum, entry) => sum + (entry.watchEpisodes || 0), 0), minutes: entries.reduce((sum, entry) => sum + (entry.watchMinutes || 0), 0) };
 }).sort((a, b) => b.count - a.count);
 const related = relatedArticles(english, franchise.titleKeys, 6);
+const lead = bySlug.get((mainEntries[0] || franchise.releaseOrder[0])?.slug);
+const insights = orderInsights(franchise, allFranchises.map(item => item.totals.all.minutes).filter(Boolean), lead ? {
+  title: lead.title, format: lead.format, year: lead.year, studios: lead.studios, genres: lead.genres, sourceMaterial: lead.sourceMaterial,
+  score: lead.score, popularity: lead.popularity, status: lead.status,
+} : undefined);
 const orderLabels: Record<string, string> = { chronological: 'Chronological', beginner: 'Beginner-friendly' };
 const roleLabels: Record<string, string> = { main: 'Main story', side: 'Side story', recap: 'Recap' };
 
@@ -196,6 +204,8 @@ const missingKinds = ['chronological', 'beginner'].filter(kind => !franchise.cur
         {arcLanding && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">Following the story arc by arc? See <a href={`/tools/anime-arc-explorer/${arcLanding.slug}`}>{arcLanding.name} arcs in order</a>.</p>}
       </section>
 
+      <ToolInsights id="numbers-title" heading={`${franchise.title} by the numbers`} insights={insights} />
+      <ToolFaq faq={insights.faq} />
       <section class="tool-section tool-guide" aria-labelledby="franchise-method">
         <h2 id="franchise-method">How this list is built</h2>
         <p>Entries are gathered from MyAnimeList’s sequel, prequel, side-story and summary links, starting from {franchise.releaseOrder[0]?.title}. They are then sorted by original premiere date. Main-story entries are joined by sequel and prequel links. Everything else is marked as a side story or recap so you can skip it.</p>

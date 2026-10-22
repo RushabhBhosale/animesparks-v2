@@ -2,6 +2,8 @@
 import ToolPage from '../../../components/tools/ToolPage.astro';
 import ShareBox from '../../../components/tools/ShareBox.astro';
 import GuideDirectory from '../../../components/tools/GuideDirectory.astro';
+import ToolInsights from '../../../components/tools/ToolInsights.astro';
+import { arcInsights } from '../../../lib/tools/insights';
 import { getBuildData } from '../../../lib/content/build-data';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData, relatedArticles } from '../../../lib/tools/build-data';
@@ -54,6 +56,7 @@ const list = (names: string[]) => names.length > 1 ? `${names.slice(0, -1).join(
 
 const title = fitTitle([`${landing.name} Arcs in Order: All ${arcCount} Story Arcs & Episodes`, `${landing.name} Arcs in Order: All ${arcCount} Arcs`, `${landing.name} Arcs in Order`]);
 const description = `All ${arcCount} ${landing.name} arcs in order, from ${rows[0].name} to ${rows.at(-1)!.name}, with episode ranges${hasChapters ? ', manga chapters' : ''}${fillerArcs.length ? ' and the filler arcs you can skip' : ''}.`;
+const insights = arcInsights(landing.name, rows.map(row => ({ name: row.name, length: row.length, filler: row.filler, chapters: row.chapters, overallStart: row.overallStart, overallEnd: row.overallEnd, isFiller: isFillerArc(row) })), entries.length);
 const faq = [
   { question: `How many arcs are in ${landing.name}?`, answer: `${arcCount} story arcs across ${totalEpisodes} episodes${multiSeason ? ` and ${entries.length} seasons` : ''}${isAiring ? ', counting the episodes aired so far' : ''}.` },
   { question: `What is the longest ${landing.name} arc?`, answer: `${longest.name}, at ${longest.length} episodes (${where(longest)}).` },
@@ -61,6 +64,7 @@ const faq = [
     ? [{ question: `Which ${landing.name} arcs are filler?`, answer: `${fillerArcs.length === 1 ? 'One arc is' : `${fillerArcs.length} arcs are`} entirely filler: ${list(fillerArcs.slice(0, 12).map(row => row.name))}${fillerArcs.length > 12 ? ', and more in the table above' : ''}. You can skip ${fillerArcs.length === 1 ? 'it' : 'them'} without missing the main story.` }]
     : hasFiller ? [] : [{ question: `Does ${landing.name} have filler arcs?`, answer: `No. None of the arcs listed here are filler.` }]),
   { question: `What is the ${isAiring ? 'latest' : 'final'} ${landing.name} arc in the anime?`, answer: `${rows.at(-1)!.name} (${where(rows.at(-1)!)})${isAiring ? `, while ${latest.title} is still airing` : ''}.` },
+  ...insights.faq,
 ];
 const jsonLd = [{
   '@context': 'https://schema.org', '@type': 'ItemList', name: `${landing.name} arcs in order`, numberOfItems: rows.length,
@@ -116,6 +120,8 @@ const otherGuides = ARC_LANDINGS.filter(item => item.slug !== landing.slug && it
       {hasFiller && ' Filler counts use the episode flags from our filler list.'}
     </p>
   </section>
+
+  <ToolInsights id="arc-numbers-title" heading={`${landing.name} arcs by the numbers`} insights={insights} />
 
   <section class="tool-section" aria-labelledby="plan-title">
     <h2 id="plan-title">More {landing.name} guides</h2>

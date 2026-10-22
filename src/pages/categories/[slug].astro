@@ -23,6 +23,9 @@ const presets: Record<string, [string, string]> = {
   'anime-reviews': ['Anime Reviews — Honest Takes on Popular & Underrated Series', 'In-depth anime reviews focused on story, characters, themes, and execution — covering both mainstream hits and overlooked series.'],
   'anime-opinions': ['Anime Opinions & Hot Takes That Go Deeper', 'Thought-provoking anime opinions exploring themes, character choices, power systems, and storytelling decisions across popular series.'],
   'anime-lists': ['Anime Lists — Recommendations, Rankings & Hidden Gems', 'Curated anime lists featuring recommendations, rankings, underrated picks, and must-watch series across multiple genres.'],
+  // Titles only: the descriptions below match the category descriptions already stored for these sections.
+  'kdrama': ['K-Drama Reviews, Recommendations & Opinions', 'Thoughtful K-drama reviews, recommendations, and opinion pieces focused on storytelling, emotion, and why certain dramas stay with you long after the final episode.'],
+  'tv-series': ['TV Series Reviews & Guides — Story Arcs, Characters & Release Updates', 'Thoughtful reviews and guides for notable TV series, covering story arcs, characters, release timelines, and the ideas that drive long-form television.'],
 };
 const [title, description] = presets[slug] || [`Category: ${data.category.title}`, data.category.description?.trim() || `Posts in ${data.category.title} on AnimeSparks.`];
 const canonical = SITE + listingHref(`/categories/${slug}`, { sort: sort || undefined }, page);
