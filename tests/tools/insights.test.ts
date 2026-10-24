@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { arcInsights, episodeRuns, fillerInsights, mangaInsights, movieInsights, orderInsights } from '../../src/lib/tools/insights.ts';
+import { arcInsights, compareRecommendation, episodeRuns, fillerInsights, mangaInsights, movieInsights, orderInsights, picksBySeedTag } from '../../src/lib/tools/insights.ts';
 
 const episodes = (types: string) => [...types].map((char, index) => ({ n: index + 1, type: char === 'F' ? 'filler' : char === 'R' ? 'recap' : 'canon' }));
 const view = (types: string, extra = {}) => {
@@ -90,4 +90,49 @@ test('arc insights describe filler arcs and spread', () => {
   assert.match(text, /A Arc runs 24 episodes/);
   assert.match(text, /entirely filler, 4 episodes or 10% of the series/);
   assert.ok(insights.faq.some(item => /filler arcs/.test(item.question)));
+});
+
+test('recommendation comparisons report shared tags, additions, length and era', () => {
+  const seed = { t: 'Seed', f: 'tv', y: 2010, e: 24, g: ['Action', 'Drama'], th: ['Military'], dm: ['Shounen'] };
+  const pick = { t: 'Pick', f: 'tv', y: 2018, e: 12, g: ['Action', 'Mystery'], th: ['Military', 'Psychological'], dm: [] };
+  const result = compareRecommendation(seed, pick);
+  assert.deepEqual(result.shared, ['Action', 'Military']);
+  assert.deepEqual(result.adds, ['Mystery', 'Psychological']);
+  assert.equal(result.length, '12 episodes, much shorter than Seed');
+  assert.equal(result.era, '2018, 8 years newer');
+});
+
+test('picks are grouped by the seed tags that actually separate them', () => {
+  const seed = { t: 'Seed', f: 'tv', g: ['Action'], th: ['Military', 'Gore'], dm: [] };
+  const mk = (t: string, g: string[], th: string[]) => ({ t, f: 'tv', g, th, dm: [] });
+  const picks = [mk('A', ['Action'], ['Military']), mk('B', ['Action'], ['Military']), mk('C', ['Action'], ['Gore']), mk('D', ['Action'], [])];
+  const groups = picksBySeedTag(seed, picks);
+  assert.deepEqual(groups.map(group => [group.tag, group.picks.map(pick => pick.t)]), [['Military', ['A', 'B']]]);
+});
+
+test('tier templates take one entry per franchise and drop thin ones', async () => {
+  const { buildTierTemplates, listFromTemplate } = await import('../../src/lib/tools/tierlist.ts');
+  const entry = (s: string, r: number, extra = {}) => ({ s, t: s.toUpperCase(), f: 'tv', st: 'finished', r, sc: 7 + r / 100, g: ['Action'], th: [], dm: ['Shounen'], ...extra });
+  const entries = Array.from({ length: 30 }, (_, index) => entry(`a${index}`, index + 1));
+  entries.push(entry('a0-season-2', 31));
+  const templates = buildTierTemplates(entries, slug => (slug.startsWith('a0') ? 'a0' : undefined));
+  const popular = templates.find(template => template.id === 'most-popular')!;
+  assert.equal(popular.items.length, 24);
+  assert.ok(!popular.items.some(item => item.slug === 'a0-season-2'));
+  assert.ok(!templates.some(template => template.id === 'isekai'));
+  const list = listFromTemplate(popular, '2026-01-01T00:00:00.000Z');
+  assert.equal(list.pool.length, 24);
+  assert.equal(list.title, 'Most popular anime');
+  assert.equal(list.tiers.length, 5);
+});
+
+test('watch-order titles describe the entries without calling them all seasons', async () => {
+  const { watchOrderTitleOptions, fitTitle } = await import('../../src/lib/tools/landings.ts');
+  const entries = [{ format: 'tv' }, ...Array(19).fill({ format: 'movie' }), ...Array(49).fill({ format: 'special' })];
+  const options = watchOrderTitleOptions('One Piece', entries);
+  assert.equal(options[0], 'One Piece Watch Order: 1 TV Series, 19 Movies and 49 OVAs and Specials');
+  assert.equal(options[1], 'One Piece Watch Order: Seasons, Movies & Specials');
+  assert.ok(!options.some(option => /\d+ Seasons/.test(option)));
+  assert.equal(fitTitle(options), 'One Piece Watch Order: Seasons, Movies & Specials | AnimeSparks');
+  assert.deepEqual(watchOrderTitleOptions('X', [{ format: 'tv' }, { format: 'tv' }, { format: 'tv' }]).slice(0, 2), ['X Watch Order: 3 TV Series', 'X Watch Order: Seasons']);
 });

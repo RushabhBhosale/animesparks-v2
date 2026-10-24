@@ -394,3 +394,13 @@ a.mini-card:hover { background: var(--surface2); border-color: var(--line-2); }
 @media (max-width: 700px) { .rec-grid { grid-template-columns: 1fr; } }
 .rec-card h3 a { color: inherit; }
 .rec-card__rank { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* Filler pages: the episodes to skip, up front. */
+.skip-callout { margin: var(--sp-5) 0; padding: var(--sp-4) var(--sp-5); border: 1px solid var(--line); border-left: 4px solid var(--accent); background: var(--surface); }
+.skip-callout h2 { margin: 0 0 var(--sp-2); font-size: var(--text-lg); }
+.skip-callout__ranges { margin: 0; font-size: var(--text-lg); font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; max-height: 9em; overflow: auto; }
+.skip-callout__meta { margin: var(--sp-2) 0 0; color: var(--ink-2); font-size: var(--text-sm); }
+.label-guide { display: grid; grid-template-columns: max-content 1fr; gap: var(--sp-2) var(--sp-4); align-items: center; margin: 0 0 var(--sp-3); }
+.label-guide dt, .label-guide dd { margin: 0; }
+.label-guide dd { color: var(--ink-2); }
+@media (max-width: 600px) { .label-guide { grid-template-columns: 1fr; } .label-guide dd { margin-bottom: var(--sp-2); } }

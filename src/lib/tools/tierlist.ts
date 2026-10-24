@@ -128,3 +128,62 @@ export function restoreTierList(input: unknown, now: string): TierList {
   for (const slug of Object.keys(items)) if (!placed.has(slug)) pool.push(slug);
   return { title: typeof raw.title === 'string' ? raw.title.slice(0, 80) : 'My anime tier list', tiers: tiers.length ? tiers : newTierList(now).tiers, pool, items, updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : now };
 }
+
+// ── Templates ──────────────────────────────────────────────────────────────
+
+export interface TierTemplate {
+  id: string;
+  name: string;
+  description: string;
+  items: TierItem[];
+}
+
+interface TemplateEntry {
+  s: string;
+  t: string;
+  p?: string;
+  f: string;
+  st: string;
+  r?: number;
+  sc?: number;
+  g: string[];
+  th: string[];
+  dm: string[];
+}
+
+const TEMPLATE_DEFINITIONS: Array<{ id: string; name: string; description: string; pick: (entry: TemplateEntry) => boolean; rank?: 'score' }> = [
+  { id: 'most-popular', name: 'Most popular anime', description: 'The series MyAnimeList members have added most often.', pick: () => true },
+  { id: 'highest-rated', name: 'Highest-rated anime', description: 'Top MyAnimeList scores among well-known series.', pick: entry => Boolean(entry.sc) && (entry.r || Infinity) <= 800, rank: 'score' },
+  { id: 'shounen', name: 'Shounen anime', description: 'Popular series aimed at a shounen audience.', pick: entry => entry.dm.includes('Shounen') },
+  { id: 'isekai', name: 'Isekai anime', description: 'Popular series built on another-world premises.', pick: entry => entry.th.includes('Isekai') },
+  { id: 'romance', name: 'Romance anime', description: 'Popular series tagged Romance.', pick: entry => entry.g.includes('Romance') },
+  { id: 'sports', name: 'Sports anime', description: 'Popular series tagged Sports.', pick: entry => entry.g.includes('Sports') },
+  { id: 'dark', name: 'Dark and psychological anime', description: 'Popular series tagged Horror, Psychological or Suspense.', pick: entry => entry.g.includes('Horror') || entry.g.includes('Suspense') || entry.th.includes('Psychological') },
+  { id: 'airing', name: 'Airing right now', description: 'Series currently airing, most popular first.', pick: entry => entry.st === 'airing' && ['tv', 'ona'].includes(entry.f) },
+];
+
+/** Ready-made unranked pools from catalogue data. One entry per franchise; templates with too few titles are dropped. */
+export function buildTierTemplates(entries: TemplateEntry[], franchiseOf: (slug: string) => string | undefined, size = 24, minimum = 12): TierTemplate[] {
+  const byPopularity = [...entries].sort((a, b) => (a.r || Infinity) - (b.r || Infinity));
+  return TEMPLATE_DEFINITIONS.flatMap(definition => {
+    const matching = byPopularity.filter(definition.pick);
+    if (definition.rank === 'score') matching.sort((a, b) => (b.sc || 0) - (a.sc || 0) || (a.r || Infinity) - (b.r || Infinity));
+    const seen = new Set<string>();
+    const items: TierItem[] = [];
+    for (const entry of matching) {
+      const key = franchiseOf(entry.s) || entry.s;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push({ slug: entry.s, title: entry.t, poster: entry.p });
+      if (items.length >= size) break;
+    }
+    return items.length >= minimum ? [{ id: definition.id, name: definition.name, description: definition.description, items }] : [];
+  });
+}
+
+/** A fresh list whose unranked pool is a template. */
+export function listFromTemplate(template: TierTemplate, now: string): TierList {
+  const base = newTierList(now);
+  const items = Object.fromEntries(template.items.slice(0, MAX_ITEMS).map(item => [item.slug, item]));
+  return { ...base, title: template.name, items, pool: Object.keys(items) };
+}

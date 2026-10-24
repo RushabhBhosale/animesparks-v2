@@ -1,7 +1,8 @@
 ---
 import { Image } from 'astro:assets';
 import type { ArticleCard } from '../lib/content/types';
-import { r2ImageDimensions, r2ImageUrl } from '../lib/content/images';
+import { r2ImageUrl } from '../lib/content/images';
+import { resolveImageDimensions } from '../lib/content/image-size';
 import { categoryLabel, getUiCopy } from '../lib/content/locales';
 
 export interface Props {
@@ -26,7 +27,7 @@ const {
 const variant = propVariant || (layout === 'row' ? 'horizontal' : 'standard');
 
 const image = r2ImageUrl(article.mainImage);
-const imageDimensions = r2ImageDimensions(article.mainImage);
+const imageDimensions = await resolveImageDimensions(article.mainImage);
 const date = article.publishedAt
   ? new Date(article.publishedAt).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', {
       year: 'numeric',

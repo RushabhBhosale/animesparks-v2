@@ -1,8 +1,12 @@
 import type { PortableBlock, PortableSpan } from './types';
 import { r2ImageDimensions, r2ImageUrl } from './images';
 import { inferRemoteSize } from 'astro/assets/utils';
+import { getImage } from 'astro:assets';
 
 interface ImageDimensions { width: number; height: number }
+interface OptimisedImage { src: string; srcset: string }
+// Body images are served as WebP in several widths, not as the original upload.
+const BODY_IMAGE_SIZES = '(max-width: 760px) calc(100vw - 32px), 720px';
 const remoteDimensions = new Map<string, Promise<ImageDimensions>>();
 
 async function dimensionsForImage(src: string, block: PortableBlock): Promise<ImageDimensions> {
@@ -56,7 +60,7 @@ const renderSpan = (span: PortableSpan, block: PortableBlock) => {
   }
   return html;
 };
-const renderBlock = (block: PortableBlock, headingIds: Map<string, number>, imageSizes: Map<string, ImageDimensions>) => {
+const renderBlock = (block: PortableBlock, headingIds: Map<string, number>, imageSizes: Map<string, ImageDimensions>, optimised: Map<string, OptimisedImage>) => {
   if (block._type === 'image') {
     const src = r2ImageUrl(block);
     if (!src) return '';
@@ -64,7 +68,8 @@ const renderBlock = (block: PortableBlock, headingIds: Map<string, number>, imag
     // An unavailable remote image must not take the whole article offline.
     const alt = escapeHtml(block.alt || '');
     const caption = escapeHtml(block.caption || block.alt || '');
-    return `<figure><img src="${escapeHtml(src)}" alt="${alt}" ${dimensions ? `width="${dimensions.width}" height="${dimensions.height}"` : ''} loading="lazy" decoding="async">${caption ? `<figcaption>${caption}</figcaption>` : ''}</figure>`;
+    const better = optimised.get(src);
+    return `<figure><img src="${escapeHtml(better?.src || src)}"${better ? ` srcset="${escapeHtml(better.srcset)}" sizes="${BODY_IMAGE_SIZES}"` : ''} alt="${alt}" ${dimensions ? `width="${dimensions.width}" height="${dimensions.height}"` : ''} loading="lazy" decoding="async">${caption ? `<figcaption>${caption}</figcaption>` : ''}</figure>`;
   }
   if (block._type !== 'block') throw new Error(`Unsupported Portable Text block: ${block._type}`);
   const content = (block.children || []).map(child => renderSpan(child, block)).join('');
@@ -90,6 +95,16 @@ export async function renderPortableText(blocks: PortableBlock[] = [], adMarkers
       catch (error) { console.warn(`[images] Could not determine dimensions for ${src}; using unoptimized image: ${String(error)}`); }
     }
   }));
+  const optimised = new Map<string, OptimisedImage>();
+  await Promise.all([...imageSizes].map(async ([src, size]) => {
+    try {
+      const image = await getImage({ src, width: size.width, height: size.height, widths: [480, 800, 1200], sizes: BODY_IMAGE_SIZES, format: 'webp', quality: 78 });
+      const srcset = image.srcSet.attribute;
+      if (srcset) optimised.set(src, { src: image.src, srcset });
+    } catch (error) {
+      console.warn(`[images] Could not optimise ${src}; using the original file: ${String(error)}`);
+    }
+  }));
   const headingIds = new Map<string, number>();
   const listTags: string[] = [];
   let html = '';
@@ -98,7 +113,7 @@ export async function renderPortableText(blocks: PortableBlock[] = [], adMarkers
     if (block.listItem && !['bullet', 'number'].includes(block.listItem)) throw new Error(`Unsupported Portable Text list: ${block.listItem}`);
     if (!nextTag) {
       while (listTags.length) html += `</li></${listTags.pop()}>`;
-      html += renderBlock(block, headingIds, imageSizes);
+      html += renderBlock(block, headingIds, imageSizes, optimised);
     } else {
       const level = Math.max(1, Math.min(block.level || 1, listTags.length + 1));
       while (listTags.length > level) html += `</li></${listTags.pop()}>`;
@@ -107,7 +122,7 @@ export async function renderPortableText(blocks: PortableBlock[] = [], adMarkers
         html += `<${nextTag}>`;
         listTags.push(nextTag);
       } else html += '</li>';
-      html += renderBlock(block, headingIds, imageSizes);
+      html += renderBlock(block, headingIds, imageSizes, optimised);
     }
     const adSlot = adMarkersAfterBlock.get(index);
     if (adSlot) html += `<!--AS_AD_SLOT:${adSlot}-->`;

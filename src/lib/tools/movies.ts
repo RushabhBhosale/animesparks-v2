@@ -28,3 +28,15 @@ export function hasMoviePage(franchise: { slug: string; indexable: boolean; rele
   return franchise.indexable && MOVIE_LANDINGS.includes(franchise.slug)
     && franchise.releaseOrder.filter(entry => entry.format === 'movie').length >= MIN_LANDING_MOVIES;
 }
+
+/** Movies, OVAs and specials in release order, each with the TV series that was current when it premiered. */
+export function extrasTimeline<T extends Entry>(releaseOrder: T[]): Array<T & { during?: T }> {
+  const series = releaseOrder.filter(entry => SERIES_FORMATS.has(entry.format) && entry.role !== 'recap');
+  return releaseOrder
+    .filter(entry => !SERIES_FORMATS.has(entry.format))
+    .sort((a, b) => time(a.airedFrom) - time(b.airedFrom))
+    .map(extra => ({
+      ...extra,
+      during: Number.isFinite(time(extra.airedFrom)) ? series.filter(entry => time(entry.airedFrom) <= time(extra.airedFrom)).at(-1) : undefined,
+    }));
+}

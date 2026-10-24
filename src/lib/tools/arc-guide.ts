@@ -28,11 +28,30 @@ export interface ArcGuideRow {
 }
 
 /** "Shibuya Incident" and "Shibuya Incident Arc" are one arc. */
-export const arcKey = (name: string) => name.toLowerCase().replace(/\s+arc$/, '').trim();
+export const arcKey = (name: string) => cleanArcName(name).toLowerCase().replace(/\s+arc$/, '').trim();
+
+/** Label for wiki entries that list episodes without naming an arc. */
+export const UNNAMED_ARC = 'Episodes outside a named arc';
+
+/**
+ * Repairs wiki-import artefacts in arc names: stray trailing commas, "(Arc)"
+ * markers, two names run together without a space, and the literal "None" the
+ * wiki uses for episodes that belong to no arc. It never invents a name.
+ */
+export function cleanArcName(name: string): string {
+  let clean = name.replace(/\s+/g, ' ').trim();
+  if (!clean || /^(none|n\/a|-|—)$/i.test(clean)) return UNNAMED_ARC;
+  clean = clean.replace(/\s*\(\s*arc\s*\)/gi, ' Arc').replace(/,(?=\S)/g, ' & ');
+  clean = clean.replace(/^[\s,;:]+|[\s,;:]+$/g, '');
+  return clean || UNNAMED_ARC;
+}
 
 /** Arc names with a consistent "Arc" suffix ("Fearsome Womb" → "Fearsome Womb Arc"). */
 export function arcLabel(name: string): string {
-  return /\b(arc|saga|prologue|epilogue)\b/i.test(name) ? name : `${name} Arc`;
+  const clean = cleanArcName(name);
+  // Unnamed groups and subtitled titles ("Book: Light and Darkness") read wrongly with "Arc" appended.
+  if (clean === UNNAMED_ARC || /[:,&]/.test(clean)) return clean;
+  return /\b(arc|saga|prologue|epilogue)\b/i.test(clean) ? clean : `${clean} Arc`;
 }
 
 export function buildArcGuide(seasons: ArcGuideSeason[]): ArcGuideRow[] {

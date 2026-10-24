@@ -531,3 +531,58 @@ export function arcInsights(name: string, arcs: ArcRowLike[], seasonCount: numbe
   if (fillerArcs.length) faq.push({ question: `How much of ${name} is filler arcs?`, answer: `${plural(fillerArcs.length, 'arc')} totalling ${plural(fillerEpisodes, 'episode')}, or ${percent(fillerEpisodes, total)}% of the ${total} listed episodes.` });
   return { rows, paragraphs, faq };
 }
+
+// ── "Anime like X" comparisons ─────────────────────────────────────────────
+
+export interface RecLike {
+  t: string;
+  f: string;
+  y?: number;
+  e?: number;
+  sc?: number;
+  g: string[];
+  th: string[];
+  dm: string[];
+}
+
+export interface RecComparison {
+  /** Genres and themes both titles carry. */
+  shared: string[];
+  /** Genres and themes the pick has that the seed does not. */
+  adds: string[];
+  length: string;
+  era: string;
+}
+
+/** Length, era and tag differences between a seed and one pick, from catalogue data only. */
+export function compareRecommendation(seed: RecLike, pick: RecLike): RecComparison {
+  const seedTags = new Set([...seed.g, ...seed.th]);
+  const pickTags = [...pick.g, ...pick.th];
+  const shared = pickTags.filter(tag => seedTags.has(tag));
+  const adds = pickTags.filter(tag => !seedTags.has(tag));
+  let length = pick.f === 'movie' ? 'Movie' : pick.e ? plural(pick.e, 'episode') : 'Ongoing';
+  if (pick.f !== 'movie' && pick.e && seed.f !== 'movie' && seed.e) {
+    const ratio = pick.e / seed.e;
+    if (ratio <= 0.6) length += `, much shorter than ${seed.t}`;
+    else if (ratio >= 1.7) length += `, much longer than ${seed.t}`;
+  }
+  let era = pick.y ? String(pick.y) : 'Year unknown';
+  if (pick.y && seed.y) {
+    const gap = pick.y - seed.y;
+    if (Math.abs(gap) >= 4) era += `, ${plural(Math.abs(gap), 'year')} ${gap > 0 ? 'newer' : 'older'}`;
+  }
+  return { shared: shared.slice(0, 4), adds: adds.slice(0, 3), length, era };
+}
+
+/** For the seed's own themes (then genres), the best picks that share each one. */
+export function picksBySeedTag<T extends RecLike>(seed: RecLike, picks: T[], maxTags = 3, perTag = 4): Array<{ tag: string; picks: T[] }> {
+  const candidates = [...seed.th, ...seed.g];
+  const groups: Array<{ tag: string; picks: T[] }> = [];
+  for (const tag of candidates) {
+    const matching = picks.filter(pick => pick.th.includes(tag) || pick.g.includes(tag)).slice(0, perTag);
+    // A tag shared by nearly every pick says nothing about what to choose.
+    if (matching.length >= 2 && matching.length < picks.length && !groups.some(group => group.tag === tag)) groups.push({ tag, picks: matching });
+    if (groups.length >= maxTags) break;
+  }
+  return groups;
+}

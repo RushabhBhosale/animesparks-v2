@@ -11,7 +11,7 @@ import { ARC_LANDINGS, MANGA_LANDINGS, fitTitle } from '../../../lib/tools/landi
 import { getBuildData } from '../../../lib/content/build-data';
 import { relatedArticles } from '../../../lib/tools/build-data';
 import { getToolsExtras, type FillerView } from '../../../lib/tools/build-extras';
-import { CANON_LABELS, fillerFreeEpisodes, formatRanges, toRanges, typeRuns } from '../../../lib/tools/episodes';
+import { CANON_DEFINITIONS, CANON_LABELS, fillerFreeEpisodes, formatRanges, toRanges, typeRuns } from '../../../lib/tools/episodes';
 import { formatDuration, formatLabel } from '../../../lib/tools/normalize';
 import type { CanonType } from '../../../lib/tools/types';
 
@@ -34,6 +34,8 @@ const { summary } = view;
 const skippable = summary.skippable;
 const types = (Object.keys(CANON_LABELS) as CanonType[]).filter(type => summary.counts[type] > 0);
 const rangesFor = (type: CanonType) => formatRanges(toRanges(view.episodes.filter(episode => episode.type === type).map(episode => episode.n)));
+const skipText = formatRanges(toRanges(view.episodes.filter(episode => episode.type === 'filler' || episode.type === 'recap').map(episode => episode.n)));
+const missingKinds = (['mixed', 'manga-canon', 'anime-canon'] as CanonType[]).filter(type => summary.counts[type] === 0);
 const watchList = fillerFreeEpisodes(view.episodes);
 const watchListText = formatRanges(toRanges(watchList));
 const saved = view.durationMinutes ? skippable * view.durationMinutes : 0;
@@ -92,6 +94,14 @@ const typeLabel = (type: CanonType) => providerBasis && type === 'canon' ? 'Cano
       <div><dt>Filler %</dt><dd>{summary.fillerPercent}%</dd></div>
     </dl>
 
+    {skippable > 0 && (
+      <aside class="skip-callout" aria-labelledby="skip-title">
+        <h2 id="skip-title">Skip these {view.title} episodes</h2>
+        <p class="skip-callout__ranges">{skipText}</p>
+        <p class="skip-callout__meta">{skippable} {skippable === 1 ? 'episode' : 'episodes'}{saved ? ` · saves about ${formatDuration(saved)}` : ''}{providerBasis ? ' · flags from MyAnimeList' : ' · verified list'}</p>
+      </aside>
+    )}
+
     <div class="type-bar" role="img" aria-label={`Episode overview: ${types.map(type => `${summary.counts[type]} ${typeLabel(type).toLowerCase()}`).join(', ')}`}>
       {runs.map(run => <span data-type={run.type} style={`flex: ${run.end - run.start + 1}`} title={`${run.start === run.end ? run.start : `${run.start}–${run.end}`}: ${typeLabel(run.type)}`}></span>)}
     </div>
@@ -117,6 +127,16 @@ const typeLabel = (type: CanonType) => providerBasis && type === 'canon' ? 'Cano
           </tbody>
         </table>
       </div>
+    </section>
+
+    <section class="tool-section" aria-labelledby="labels-title">
+      <h2 id="labels-title">What the labels mean</h2>
+      <dl class="label-guide">
+        {types.map(type => <><dt><span class="type-badge" data-type={type}>{typeLabel(type)}</span></dt><dd>{CANON_DEFINITIONS[type]}</dd></>)}
+      </dl>
+      {providerBasis && missingKinds.length > 0 && (
+        <p class="tool-note tool-note--muted">This list comes from MyAnimeList, which flags only filler and recap episodes. It does not mark {missingKinds.map(type => CANON_LABELS[type].toLowerCase()).join(', ')} episodes, so those labels are not shown for {view.title}. AnimeSparks does not guess them.</p>
+      )}
     </section>
 
     <ToolInsights id="insights-title" heading={skippable ? `${view.title} filler: where it falls` : `${view.title} episode flow`} insights={insights} />

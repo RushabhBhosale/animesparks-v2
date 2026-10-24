@@ -222,6 +222,29 @@ export function fitTitle(options: string[], suffix = ' | AnimeSparks', max = 68)
   return (fitting || options.at(-1)!) + suffix;
 }
 
+/**
+ * Watch-order title candidates that describe the entries accurately: a list
+ * of 69 entries is not "69 seasons". Most specific first; the caller picks the
+ * longest one that fits.
+ */
+export function watchOrderTitleOptions(name: string, entries: Array<{ format: string }>): string[] {
+  const count = (formats: string[]) => entries.filter(entry => formats.includes(entry.format)).length;
+  const series = count(['tv', 'ona']);
+  const movies = count(['movie']);
+  const rest = count(['ova', 'special', 'tv-special', 'music', 'other']);
+  const part = (n: number, one: string, many: string) => n ? [`${n} ${n === 1 ? one : many}`] : [];
+  const parts = [...part(series, 'TV Series', 'TV Series'), ...part(movies, 'Movie', 'Movies'), ...part(rest, 'OVA or Special', 'OVAs and Specials')];
+  const joined = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0] || '';
+  const kinds = [series ? 'Seasons' : '', movies ? 'Movies' : '', rest ? 'Specials' : ''].filter(Boolean);
+  const kindText = kinds.length > 1 ? `${kinds.slice(0, -1).join(', ')} & ${kinds.at(-1)}` : kinds[0] || '';
+  return [
+    ...(joined ? [`${name} Watch Order: ${joined}`] : []),
+    ...(kindText ? [`${name} Watch Order: ${kindText}`] : []),
+    `${name} Watch Order: All ${entries.length} Entries in Order`,
+    `${name} Watch Order`,
+  ];
+}
+
 /** Descriptions: at most ~158 characters, cut on a word boundary. */
 export function clampDescription(text: string, max = 158): string {
   const clean = text.replace(/\s+/g, ' ').trim();

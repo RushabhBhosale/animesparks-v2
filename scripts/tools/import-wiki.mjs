@@ -146,7 +146,9 @@ export function arcName(params) {
   const raw = (params.arc || '').match(/^\s*\[\[[^\]]*\]\]/)?.[0] || params.arc || '';
   const name = raw ? strip(raw).replace(/\s*\(arc\)$/i, ' Arc').replace(/\s+arc$/i, ' Arc') : '';
   // Placeholder links such as "[[Arc 2]]" carry no name; the episode joins its neighbours.
-  return name && !/^arc\s*\d+$/i.test(name) ? name : null;
+  // "None" is the wikis' placeholder for episodes outside any arc; trailing commas are list artefacts.
+  const cleaned = name.replace(/[\s,;]+$/, '');
+  return cleaned && !/^arc\s*\d+$/i.test(cleaned) && !/^(none|n\/a)$/i.test(cleaned) ? cleaned : null;
 }
 
 /** "Shibuya Incident" and "Shibuya Incident Arc" are the same arc. */

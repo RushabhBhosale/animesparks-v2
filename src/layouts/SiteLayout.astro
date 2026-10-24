@@ -59,7 +59,27 @@ const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003
   {spanishUrl && <link rel="alternate" hreflang="es" href={spanishUrl} />}
   {hasAlternates && <link rel="alternate" hreflang="x-default" href={englishUrl || canonical} />}
   <meta name="robots" content={testHost ? 'noindex, nofollow' : robotsNoindex ? 'noindex, follow' : 'index, follow'} />
-  {!testHost && !adsDisabled && <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1425611919231559" crossorigin="anonymous"></script>}
+  {/* AdSense loads once the page has finished loading and the browser is idle, so the ad library and its auction requests do not compete with the hero image and text for bandwidth. Slot initialisation below queues on window.adsbygoogle and runs when the library arrives. */}
+  {!testHost && !adsDisabled && <script is:inline>
+    (function () {
+      var started = false;
+      function load() {
+        if (started) return;
+        started = true;
+        var script = document.createElement('script');
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1425611919231559';
+        document.head.appendChild(script);
+      }
+      function schedule() {
+        if ('requestIdleCallback' in window) window.requestIdleCallback(load, { timeout: 2500 });
+        else setTimeout(load, 1500);
+      }
+      if (document.readyState === 'complete') schedule();
+      else window.addEventListener('load', schedule, { once: true });
+    })();
+  </script>}
   <meta property="og:title" content={socialTitle} />
   <meta property="og:description" content={description} />
   <meta property="og:url" content={canonical} />

@@ -24,6 +24,9 @@ const unit = ADSENSE_SLOTS[slot];
 
 <style>
   .ad-placement { min-width: 0; margin-block: 1.75rem; text-align: center; }
+  /* Reserve the space the ad will fill so a late ad does not push the content below it (CLS). Unfilled units still collapse. */
+  .ad-placement--display { min-height: 280px; }
+  .ad-placement--in-feed { min-height: 120px; }
   .ad-placement__label { display: block; margin-bottom: .4rem; color: #8d8d8d; font-size: .625rem; letter-spacing: .16em; text-transform: uppercase; }
   .ad-placement.is-unfilled { display: none; }
   .ad-placement:has(> .adsbygoogle[data-ad-status="unfilled"]) { display: none; }

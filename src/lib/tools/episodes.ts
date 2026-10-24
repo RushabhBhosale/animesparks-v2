@@ -21,6 +21,17 @@ export const CANON_LABELS: Record<CanonType, string> = {
   unknown: 'Unknown',
 };
 
+/** What each label means, in general terms. Used to explain the labels on filler pages. */
+export const CANON_DEFINITIONS: Record<CanonType, string> = {
+  'manga-canon': 'Adapts the source material (manga or novel) closely.',
+  'anime-canon': 'Anime-original story that the source’s creator approved or supervised, so it counts toward the main plot.',
+  mixed: 'Combines scenes from the source material with anime-original scenes.',
+  filler: 'Anime-original story outside the main plot. Skipping it does not affect the main story.',
+  recap: 'Retells earlier episodes. Skipping it loses nothing you have not already seen.',
+  canon: 'Not flagged as filler or recap, so treated as part of the main run.',
+  unknown: 'No classification is available for this episode.',
+};
+
 /** Types a viewer can skip without missing source-material story. */
 export const SKIPPABLE: ReadonlySet<CanonType> = new Set(['filler', 'recap']);
 

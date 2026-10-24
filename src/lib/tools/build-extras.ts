@@ -5,6 +5,7 @@
 import { withDatabaseRetry } from '../content/mongodb';
 import type { ArticleCard } from '../content/types';
 import { getToolsBuildData, relatedArticles, type AnimeSnapshot } from './build-data';
+import { cleanArcName } from './arc-guide.ts';
 import { isPublishable } from './curated.ts';
 import { classifyEpisodes, summarize, typeRuns, type ClassifiedEpisode } from './episodes.ts';
 import { ANIME_DISPLAY_TITLES, canonicalFranchiseSlug, FILLER_LANDINGS, NO_FILLER_INDEXED } from './landings.ts';
@@ -125,7 +126,7 @@ async function loadExtras(english: ArticleCard[]) {
     const arcList = verifiedArcs.get(slug);
     const arcs = (arcList?.arcs || []).map(arc => {
       const inArc = episodes.filter(episode => episode.n >= arc.episodeStart && episode.n <= arc.episodeEnd);
-      return { name: arc.name, start: arc.episodeStart, end: arc.episodeEnd, filler: inArc.filter(episode => episode.type === 'filler').length, recap: inArc.filter(episode => episode.type === 'recap').length };
+      return { name: cleanArcName(arc.name), start: arc.episodeStart, end: arc.episodeEnd, filler: inArc.filter(episode => episode.type === 'filler').length, recap: inArc.filter(episode => episode.type === 'recap').length };
     }).filter(arc => arc.start <= episodes.length);
     const stretches = typeRuns(episodes.map(episode => ({ ...episode, type: episode.type === 'recap' ? 'filler' : episode.type })))
       .filter(run => run.type === 'filler' && run.end - run.start >= 2)

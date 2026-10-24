@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { arcLabel, buildArcGuide, isFillerArc } from '../../src/lib/tools/arc-guide.ts';
+import { arcLabel, buildArcGuide, cleanArcName, isFillerArc, UNNAMED_ARC } from '../../src/lib/tools/arc-guide.ts';
 
 test('arcs from several seasons share one timeline and continuing arcs merge', () => {
   const rows = buildArcGuide([
@@ -28,4 +28,14 @@ test('arc labels get a consistent suffix', () => {
   assert.equal(arcLabel('U.S.J.'), 'U.S.J. Arc');
   assert.equal(arcLabel('Romance Dawn Arc'), 'Romance Dawn Arc');
   assert.equal(arcLabel('Prologue — Land of Waves'), 'Prologue — Land of Waves');
+});
+
+test('wiki artefacts in arc names are repaired without inventing names', () => {
+  assert.equal(cleanArcName('Kaguya Ōtsutsuki Strikes,'), 'Kaguya Ōtsutsuki Strikes');
+  assert.equal(cleanArcName('Sasuke Shinden: Book of Sunrise (Arc),'), 'Sasuke Shinden: Book of Sunrise Arc');
+  assert.equal(cleanArcName('Itachi Shinden Book: Light and Darkness,Kaguya Ōtsutsuki Strikes'), 'Itachi Shinden Book: Light and Darkness & Kaguya Ōtsutsuki Strikes');
+  assert.equal(cleanArcName('None'), UNNAMED_ARC);
+  assert.equal(arcLabel('None'), UNNAMED_ARC);
+  assert.equal(arcLabel('Childhood,'), 'Childhood Arc');
+  assert.equal(arcLabel('Itachi Shinden Book: Light and Darkness'), 'Itachi Shinden Book: Light and Darkness');
 });

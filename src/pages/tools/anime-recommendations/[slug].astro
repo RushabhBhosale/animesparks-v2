@@ -10,6 +10,7 @@ import { canonicalFranchiseSlug, fitTitle, type RecLanding } from '../../../lib/
 import { getRecLandingPages } from '../../../lib/tools/rec-landings';
 import type { Recommendation } from '../../../lib/tools/recommend';
 import { compactKey, formatLabel } from '../../../lib/tools/normalize';
+import { compareRecommendation, picksBySeedTag } from '../../../lib/tools/insights';
 
 export const prerender = true;
 export async function getStaticPaths() {
@@ -34,6 +35,16 @@ const fromFans = picks.filter(pick => pick.reasons.some(reason => /MyAnimeList u
 const short = picks.filter(pick => pick.entry.f === 'movie' || (pick.entry.e && pick.entry.e <= 13));
 const list = (items: string[]) => items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items[0];
 const meta = (pick: Recommendation) => [formatLabel(pick.entry.f), pick.entry.y, pick.entry.f !== 'movie' && pick.entry.e ? `${pick.entry.e} eps` : pick.entry.st === 'airing' ? 'Airing' : '', pick.entry.sc ? `★ ${pick.entry.sc.toFixed(2)}` : ''].filter(Boolean).join(' · ');
+
+// Comparisons use catalogue data only: length, era and the genres and themes each pick shares with or adds to the seed.
+const compared = picks.slice(0, 8).map(pick => ({ pick, ...compareRecommendation(seed, pick.entry) }));
+const byTag = picksBySeedTag(seed, picks.map(pick => ({ ...pick.entry, pick })));
+const articleFor = (slug: string) => {
+  const item = bySlug.get(slug);
+  if (!item) return undefined;
+  const itemKeys = new Set([item.title, item.titleEnglish, item.titleRomaji, ...(item.legacy?.articleAnimeNames || [])].filter((value): value is string => Boolean(value)).map(compactKey).filter(key => key.length > 2));
+  return relatedArticles(english, itemKeys, 1)[0];
+};
 
 const title = fitTitle([`${picks.length} Anime Like ${name}: What to Watch Next`, `${picks.length} Anime Like ${name}`, `Anime Like ${name}`]);
 const description = `Loved ${name}? ${picks.length} anime like it, starting with ${list(picks.slice(0, 3).map(pick => pick.entry.t))}. Picked from MyAnimeList fan recommendations and shared ${tags.slice(0, 2).join(' and ').toLowerCase() || 'genres'}, with the reason for each.`;
@@ -78,6 +89,7 @@ const keys = new Set([seedItem?.title, seedItem?.titleEnglish, name].filter((val
               <h3><span class="rec-card__rank">{index + 1}.</span> {franchise ? <a href={`/tools/anime-watch-order/${franchise.slug}`}>{pick.entry.t}</a> : pick.entry.t}</h3>
               <p>{meta(pick)}</p>
               <ul>{(pick.reasons.length ? pick.reasons : [`Shares ${[...pick.entry.g, ...pick.entry.th].filter(tag => tags.includes(tag)).slice(0, 3).join(', ')} with ${name}`]).map(reason => <li>{reason}</li>)}</ul>
+              {(() => { const article = articleFor(pick.entry.s); return article ? <p>On AnimeSparks: <a href={`/blog/${article.slug}`}>{article.title}</a></p> : null; })()}
               {(ownPage || fillerPages.has(pick.entry.s)) && (
                 <p>
                   {ownPage && <a href={`/tools/anime-recommendations/${ownPage.slug}`}>Anime like {ownPage.name}</a>}
@@ -92,6 +104,36 @@ const keys = new Set([seedItem?.title, seedItem?.titleEnglish, name].filter((val
     </ol>
     <p class="order-sources">Genres, scores and fan recommendations from MyAnimeList. Picks never include other seasons or spin-offs of {name}{seedFranchise && <>; for those, see the <a href={`/tools/anime-watch-order/${seedFranchise.slug}`}>{seedFranchise.title} watch order</a></>}.</p>
   </section>
+
+  <section class="tool-section" aria-labelledby="compare-title">
+    <h2 id="compare-title">How the top picks compare with {name}</h2>
+    <p class="tool-hero__deck" style="margin-bottom: var(--sp-4)">{name} is {seed.e && seed.f !== 'movie' ? `${seed.e} episodes` : formatLabel(seed.f)}{seed.y ? ` from ${seed.y}` : ''}, tagged {list(tags.slice(0, 4).map(tag => tag.toLowerCase()))}. “Carries over” lists the tags each pick shares; “Adds” lists what it brings that {name} does not.</p>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th scope="col">Pick</th><th scope="col">Length</th><th scope="col">Era</th><th scope="col">Carries over</th><th scope="col">Adds</th></tr></thead>
+        <tbody>
+          {compared.map(row => (
+            <tr>
+              <td><strong>{row.pick.entry.t}</strong></td>
+              <td>{row.length}</td>
+              <td>{row.era}</td>
+              <td>{row.shared.length ? row.shared.join(', ') : '—'}</td>
+              <td>{row.adds.length ? row.adds.join(', ') : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {byTag.length > 0 && (
+    <section class="tool-section" aria-labelledby="by-tag-title">
+      <h2 id="by-tag-title">Pick by what you loved about {name}</h2>
+      <ul class="tool-guide" style="margin:0;padding-left:1.2em">
+        {byTag.map(group => <li><strong>If you liked the {group.tag.toLowerCase()} side:</strong> {list(group.picks.map(item => item.t))}.</li>)}
+      </ul>
+    </section>
+  )}
 
   <section class="tool-section" aria-labelledby="own-title">
     <h2 id="own-title">Make your own list</h2>

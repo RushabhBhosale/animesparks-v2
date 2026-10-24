@@ -32,7 +32,7 @@ const faq = [
         <span class="tool-legend" data-attempts></span>
       </div>
       <div class="tool-panel__body">
-        <ol class="game-clues" data-clues></ol>
+        <ol class="game-clues" data-clues>{Array.from({ length: MAX_GUESSES }, () => <li class="is-locked">Revealed after another guess</li>)}</ol>
         <div data-play>
           <AnimePicker id="game-guess" label="Your guess" placeholder="Type an anime title…" />
           <div class="tool-results__actions" style="margin-top: var(--sp-3)">

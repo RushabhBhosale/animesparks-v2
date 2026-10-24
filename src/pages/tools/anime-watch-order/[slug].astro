@@ -11,13 +11,13 @@ import ToolInsights from '../../../components/tools/ToolInsights.astro';
 import ToolFaq from '../../../components/tools/ToolFaq.astro';
 import { orderInsights } from '../../../lib/tools/insights';
 import { getToolsExtras } from '../../../lib/tools/build-extras';
-import { ARC_LANDINGS, MANGA_LANDINGS, clampDescription, fitTitle } from '../../../lib/tools/landings';
+import { ARC_LANDINGS, MANGA_LANDINGS, clampDescription, fitTitle, watchOrderTitleOptions } from '../../../lib/tools/landings';
 import { getBuildData } from '../../../lib/content/build-data';
 import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData, relatedArticles, type FranchiseEntryView, type FranchiseView } from '../../../lib/tools/build-data';
 import { formatDuration, formatHours, formatLabel, statusLabel } from '../../../lib/tools/normalize';
 import { toolBreadcrumbs, TOOLS_IMAGE } from '../../../lib/tools/seo';
-import { hasMoviePage } from '../../../lib/tools/movies';
+import { extrasTimeline, hasMoviePage } from '../../../lib/tools/movies';
 import { getRecLandingPages } from '../../../lib/tools/rec-landings';
 
 export const prerender = true;
@@ -33,7 +33,7 @@ const count = franchise.releaseOrder.length;
 const mainCount = franchise.releaseOrder.filter(entry => entry.role === 'main').length;
 const allTime = franchise.totals.all;
 const mainTime = franchise.totals.main;
-const title = fitTitle([`${franchise.title} Watch Order: All ${count} Seasons, Movies & OVAs`, `${franchise.title} Watch Order: All ${count} Entries in Order`, `${franchise.title} Watch Order`]);
+const title = fitTitle(watchOrderTitleOptions(franchise.title, franchise.releaseOrder));
 const mainEntries = franchise.releaseOrder.filter(entry => entry.role === 'main');
 const description = clampDescription(`How to watch ${franchise.title} in order: ${mainEntries.length} main-story entries and ${count - mainEntries.length} side stories, movies and recaps in release order${allTime.minutes ? `, about ${formatHours(allTime.minutes)} in total` : ''}.`);
 const { filler: fillerViews } = await getToolsExtras(english);
@@ -53,6 +53,8 @@ const formatRows = [...new Set(franchise.releaseOrder.map(entry => entry.format)
   return { label: formatLabel(format), count: entries.length, episodes: entries.reduce((sum, entry) => sum + (entry.watchEpisodes || 0), 0), minutes: entries.reduce((sum, entry) => sum + (entry.watchMinutes || 0), 0) };
 }).sort((a, b) => b.count - a.count);
 const related = relatedArticles(english, franchise.titleKeys, 6);
+const extras = extrasTimeline(franchise.releaseOrder);
+const extrasShown = extras.slice(0, 30);
 const lead = bySlug.get((mainEntries[0] || franchise.releaseOrder[0])?.slug);
 const insights = orderInsights(franchise, allFranchises.map(item => item.totals.all.minutes).filter(Boolean), lead ? {
   title: lead.title, format: lead.format, year: lead.year, studios: lead.studios, genres: lead.genres, sourceMaterial: lead.sourceMaterial,
@@ -78,7 +80,7 @@ const jsonLd = [
     itemListOrder: 'https://schema.org/ItemListOrderAscending',
     itemListElement: franchise.releaseOrder.map((entry, index) => ({
       '@type': 'ListItem', position: index + 1,
-      item: { '@type': entry.format === 'movie' ? 'Movie' : 'TVSeries', name: entry.title, ...(entry.airedFrom ? { datePublished: entry.airedFrom.slice(0, 10) } : {}), ...(entry.sourceUrl ? { sameAs: entry.sourceUrl } : {}) },
+      item: { '@type': entry.format === 'movie' ? 'Movie' : ['tv', 'ona'].includes(entry.format) ? 'TVSeries' : 'CreativeWork', name: entry.title, ...(entry.airedFrom ? { datePublished: entry.airedFrom.slice(0, 10) } : {}), ...(entry.sourceUrl ? { sameAs: entry.sourceUrl } : {}) },
     })) },
 ];
 const lists = [
@@ -204,6 +206,29 @@ const missingKinds = ['chronological', 'beginner'].filter(kind => !franchise.cur
         {arcLanding && <p class="tool-note tool-note--muted" style="margin-top: var(--sp-4)">Following the story arc by arc? See <a href={`/tools/anime-arc-explorer/${arcLanding.slug}`}>{arcLanding.name} arcs in order</a>.</p>}
       </section>
 
+      {extras.length > 0 && (
+        <section class="tool-section" aria-labelledby="extras-title">
+          <h2 id="extras-title">Where the movies, OVAs and specials fit</h2>
+          <p class="tool-hero__deck" style="margin-bottom: var(--sp-4)">Extras are placed by premiere date. “Premiered during” names the TV series that had most recently started, so watch it up to that point first. Main-story extras are linked as sequels or prequels; side stories are optional; recaps retell episodes you have already seen.</p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th scope="col">Entry</th><th scope="col">Type</th><th scope="col">Premiered</th><th scope="col">Premiered during</th><th scope="col">Watch it?</th></tr></thead>
+              <tbody>
+                {extrasShown.map(extra => (
+                  <tr>
+                    <td><strong>{extra.title}</strong></td>
+                    <td>{formatLabel(extra.format)}</td>
+                    <td>{extra.airedFrom ? extra.airedFrom.slice(0, 4) : extra.year || 'TBA'}{extra.status === 'upcoming' && ' (upcoming)'}</td>
+                    <td>{extra.during ? extra.during.title : '—'}</td>
+                    <td>{extra.role === 'main' ? 'Main story' : extra.role === 'recap' ? 'Optional recap' : 'Optional side story'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {extras.length > extrasShown.length && <p class="order-sources">The first {extrasShown.length} of {extras.length} extras are shown; the full list above has every entry.</p>}
+        </section>
+      )}
       <ToolInsights id="numbers-title" heading={`${franchise.title} by the numbers`} insights={insights} />
       <ToolFaq faq={insights.faq} />
       <section class="tool-section tool-guide" aria-labelledby="franchise-method">

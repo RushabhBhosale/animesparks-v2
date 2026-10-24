@@ -15,7 +15,7 @@
   --surface2: #1c1b19;    /* slightly lighter surface */
   --ink:     #ede8e2;     /* warm off-white body text */
   --ink-2:   #a09890;     /* secondary / muted text */
-  --ink-3:   #6b6460;     /* tertiary / disabled */
+  --ink-3:   #8c8580;     /* tertiary text; 5.1:1 on the surface colour (WCAG AA) */
   --line:    #2c2a27;     /* dividers */
   --line-2:  #3d3a36;     /* stronger dividers */
   --accent:  #e8192c;     /* AnimeSparks red */
@@ -93,7 +93,7 @@ button { cursor: pointer; }
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.kicker.red { color: var(--accent); }
+.kicker.red { color: var(--accent-2); } /* lighter red: 6:1 on the page background, the brand red is 4.3:1 at this size */
 
 /* Focus visible */
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
@@ -544,7 +544,7 @@ body.menu-open { overflow: hidden; }
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-2);
 }
 .card__date {
   font-size: var(--text-xs);
@@ -680,9 +680,9 @@ body.menu-open { overflow: hidden; }
   border-color: var(--accent);
   color: #fff;
 }
-.panel-highlight .side-panel__label { color: rgba(255,255,255,.7); }
+.panel-highlight .side-panel__label { color: #fff; }
 .panel-highlight h2 { color: #fff; }
-.panel-highlight p { color: rgba(255,255,255,.85); font-size: var(--text-sm); line-height: 1.6; }
+.panel-highlight p { color: #fff; font-size: var(--text-sm); line-height: 1.6; }
 .panel-highlight a { color: #fff; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
 /* ── Article hero ──────────────────────────────────────────── */

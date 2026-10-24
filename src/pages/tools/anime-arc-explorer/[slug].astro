@@ -9,7 +9,7 @@ import { SITE } from '../../../lib/content/seo';
 import { getToolsBuildData, relatedArticles } from '../../../lib/tools/build-data';
 import { getToolsExtras, type SourceEntry } from '../../../lib/tools/build-extras';
 import { ARC_LANDINGS, MANGA_LANDINGS, fitTitle, type ArcLanding } from '../../../lib/tools/landings';
-import { arcKey, buildArcGuide, isFillerArc } from '../../../lib/tools/arc-guide';
+import { arcKey, buildArcGuide, isFillerArc, UNNAMED_ARC } from '../../../lib/tools/arc-guide';
 import { compactKey } from '../../../lib/tools/normalize';
 
 export const prerender = true;
@@ -38,11 +38,13 @@ const multiSeason = entries.length > 1;
 const path = `/tools/anime-arc-explorer/${landing.slug}`;
 const totalEpisodes = rows.reduce((sum, row) => sum + row.length, 0);
 // An arc interrupted by a flashback appears twice in the table but counts once.
-const arcCount = new Set(rows.map(row => arcKey(row.name))).size;
+// Episodes the wiki lists outside any arc are shown in the table but are not counted as arcs.
+const namedRows = rows.filter(row => row.name !== UNNAMED_ARC);
+const arcCount = new Set(namedRows.map(row => arcKey(row.name))).size;
 const fillerArcs = rows.filter(isFillerArc);
 const hasChapters = rows.some(row => row.chapters);
 const hasFiller = rows.some(row => row.filler > 0);
-const longest = rows.reduce((best, row) => row.length > best.length ? row : best, rows[0]);
+const longest = namedRows.reduce((best, row) => row.length > best.length ? row : best, namedRows[0]);
 const latest = entries.at(-1)!;
 const isAiring = latest.status === 'airing';
 const franchise = franchises.find(item => item.slug === bySlug.get(entries[0].slug)?.franchiseSlug && item.indexable);
@@ -56,7 +58,7 @@ const list = (names: string[]) => names.length > 1 ? `${names.slice(0, -1).join(
 
 const title = fitTitle([`${landing.name} Arcs in Order: All ${arcCount} Story Arcs & Episodes`, `${landing.name} Arcs in Order: All ${arcCount} Arcs`, `${landing.name} Arcs in Order`]);
 const description = `All ${arcCount} ${landing.name} arcs in order, from ${rows[0].name} to ${rows.at(-1)!.name}, with episode ranges${hasChapters ? ', manga chapters' : ''}${fillerArcs.length ? ' and the filler arcs you can skip' : ''}.`;
-const insights = arcInsights(landing.name, rows.map(row => ({ name: row.name, length: row.length, filler: row.filler, chapters: row.chapters, overallStart: row.overallStart, overallEnd: row.overallEnd, isFiller: isFillerArc(row) })), entries.length);
+const insights = arcInsights(landing.name, namedRows.map(row => ({ name: row.name, length: row.length, filler: row.filler, chapters: row.chapters, overallStart: row.overallStart, overallEnd: row.overallEnd, isFiller: isFillerArc(row) })), entries.length);
 const faq = [
   { question: `How many arcs are in ${landing.name}?`, answer: `${arcCount} story arcs across ${totalEpisodes} episodes${multiSeason ? ` and ${entries.length} seasons` : ''}${isAiring ? ', counting the episodes aired so far' : ''}.` },
   { question: `What is the longest ${landing.name} arc?`, answer: `${longest.name}, at ${longest.length} episodes (${where(longest)}).` },

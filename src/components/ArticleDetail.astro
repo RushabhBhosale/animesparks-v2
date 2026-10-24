@@ -6,7 +6,8 @@ import AdUnit from './AdUnit.astro';
 import ArticleToolLinks from './ArticleToolLinks.astro';
 import type { ArticleToolLink } from '../lib/tools/article-links';
 import type { ArticleCard, ArticlePageData } from '../lib/content/types';
-import { r2ImageDimensions, r2ImageUrl } from '../lib/content/images';
+import { r2ImageUrl } from '../lib/content/images';
+import { resolveImageDimensions } from '../lib/content/image-size';
 import { articleSeo, SITE } from '../lib/content/seo';
 import { blockText, renderPortableText, tableOfContents } from '../lib/content/portable-text';
 import { articleTypeLabel, categoryLabel, getUiCopy } from '../lib/content/locales';
@@ -21,7 +22,7 @@ const { article, related, toolLinks = [] } = Astro.props;
 const es = article.language === 'es';
 const seo = articleSeo(article);
 const hero = r2ImageUrl(article.mainImage);
-const heroDimensions = r2ImageDimensions(article.mainImage);
+const heroDimensions = await resolveImageDimensions(article.mainImage);
 const authorImage = r2ImageUrl(article.author?.image);
 const bodyBlocks = article.body || [];
 const toc = tableOfContents(bodyBlocks);
@@ -169,7 +170,7 @@ const locale = getUiCopy(article.language);
       <div class="byline">
         <div class="byline__avatar">
           {authorImage ? (
-            <img src={authorImage} alt={article.author?.name || ''} width="52" height="52" loading="lazy" decoding="async" />
+            <Image src={authorImage} alt={article.author?.name || ''} width={52} height={52} densities={[1, 2]} format="webp" quality={80} loading="lazy" decoding="async" />
           ) : (
             <span>{(article.author?.name || 'A')[0]}</span>
           )}
@@ -294,7 +295,7 @@ const locale = getUiCopy(article.language);
 
         <section aria-labelledby="article-author-heading">
           {authorImage && (
-            <img class="author-image" src={authorImage} alt={article.author?.name || ''} width="52" height="52" loading="lazy" decoding="async" />
+            <Image class="author-image" src={authorImage} alt={article.author?.name || ''} width={52} height={52} densities={[1, 2]} format="webp" quality={80} loading="lazy" decoding="async" />
           )}
           <p class="kicker">{locale.author}</p>
           <h2 id="article-author-heading">{article.author?.name || 'AnimeSparks Editorial'}</h2>

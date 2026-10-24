@@ -5,14 +5,15 @@ import Card from '../components/Card.astro';
 import AdUnit from '../components/AdUnit.astro';
 import HomeTools from '../components/tools/HomeTools.astro';
 import { getBuildData } from '../lib/content/build-data';
-import { r2ImageDimensions, r2ImageUrl } from '../lib/content/images';
+import { r2ImageUrl } from '../lib/content/images';
+import { resolveImageDimensions } from '../lib/content/image-size';
 import { SITE, homeDescription, homeImage, homeTitle } from '../lib/content/seo';
 
 export const prerender = true;
 const data = (await getBuildData()).home;
 const featured = data.featured;
 const hero = r2ImageUrl(featured?.mainImage);
-const heroDimensions = r2ImageDimensions(featured?.mainImage);
+const heroDimensions = await resolveImageDimensions(featured?.mainImage);
 ---
 
 <SiteLayout title={homeTitle} description={homeDescription} canonical={SITE} image={homeImage} showFooterAd>
@@ -196,9 +197,9 @@ const heroDimensions = r2ImageDimensions(featured?.mainImage);
             <a class="section-header__link" href="/my-anime-list">Anime database ↗</a>
           </div>
           <div class="cluster-grid">
-            {data.animeClusters.map(cluster => {
+            {data.animeClusters.map(async cluster => {
               const coverUrl = r2ImageUrl(cluster.cover);
-              const coverDimensions = r2ImageDimensions(cluster.cover);
+              const coverDimensions = await resolveImageDimensions(cluster.cover);
               return (
                 <a class="cluster-card" href={`/search?q=${encodeURIComponent(cluster.name)}`}>
                   {coverUrl && (coverDimensions ? (

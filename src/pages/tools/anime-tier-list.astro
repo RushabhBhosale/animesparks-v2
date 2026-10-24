@@ -1,9 +1,17 @@
 ---
 import ToolPage from '../../components/tools/ToolPage.astro';
 import AnimePicker from '../../components/tools/AnimePicker.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { getToolsBuildData } from '../../lib/tools/build-data';
+import { getToolsExtras } from '../../lib/tools/build-extras';
+import { canonicalFranchiseSlug } from '../../lib/tools/landings';
+import { buildTierTemplates } from '../../lib/tools/tierlist';
 
 export const prerender = true;
+const [{ bySlug }, extras] = await Promise.all([getToolsBuildData(), getToolsExtras((await getBuildData()).english)]);
+const templates = buildTierTemplates(extras.recIndex, slug => { const franchise = bySlug.get(slug)?.franchiseSlug; return franchise ? canonicalFranchiseSlug(franchise) : undefined; });
 const faq = [
+  { question: 'Can I start from a template?', answer: `Yes. Pick one of the ${templates.length} templates, such as ${templates.slice(0, 3).map(template => template.name.toLowerCase()).join(', ')}, and its posters appear in Unranked, ready to drag into tiers. You can then add, remove or rename anything.` },
   { question: 'How do I move anime between tiers?', answer: 'Drag a poster onto a tier with a mouse, finger or stylus. Or tap a poster to select it, then tap a tier to move it there. That also works with a keyboard.' },
   { question: 'Can I rename tiers or change their colours?', answer: 'Yes. Edit a tier’s name, pick any colour, reorder tiers with the arrows, add up to 10 tiers or remove ones you don’t need. Items from a removed tier go back to Unranked.' },
   { question: 'How do I share my tier list?', answer: 'Use “Share image” to send a PNG through your device’s share sheet, or “Download PNG” to save it. Your list is also saved in this browser automatically.' },
@@ -25,6 +33,22 @@ const faq = [
         <AnimePicker id="tl-search" label="Add anime" placeholder="Search to add a poster…" />
       </div>
     </section>
+
+    {templates.length > 0 && (
+      <section class="tool-section" aria-labelledby="tl-templates-title" data-templates>
+        <script type="application/json" data-templates-data set:html={JSON.stringify(templates).replace(/</g, '\\u003c')}></script>
+        <h2 id="tl-templates-title">Start from a template</h2>
+        <p class="tool-hero__deck" style="margin-bottom: var(--sp-4)">Load a ready-made pool of posters, then rank them. Your current list is replaced, so download it first if you want to keep it.</p>
+        <ul class="tl-templates">
+          {templates.map(template => (
+            <li>
+              <button type="button" class="tool-button" data-template={template.id}>{template.name}</button>
+              <small>{template.description} {template.items.length} series, including {template.items.slice(0, 4).map(item => item.title).join(', ')}.</small>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
 
     <div class="order-toolbar" style="margin-top: var(--sp-5)">
       <p class="tool-hero__deck" style="font-size: var(--text-sm)" data-hint>Drag posters into tiers, or tap a poster and then a tier.</p>
@@ -52,6 +76,9 @@ const faq = [
 </ToolPage>
 
 <style is:global>
+  .tl-templates { display: grid; gap: var(--sp-3); margin: 0; padding: 0; list-style: none; }
+  .tl-templates li { display: grid; gap: 4px; justify-items: start; }
+  .tl-templates small { color: var(--ink-2); font-size: var(--text-sm); line-height: 1.5; }
   .tl-board { border: 1px solid var(--line-2); background: var(--bg); }
   .tl-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); border-top: 1px solid var(--line-2); min-height: 104px; }
   .tl-row:first-child { border-top: 0; }
@@ -85,7 +112,7 @@ const faq = [
 </style>
 
 <script>
-  import { addItem, addTier, moveItem, moveTier, newTierList, removeItem, removeTier, restoreTierList, type TierList } from '../../lib/tools/tierlist';
+  import { addItem, addTier, listFromTemplate, moveItem, moveTier, newTierList, removeItem, removeTier, restoreTierList, type TierList, type TierTemplate } from '../../lib/tools/tierlist';
   import { createPicker } from '../../scripts/tools/anime-picker';
   import { readLocal, writeLocal } from '../../scripts/tools/storage';
 
@@ -126,6 +153,26 @@ const faq = [
     return button;
   }
 
+  // Ready-made pools: replace the current list after confirming when it has content.
+  const templateData = root.querySelector('[data-templates-data]')?.textContent;
+  const templates: TierTemplate[] = templateData ? JSON.parse(templateData) : [];
+  root.querySelectorAll<HTMLButtonElement>('[data-template]').forEach(button => button.addEventListener('click', () => {
+    const template = templates.find(item => item.id === button.dataset.template);
+    if (!template) return;
+    if (Object.keys(list.items).length && !window.confirm('Replace your current list with this template?')) return;
+    selected = null;
+    commit(listFromTemplate(template, now()));
+    say(`Loaded “${template.name}”. Drag the posters into tiers.`);
+  }));
+
+  // Black or white text, whichever contrasts more with the tier colour.
+  function readableOn(hex: string) {
+    const channel = (offset: number) => { const value = parseInt(hex.slice(offset, offset + 2), 16) / 255; return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4; };
+    const luminance = 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+    // Contrast against the actual text colours: #111 (luminance 0.0056) and white.
+    return (luminance + 0.05) / (0.0056 + 0.05) >= 1.05 / (luminance + 0.05) ? '#111' : '#fff';
+  }
+
   function render() {
     titleInput.value = list.title;
     board.replaceChildren(...list.tiers.map((tier, index) => {
@@ -134,6 +181,7 @@ const faq = [
       const label = document.createElement('div');
       label.className = 'tl-label';
       label.style.background = tier.color;
+      label.style.color = readableOn(tier.color);
       const name = document.createElement('input');
       name.type = 'text'; name.value = tier.name; name.maxLength = 24; name.setAttribute('aria-label', 'Tier name');
       name.addEventListener('change', () => commit({ ...list, tiers: list.tiers.map(other => other.id === tier.id ? { ...other, name: name.value.trim() || '?' } : other), updatedAt: now() }));
@@ -141,7 +189,7 @@ const faq = [
       tools.className = 'tl-tier-tools';
       const color = document.createElement('input');
       color.type = 'color'; color.value = tier.color; color.setAttribute('aria-label', `${tier.name} tier colour`);
-      color.addEventListener('input', () => { label.style.background = color.value; });
+      color.addEventListener('input', () => { label.style.background = color.value; label.style.color = readableOn(color.value); });
       color.addEventListener('change', () => commit({ ...list, tiers: list.tiers.map(other => other.id === tier.id ? { ...other, color: color.value } : other), updatedAt: now() }));
       const button = (text: string, aria: string, action: () => void, disabled = false) => {
         const element = document.createElement('button');
@@ -159,6 +207,7 @@ const faq = [
       const zone = document.createElement('div');
       zone.className = 'tl-zone';
       zone.dataset.zone = tier.id;
+      zone.setAttribute('role', 'group');
       zone.setAttribute('aria-label', `${tier.name} tier`);
       zone.append(...tier.items.map(tile));
       row.append(label, zone);
