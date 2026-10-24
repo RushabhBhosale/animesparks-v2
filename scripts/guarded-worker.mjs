@@ -58,6 +58,10 @@ export default {
         .on('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]', { element(element) {
           element.remove();
         } })
+        // The deferred loader that injects the same AdSense library on production.
+        .on('script[data-adsense-loader]', { element(element) {
+          element.remove();
+        } })
         .on('.ad-placement', { element(element) {
           element.remove();
         } })

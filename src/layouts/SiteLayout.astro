@@ -60,7 +60,7 @@ const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003
   {hasAlternates && <link rel="alternate" hreflang="x-default" href={englishUrl || canonical} />}
   <meta name="robots" content={testHost ? 'noindex, nofollow' : robotsNoindex ? 'noindex, follow' : 'index, follow'} />
   {/* AdSense loads once the page has finished loading and the browser is idle, so the ad library and its auction requests do not compete with the hero image and text for bandwidth. Slot initialisation below queues on window.adsbygoogle and runs when the library arrives. */}
-  {!testHost && !adsDisabled && <script is:inline>
+  {!testHost && !adsDisabled && <script is:inline data-adsense-loader>
     (function () {
       var started = false;
       function load() {
