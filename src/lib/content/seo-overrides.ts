@@ -41,6 +41,34 @@ const seoOverrides: Record<string, { metaTitle: string; metaDescription: string 
     metaTitle: 'Tougen Anki Season 2: Premiere, Cast & Trailer',
     metaDescription: 'Tougen Anki Season 2, the Nikko Kegon Falls Arc, premiered October 2, 2026 on Nippon TV. Trailer, new cast, theme songs, recap schedule and story details.',
   },
+  'the-ramparts-of-ice-season-2-release-date-october-2026': {
+    metaTitle: 'Ramparts of Ice Season 2 Schedule & Streaming',
+    metaDescription: 'The Ramparts of Ice Season 2 premiered October 1, 2026 in Japan, airing Thursdays on TBS, with weekly Netflix episodes worldwide. Schedule, story and cast.',
+  },
+  'who-is-future-rudeus-mushoku-tensei-turning-point-4': {
+    metaTitle: 'Who Is Oldeus in Mushoku Tensei? Future Rudeus',
+    metaDescription: 'Oldeus is the fan name for Future Rudeus, an older Rudeus from a ruined future. Who he is, why he returns, and what Season 3 Episodes 12 and 13 reveal.',
+  },
+  'who-is-hitogami-mushoku-tensei-man-god-explained': {
+    metaTitle: 'Who Is Hitogami in Mushoku Tensei? The Man-God',
+    metaDescription: 'Who is Hitogami, the Man-God of Mushoku Tensei? Why his advice seemed trustworthy, how Oldeus exposes it, and what Season 3 Episode 13 changes. Spoilers.',
+  },
+  'jujutsu-kaisen-domain-expansion-explained-how-domains-work': {
+    metaTitle: 'JJK Domain Expansion Rules, Clashes & Counters',
+    metaDescription: 'How does Domain Expansion work in Jujutsu Kaisen? Sure-hit effects, domain clashes, counters, incomplete domains like Megumi’s, and why Sukuna’s domain differs.',
+  },
+  'who-is-jinshi-apothecary-diaries-true-identity': {
+    metaTitle: 'Is Jinshi a Eunuch? True Identity Explained',
+    metaDescription: 'Is Jinshi really a eunuch? What The Apothecary Diaries reveals about his royal identity, why he hides it, and when Maomao notices. Major spoilers.',
+  },
+  'maomao-jinshi-relationship-apothecary-diaries-explained': {
+    metaTitle: 'Are Maomao and Jinshi Together? Explained',
+    metaDescription: 'Are Maomao and Jinshi together? Not officially in the anime yet. How their slow-burn romance develops, why she resists him, and where they stand now.',
+  },
+  'how-long-does-it-take-to-watch-one-piece': {
+    metaTitle: 'How Long to Watch One Piece? Hours & Days by Pace',
+    metaDescription: 'How long does it take to watch One Piece? About 469 hours for 1,173 episodes. See the days needed at 1, 2, 4 or 8 hours a day, with and without filler.',
+  },
 };
 
 export function applySeoOverride<T extends PublicArticle>(article: T): T {
