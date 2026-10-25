@@ -1,10 +1,12 @@
 import type { ArticleCard, ArticleDocument } from './types';
+import { applySeoOverride } from './seo-overrides';
 
 type PublicArticle = ArticleDocument | ArticleCard;
 
 /** Build-time copy corrections for dated release announcements. This keeps the
  * production render current without writing to MongoDB or changing URLs/dates. */
-export function applyFreshnessOverride<T extends PublicArticle>(article: T): T {
+export function applyFreshnessOverride<T extends PublicArticle>(source: T): T {
+  const article = applySeoOverride(source);
   if (article.slug === 'blue-box-season-2-release-date-netflix') {
     const replace = (value: string) => value
       .replaceAll('Blue Box Season 2 premieres October 4, 2026.', 'Blue Box Season 2 began weekly streaming on Netflix on October 4, 2026.')
