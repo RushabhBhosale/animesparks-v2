@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { buildRegistry } from '../../src/lib/characters/registry.ts';
 import { PROFILES, SERIES } from '../../src/lib/characters/data/index.ts';
 import { completenessProblems, integrityErrors } from '../../src/lib/characters/validate.ts';
-import { castGraph, egoGraph, familyTree } from '../../src/lib/characters/graph.ts';
+import { castGraph, egoGraph, familyForest, familyTree } from '../../src/lib/characters/graph.ts';
 import { orderingsDiffer, releaseOrdered, storyOrdered } from '../../src/lib/characters/timeline.ts';
 import { checkpointIndex, refLabel } from '../../src/lib/characters/format.ts';
 import { searchText } from '../../src/lib/characters/search.ts';
@@ -171,6 +171,15 @@ describe('graphs and timelines', () => {
     assert.equal(y('a'), y('b'));
     assert.equal(y('c'), y('d'));
     assert.equal(tree.links.length, 4);
+  });
+
+  it('builds a family forest with every relative, profile or not', () => {
+    const naruto = registry.seriesBySlug.get('naruto')!;
+    const forest = familyForest(naruto.cast, naruto.relationships);
+    assert.ok(forest.length >= 2);
+    const names = forest.flatMap(tree => tree.nodes.map(node => node.name));
+    for (const name of ['Minato Namikaze', 'Kushina Uzumaki', 'Naruto Uzumaki', 'Fugaku Uchiha', 'Mikoto Uchiha', 'Itachi Uchiha', 'Sasuke Uchiha']) assert.ok(names.includes(name), name);
+    assert.ok(forest.every(tree => tree.nodes.every(node => !node.focus)));
   });
 
   it('distinguishes story order from release order', () => {

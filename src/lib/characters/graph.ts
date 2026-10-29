@@ -76,7 +76,8 @@ const PARENTS = new Set(['parent', 'adoptive-parent', 'guardian']);
  * (parent = one level up). Spouses and siblings share a level. Returns null
  * when the character has fewer than two family connections.
  */
-export function familyTree(focusId: string, cast: CastMember[], relationships: Relationship[]): FamilyTree | null {
+export function familyTree(focusId: string, cast: CastMember[], relationships: Relationship[], options: { highlight?: boolean; minEdges?: number } = {}): FamilyTree | null {
+  const { highlight = true, minEdges = 2 } = options;
   const family = relationships.filter(item => item.type === 'family' && item.kin);
   const byId = castById(cast);
   // Connected component of family edges around the focus.
@@ -89,7 +90,7 @@ export function familyTree(focusId: string, cast: CastMember[], relationships: R
     }
   }
   const edges = family.filter(item => members.has(item.a) && members.has(item.b));
-  if (edges.length < 2) return null;
+  if (edges.length < minEdges) return null;
 
   // Assign levels: parent edges fix the difference, others copy the level.
   const level = new Map<string, number>([[focusId, 0]]);
@@ -119,7 +120,7 @@ export function familyTree(focusId: string, cast: CastMember[], relationships: R
     const ordered = row.sort((a, b) => spouseKey(a, edges) - spouseKey(b, edges) || a.localeCompare(b));
     ordered.forEach((id, index) => {
       const x = (width - (ordered.length - 1) * columnWidth) / 2 + index * columnWidth;
-      nodes.push({ id, name: byId.get(id)!.name, profile: byId.get(id)!.profile, generation, x: round(x), y: 44 + generation * rowHeight, focus: id === focusId });
+      nodes.push({ id, name: byId.get(id)!.name, profile: byId.get(id)!.profile, generation, x: round(x), y: 44 + generation * rowHeight, focus: highlight && id === focusId });
     });
   }
   const nodeById = new Map(nodes.map(node => [node.id, node]));
@@ -139,3 +140,21 @@ function spouseKey(id: string, edges: Relationship[]): number {
   return partner ? Math.min(hash(partner.a), hash(partner.b)) : hash(id);
 }
 const hash = (value: string) => [...value].reduce((total, char) => (total * 31 + char.charCodeAt(0)) % 100000, 7);
+
+/**
+ * Every family in the series: one tree per connected group of family
+ * relationships, including characters who have no profile. Largest first.
+ */
+export function familyForest(cast: CastMember[], relationships: Relationship[]): FamilyTree[] {
+  const family = relationships.filter(item => item.type === 'family' && item.kin);
+  const seen = new Set<string>();
+  const trees: FamilyTree[] = [];
+  for (const item of family) {
+    if (seen.has(item.a)) continue;
+    const tree = familyTree(item.a, cast, family, { highlight: false, minEdges: 1 });
+    if (!tree) continue;
+    tree.nodes.forEach(node => seen.add(node.id));
+    trees.push(tree);
+  }
+  return trees.sort((a, b) => b.nodes.length - a.nodes.length);
+}

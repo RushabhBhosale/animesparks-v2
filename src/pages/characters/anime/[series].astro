@@ -9,12 +9,13 @@ import SpoilerBar from '../../../components/characters/SpoilerBar.astro';
 import Spoiler from '../../../components/characters/Spoiler.astro';
 import CharacterCard from '../../../components/characters/CharacterCard.astro';
 import RelationshipGraph from '../../../components/characters/RelationshipGraph.astro';
+import FamilyTree from '../../../components/characters/FamilyTree.astro';
 import RelationshipList from '../../../components/characters/RelationshipList.astro';
 import TimelineExplorer from '../../../components/characters/TimelineExplorer.astro';
 import { getBuildData } from '../../../lib/content/build-data';
 import { SITE } from '../../../lib/content/seo';
 import { ABILITY_KIND_LABEL, checkpointIndex, refLabel } from '../../../lib/characters/format.ts';
-import { castGraph } from '../../../lib/characters/graph.ts';
+import { castGraph, familyForest } from '../../../lib/characters/graph.ts';
 import { seriesArticles, seriesToolLinks } from '../../../lib/characters/links.ts';
 import { characterPath, getRegistry, hubPath, latestVerified } from '../../../lib/characters/registry.ts';
 import { CHARACTERS_IMAGE, crumbList } from '../../../lib/characters/seo.ts';
@@ -31,6 +32,7 @@ const toolLinks = await seriesToolLinks(series, english);
 const articles = seriesArticles(series, english);
 const path = hubPath(series.slug);
 const graph = castGraph(series.cast, series.relationships);
+const forest = familyForest(series.cast, series.relationships);
 const allAbilities = series.profiles.flatMap(profile => profile.abilities.map(ability => ({ ability, profile })));
 const kinds = [...new Set(allAbilities.map(item => item.ability.kind))];
 const verified = latestVerified(series.profiles)!;
@@ -50,7 +52,7 @@ const faq = [...series.faq, { question: `Which ${series.short} characters have p
     <div class="shell"><SpoilerBar series={series} /></div>
     <div class="shell tool-main">
       <nav aria-label="On this page"><ul class="jump-nav">
-        {[['cast', 'Characters'], ['relationships', 'Relationship map'], ['powers', 'Powers and transformations'], ['status', 'Death tracker'], ['timeline', 'Timeline'], ['arcs', 'Arcs'], ['guides', 'Guides and articles']].map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}
+        {[['cast', 'Characters'], ['relationships', 'Relationship map'], ['families', 'Family trees'], ['powers', 'Powers and transformations'], ['status', 'Death tracker'], ['timeline', 'Timeline'], ['arcs', 'Arcs'], ['guides', 'Guides and articles']].map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}
       </ul></nav>
 
       <p class="tool-note tool-note--muted" style="margin-top:var(--sp-6)"><strong>What this covers.</strong> Manga: {series.coverage.manga}. Anime: {series.coverage.anime}. Checked {new Date(series.coverage.asOf).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.</p>
@@ -66,6 +68,14 @@ const faq = [...series.faq, { question: `Which ${series.short} characters have p
         <RelationshipGraph graph={graph} series={series} label={`${series.title} relationship map`} idPrefix="cast-rel" />
         <RelationshipList relationships={series.relationships} series={series} idPrefix="cast-rel" />
       </section>
+
+      {forest.length > 0 && (
+        <section class="char-section" id="families" aria-labelledby="families-title">
+          <h2 id="families-title">{series.short} family trees</h2>
+          <p class="lede">Every family connection in the series, including characters who do not have a profile yet. Bold names open a profile; lines open the explanation in the relationship map above.</p>
+          {forest.map((tree, index) => <FamilyTree tree={tree} series={series} idPrefix="cast-rel" label={`${series.title} family tree ${index + 1}`} />)}
+        </section>
+      )}
 
       <section class="char-section" id="powers" aria-labelledby="powers-title">
         <h2 id="powers-title">{series.short} powers and transformations</h2>

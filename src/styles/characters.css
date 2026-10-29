@@ -255,3 +255,8 @@ a.char-card:hover { border-color: var(--line-2); background: var(--surface2); }
 .arc-list h3 { margin: 0 0 var(--sp-1); font-size: var(--text-base); }
 .arc-list p { margin: 0; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.55; }
 .arc-list .ref { display: block; margin-bottom: var(--sp-1); }
+
+.quick-facts--top .quick-facts dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.quick-facts--top .quick-facts .fact { border-right: 1px solid var(--line); }
+.quick-facts--top .quick-facts .fact:nth-child(even) { border-right: 0; }
+@media (max-width: 680px) { .quick-facts--top .quick-facts dl { grid-template-columns: minmax(0, 1fr); } .quick-facts--top .quick-facts .fact { border-right: 0; } }
