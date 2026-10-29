@@ -17,7 +17,7 @@ const H = 36;
 const clip = (name: string) => (name.length > 18 ? `${name.slice(0, 17)}…` : name);
 const paths = tree.links.map(link => {
   const { from, to } = link;
-  if (link.kind === 'parent') {
+  if (link.kind === 'parent' || link.kind === 'lineage') {
     const midY = (from.y + H / 2 + to.y - H / 2) / 2;
     return { d: `M${from.x},${from.y + H / 2} V${midY} H${to.x} V${to.y - H / 2}`, kind: link.kind, link };
   }
@@ -32,6 +32,14 @@ const paths = tree.links.map(link => {
 ---
 <div class="graph-wrap">
   <svg viewBox={`0 0 ${tree.width} ${tree.height}`} role="group" aria-label={label}>
+    <g aria-hidden="true">
+      {Array.from({ length: tree.generations }, (_, generation) => (
+        <g>
+          <line x1="0" x2={tree.width} y1={44 + generation * 112 + 56} y2={44 + generation * 112 + 56} stroke="var(--line)" stroke-dasharray="2 6" opacity={generation < tree.generations - 1 ? 1 : 0} />
+          <text x="8" y={44 + generation * 112 - 24} class="tree-label" style="text-anchor:start">Generation {generation + 1}</text>
+        </g>
+      ))}
+    </g>
     <g>
       {paths.map(path => (
         <a href={`#${idPrefix}-${path.link.relationship.id}`} data-spoiler-idx={lockOf(path.link.relationship.spoiler) >= 0 ? lockOf(path.link.relationship.spoiler) : undefined} data-spoiler-hide={lockOf(path.link.relationship.spoiler) >= 0 ? '' : undefined} {...(lockOf(path.link.relationship.spoiler) >= 0 ? { hidden: true } : {})}>
@@ -52,4 +60,4 @@ const paths = tree.links.map(link => {
     </g>
   </svg>
 </div>
-<p class="graph-hint">Solid lines connect parents and children, a pink line joins partners and a dashed blue line joins siblings. Dotted lines show other family ties.</p>
+<p class="graph-hint">Solid lines connect parents and children, dashed amber lines skip generations, a pink line joins partners and a dashed blue line joins siblings. Dotted lines show other family ties.</p>

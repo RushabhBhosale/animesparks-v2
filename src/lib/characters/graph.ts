@@ -66,7 +66,7 @@ const round = (value: number) => Math.round(value * 10) / 10;
 // ── Family tree ──────────────────────────────────────────────────────────
 
 export interface TreeNode { id: string; name: string; profile?: string; generation: number; x: number; y: number; focus: boolean }
-export interface TreeLink { kind: 'parent' | 'spouse' | 'sibling' | 'other'; from: TreeNode; to: TreeNode; relationship: Relationship }
+export interface TreeLink { kind: 'parent' | 'lineage' | 'spouse' | 'sibling' | 'other'; from: TreeNode; to: TreeNode; relationship: Relationship }
 export interface FamilyTree { width: number; height: number; nodes: TreeNode[]; links: TreeLink[]; generations: number }
 
 const PARENTS = new Set(['parent', 'adoptive-parent', 'guardian']);
@@ -96,7 +96,7 @@ export function familyTree(focusId: string, cast: CastMember[], relationships: R
   const level = new Map<string, number>([[focusId, 0]]);
   for (let pass = 0; pass < members.size + 2; pass++) {
     for (const item of edges) {
-      const delta = PARENTS.has(item.kin!) ? 1 : 0;
+      const delta = PARENTS.has(item.kin!) ? 1 : item.kin === 'ancestor' ? item.generations ?? 2 : 0;
       if (level.has(item.b) && !level.has(item.a)) level.set(item.a, level.get(item.b)! - delta);
       else if (level.has(item.a) && !level.has(item.b)) level.set(item.b, level.get(item.a)! + delta);
     }
@@ -128,7 +128,7 @@ export function familyTree(focusId: string, cast: CastMember[], relationships: R
     const a = nodeById.get(relationship.a);
     const b = nodeById.get(relationship.b);
     if (!a || !b) return [];
-    const kind = PARENTS.has(relationship.kin!) ? 'parent' : relationship.kin === 'spouse' ? 'spouse' : relationship.kin === 'sibling' ? 'sibling' : 'other';
+    const kind = PARENTS.has(relationship.kin!) ? 'parent' : relationship.kin === 'ancestor' ? 'lineage' : relationship.kin === 'spouse' ? 'spouse' : relationship.kin === 'sibling' ? 'sibling' : 'other';
     return [{ kind, from: a, to: b, relationship }];
   });
   return { width, height, nodes, links, generations: maxLevel - minLevel + 1 };

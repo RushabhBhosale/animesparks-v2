@@ -31,7 +31,9 @@ const { english } = await getBuildData();
 const toolLinks = await seriesToolLinks(series, english);
 const articles = seriesArticles(series, english);
 const path = hubPath(series.slug);
-const graph = castGraph(series.cast, series.relationships);
+// The relationship map shows friends, rivals and enemies plus family ties that involve a profiled character; the full family history lives in the family trees.
+const profiled = new Set(series.cast.filter(member => member.profile).map(member => member.id));
+const graph = castGraph(series.cast, series.relationships.filter(item => item.type !== 'family' || profiled.has(item.a) || profiled.has(item.b)));
 const forest = familyForest(series.cast, series.relationships);
 const allAbilities = series.profiles.flatMap(profile => profile.abilities.map(ability => ({ ability, profile })));
 const kinds = [...new Set(allAbilities.map(item => item.ability.kind))];

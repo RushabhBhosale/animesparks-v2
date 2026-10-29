@@ -237,6 +237,8 @@ export interface Relationship {
   b: string;
   type: RelationType;
   kin?: Kinship;
+  /** For kin 'ancestor': how many generations apart (default 2). Draws a dashed lineage line. */
+  generations?: number;
   /** Role labels from each side's view, e.g. a: "teacher", b: "student". */
   roles?: { a: string; b: string };
   summary: string;
