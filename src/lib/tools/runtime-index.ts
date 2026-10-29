@@ -28,6 +28,25 @@ export function loadToolData<T>(assets: Assets, requestUrl: string, path: `/tool
   return pending as Promise<T>;
 }
 
+/** Plain-text counterpart of loadToolData, for the line-oriented search indexes. */
+export function loadToolText(assets: Assets, requestUrl: string, path: `/tools-data/${string}.txt`): Promise<string> {
+  let pending = cache.get(path) as Promise<string> | undefined;
+  if (!pending) {
+    const url = new URL(path, requestUrl).toString();
+    pending = (async () => {
+      let response = assets ? await assets.fetch(url).catch(() => null) : null;
+      // `astro dev` has no ASSETS binding and serves the index on demand.
+      if ((!response || !response.ok) && import.meta.env.DEV) response = await fetch(url);
+      if (!response || !response.ok) throw new Error(`Tool index unavailable: ${response?.status ?? 'no assets binding'}`);
+      return response.text();
+    })();
+    // A failed load must not poison later requests.
+    pending.catch(() => cache.delete(path));
+    cache.set(path, pending);
+  }
+  return pending;
+}
+
 /** Drops the internal search key before an entry is sent to the browser. */
 export function publicEntry<T extends { k: string }>({ k: _key, ...entry }: T): Omit<T, 'k'> {
   return entry;

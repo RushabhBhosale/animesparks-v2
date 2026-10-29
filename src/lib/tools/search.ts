@@ -14,7 +14,7 @@ export function buildSearchKey(titles: Array<string | null | undefined>): string
   return [...new Set(titles.filter(Boolean).map(title => compactKey(title!)).filter(Boolean))].join('|');
 }
 
-function score(entry: SearchableEntry, query: string, tokens: string[]): number {
+export function scoreEntry(entry: SearchableEntry, query: string, tokens: string[]): number {
   const keys = entry.k.split('|');
   let best = 0;
   for (const key of keys) {
@@ -39,7 +39,7 @@ export function searchIndex<T extends SearchableEntry>(entries: T[], rawQuery: s
   const tokens = searchTokens(rawQuery.slice(0, 100)).map(compactKey).filter(token => token.length > 1);
   const hits: Array<{ entry: T; score: number }> = [];
   for (const entry of entries) {
-    const value = score(entry, query, tokens);
+    const value = scoreEntry(entry, query, tokens);
     if (value > 0) hits.push({ entry, score: value });
   }
   return hits.sort((a, b) => b.score - a.score || a.entry.t.localeCompare(b.entry.t)).slice(0, limit).map(hit => hit.entry);

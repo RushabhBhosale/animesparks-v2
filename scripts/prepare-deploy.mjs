@@ -21,6 +21,7 @@ const tagRouteMap = JSON.parse(readFileSync(join(output, 'client', 'tag-route-ma
 writeFileSync(join(output, 'server', 'tag-route-map.mjs'), `export default ${JSON.stringify(tagRouteMap)};\n`);
 const listingPageMap = JSON.parse(readFileSync(join(output, 'client', 'listing-page-map.json'), 'utf8'));
 writeFileSync(join(output, 'server', 'listing-page-map.mjs'), `export default ${JSON.stringify(listingPageMap)};\n`);
+writeFileSync(join(output, 'server', 'build-id.mjs'), `export default ${JSON.stringify(String(Date.now()))};\n`);
 const localSecretCopy = join(output, 'server', '.dev.vars');
 if (existsSync(localSecretCopy)) rmSync(localSecretCopy);
 const localSecrets = '.dev.vars';

@@ -1,10 +1,35 @@
 import astro from './entry.mjs';
 import tagRouteMap from './tag-route-map.mjs';
 import listingPageMap from './listing-page-map.mjs';
+import buildId from './build-id.mjs';
 
 const adminHost = 'admin.animesparks.blog';
 const productionHost = 'www.animesparks.blog';
 const apexHost = 'animesparks.blog';
+
+// Pages rendered on demand (search, trending, q/sort/range listings) are shared between
+// isolates through the colo's edge cache. The key carries the build id so a deploy never
+// serves HTML that points at the previous build's hashed assets.
+const SSR_CACHE_SECONDS = 300;
+async function cachedHtml(request, url, context, render) {
+  const cache = globalThis.caches?.default;
+  if (!cache || request.method !== 'GET' || url.hostname !== productionHost) return render();
+  const key = new Request(`https://ssr-cache.animesparks.internal/${buildId}${url.pathname}${url.search}`);
+  const hit = await cache.match(key).catch(() => undefined);
+  if (hit) {
+    // The stored copy carries a max-age for the cache only; browsers keep their previous behaviour.
+    const shared = new Response(hit.body, hit);
+    shared.headers.delete('Cache-Control');
+    return shared;
+  }
+  const response = await render();
+  if (response.status === 200) {
+    const copy = new Response(response.clone().body, response);
+    copy.headers.set('Cache-Control', `public, max-age=${SSR_CACHE_SECONDS}`);
+    context.waitUntil(cache.put(key, copy).catch(() => { /* best effort */ }));
+  }
+  return response;
+}
 
 const pagePattern = /^[1-9]\d*$/;
 
@@ -94,8 +119,10 @@ export default {
         const rewrite = new URL('/listing-variant', url);
         rewrite.searchParams.set('target', url.pathname);
         for (const [key, value] of url.searchParams) rewrite.searchParams.append(key, value);
-        response = await astro.fetch(new Request(rewrite, request), env, context);
+        response = await cachedHtml(request, url, context, () => astro.fetch(new Request(rewrite, request), env, context));
       }
+    } else if (url.pathname === '/search') {
+      response = await cachedHtml(request, url, context, () => astro.fetch(request, env, context));
     } else if (tagArchive) {
       const assetPath = tagArchiveAsset(url);
       if (assetPath) response = await env.ASSETS.fetch(new URL(assetPath, url).toString());

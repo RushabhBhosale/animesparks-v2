@@ -60,6 +60,7 @@ const tagRouteMap = JSON.parse(readFileSync(join(clientDirectory, 'tag-route-map
 writeFileSync(join(serverDirectory, 'tag-route-map.mjs'), `export default ${JSON.stringify(tagRouteMap)};\n`);
 const listingPageMap = JSON.parse(readFileSync(join(clientDirectory, 'listing-page-map.json'), 'utf8'));
 writeFileSync(join(serverDirectory, 'listing-page-map.mjs'), `export default ${JSON.stringify(listingPageMap)};\n`);
+writeFileSync(join(serverDirectory, 'build-id.mjs'), `export default ${JSON.stringify(String(Date.now()))};\n`);
 
 const localSecretCopy = join(serverDirectory, '.dev.vars');
 if (existsSync(localSecretCopy)) rmSync(localSecretCopy);
