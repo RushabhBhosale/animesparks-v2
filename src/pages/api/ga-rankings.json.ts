@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { getGa4PageViews, sortByGaViews } from '../../lib/content/ga4-rankings';
 import { r2ImageUrl } from '../../lib/content/images';
+import { loadListingData } from '../../lib/content/listing-data';
 import type { ArticleCard } from '../../lib/content/types';
 
 type RankedCard = {
@@ -32,9 +33,8 @@ const toCard = (article: ArticleCard): RankedCard => {
 
 export const GET: APIRoute = async ({ request }) => {
   if (!env.ASSETS) return new Response('Static assets unavailable', { status: 503 });
-  const response = await env.ASSETS.fetch(new URL('/listing-data.json', request.url).toString());
-  if (!response.ok) return new Response('Ranking data unavailable', { status: 503 });
-  const { english } = await response.json() as { english: ArticleCard[] };
+  const { english } = await loadListingData(env.ASSETS, request.url).catch(() => ({ english: null }));
+  if (!english) return new Response('Ranking data unavailable', { status: 503 });
   const excluded = new Set(new URL(request.url).searchParams.get('exclude')?.split(',').filter(Boolean) || []);
   const [weeklyViews, monthlyViews] = await Promise.all([
     getGa4PageViews(env, 'week'),

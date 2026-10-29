@@ -1,0 +1,15 @@
+---
+import ListingPage from '../../components/ListingPage.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { listingPageRoutes, listingSource } from '../../lib/content/listing-pages';
+import { buildListing } from '../../lib/content/listing-view';
+export const prerender = true;
+export async function getStaticPaths() {
+  const data = await getBuildData();
+  return listingPageRoutes(data).map(({ id, target, page }) => ({ params: { id }, props: { target, page } }));
+}
+const { target, page } = Astro.props as { target: string; page: number };
+const view = buildListing(listingSource(await getBuildData()), { target, page, views: null });
+if ('status' in view) throw new Error(`Prerendered listing page ${target}?page=${page} failed: ${view.message}`);
+---
+<ListingPage {...view.listing} />

@@ -12,6 +12,27 @@ const REPORT_TIMEOUT_MS = 5000;
 let tokenCache: { value: string; expiresAt: number } | undefined;
 const reportCache = new Map<string, { value: Map<string, number>; expiresAt: number }>();
 
+// Isolates are short-lived and many, so each would otherwise sign its own JWT
+// and call GA4 again. The colo's edge cache shares one report between them.
+const edgeCache = () => (globalThis as unknown as { caches?: { default?: Cache } }).caches?.default;
+const edgeKey = (propertyId: string, range: RankingWindow) => new Request(`https://ga4-cache.animesparks.internal/${propertyId}/${range}`);
+
+async function readEdgeReport(propertyId: string, range: RankingWindow) {
+  try {
+    const hit = await edgeCache()?.match(edgeKey(propertyId, range));
+    if (!hit) return undefined;
+    return new Map(Object.entries(await hit.json() as Record<string, number>));
+  } catch { return undefined; /* Cache API unavailable (e.g. astro dev). */ }
+}
+
+async function writeEdgeReport(propertyId: string, range: RankingWindow, views: Map<string, number>) {
+  try {
+    await edgeCache()?.put(edgeKey(propertyId, range), new Response(JSON.stringify(Object.fromEntries(views)), {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${REPORT_TTL_MS / 1000}` },
+    }));
+  } catch { /* best effort */ }
+}
+
 const base64Url = (bytes: Uint8Array) => {
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -73,6 +94,11 @@ export async function getGa4PageViews(env: AnalyticsEnv, range: RankingWindow = 
   const cacheKey = `${propertyId}:${range}`;
   const cached = reportCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const shared = await readEdgeReport(propertyId, range);
+  if (shared) {
+    reportCache.set(cacheKey, { value: shared, expiresAt: Date.now() + REPORT_TTL_MS });
+    return shared;
+  }
 
   try {
     const accessToken = await getAccessToken(email, rawKey.replace(/\\n/g, '\n'));
@@ -102,6 +128,7 @@ export async function getGa4PageViews(env: AnalyticsEnv, range: RankingWindow = 
       if (path && Number.isFinite(count)) views.set(path.replace(/\/$/, ''), count);
     }
     reportCache.set(cacheKey, { value: views, expiresAt: Date.now() + REPORT_TTL_MS });
+    await writeEdgeReport(propertyId, range, views);
     return views;
   } catch (error) {
     console.warn('[ga4] Unable to refresh article rankings', error instanceof Error ? error.message : 'unknown error');

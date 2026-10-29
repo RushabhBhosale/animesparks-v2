@@ -58,6 +58,8 @@ writeFileSync(configPath, JSON.stringify(config, null, 2));
 copyFileSync('scripts/guarded-worker.mjs', join(serverDirectory, 'guarded-worker.mjs'));
 const tagRouteMap = JSON.parse(readFileSync(join(clientDirectory, 'tag-route-map.json'), 'utf8'));
 writeFileSync(join(serverDirectory, 'tag-route-map.mjs'), `export default ${JSON.stringify(tagRouteMap)};\n`);
+const listingPageMap = JSON.parse(readFileSync(join(clientDirectory, 'listing-page-map.json'), 'utf8'));
+writeFileSync(join(serverDirectory, 'listing-page-map.mjs'), `export default ${JSON.stringify(listingPageMap)};\n`);
 
 const localSecretCopy = join(serverDirectory, '.dev.vars');
 if (existsSync(localSecretCopy)) rmSync(localSecretCopy);

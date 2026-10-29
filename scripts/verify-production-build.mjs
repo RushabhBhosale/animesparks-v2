@@ -54,6 +54,25 @@ for (const [tag, route] of Object.entries(variantRoutes)) {
   assert.match(html, /<meta name="robots" content="noindex, follow"/, `case variant must be nonindexable: ${tag}`);
 }
 
+// Prerendered pagination pages stand in for on-demand `?page=N` listings: they must keep the
+// self-referencing canonical and the first page's robots directive.
+const listingPages = JSON.parse(read('listing-page-map.json'));
+assert.ok(Object.keys(listingPages).some(key => key.startsWith('/blogs|')), 'blog archive pagination is not prerendered');
+const robotsOf = html => html.match(/<meta name="robots" content="([^"]+)"/)?.[1];
+for (const [key, route] of Object.entries(listingPages)) {
+  const separator = key.lastIndexOf('|');
+  const target = key.slice(0, separator);
+  const page = key.slice(separator + 1);
+  const html = read(`${route.slice(1)}index.html`);
+  const publicPath = target.startsWith('/tags/') ? `/tags/${encodeURIComponent(target.slice('/tags/'.length))}` : target;
+  assert.equal(html.match(/<link rel="canonical" href="([^"]+)"/)?.[1], `https://www.animesparks.blog${publicPath}?page=${page}`, `incorrect pagination canonical: ${key}`);
+  if (target.startsWith('/tags/')) {
+    const tag = target.slice('/tags/'.length);
+    const firstPage = variantRoutes[tag] ? read(`${variantRoutes[tag].slice(1)}index.html`) : read(`tags/${tag}/index.html`);
+    assert.equal(robotsOf(html), robotsOf(firstPage), `pagination robots directive differs from the first page: ${key}`);
+  }
+}
+
 const inventory = JSON.parse(read('route-inventory.json'));
 const publicArticlePaths = inventory.filter(path => /^(?:\/es)?\/blog\//.test(path));
 assert.ok(publicArticlePaths.length > 0, 'published article route inventory is empty');
