@@ -130,6 +130,21 @@ export const demonSlayer: SeriesData = {
     { id: 'tanjiro-demon', title: 'Muzan turns Tanjiro into a demon', summary: 'As a last attempt to live on, Muzan transforms Tanjiro.', kind: 'transformation', characters: ['tanjiro', 'muzan'], when: 'The final battle', storyOrder: 80, manga: { ch: 201 }, spoiler: 'finale' },
     { id: 'tanjiro-human', title: 'Tanjiro returns to human form', summary: 'Tanjiro is human again, though changed.', kind: 'reveal', characters: ['tanjiro'], when: 'After the final battle', storyOrder: 90, manga: { ch: 203 }, spoiler: 'finale' },
   ],
+  clans: [
+    { id: 'kamado', name: 'Kamado family', summary: 'Tanjiro and Nezuko’s family, charcoal sellers whose attack opens the story.', traits: [{ text: 'A fire-based dance passed down in the family.', spoiler: 'mugen-train' }], members: ['tanjuro', 'kie', 'tanjiro', 'nezuko'] },
+    { id: 'rengoku', name: 'Rengoku family', summary: 'A line of Flame Hashira: Shinjuro, Kyojuro and Senjuro Rengoku.', traits: [{ text: 'The Flame Breathing style is handed down the line.' }], members: ['shinjuro', 'rengoku', 'senjuro'] },
+  ],
+  familyGuide: {
+    seo: { title: 'Demon Slayer Family Tree: Kamado and Rengoku Families', description: 'An interactive Demon Slayer family tree of the Kamado and Rengoku families, with spoiler-protected connections and links to character profiles.' },
+    intro: [
+      'Demon Slayer is driven by two families: the Kamado siblings whose loss starts the story, and the Rengoku line of Flame Hashira that Tanjiro meets on the Mugen Train.',
+      'This explorer shows the family ties recorded in the manga. It is deliberately small because only verified relatives are included; other families, such as the Ubuyashiki, will be added once their ties are checked.',
+    ],
+    faq: [
+      { question: 'Who is in the Kamado family?', answer: 'Tanjiro, Nezuko and their parents Tanjuro and Kie are shown in the tree.' },
+      { question: 'Is Rengoku’s family a line of Hashira?', answer: 'Yes. His father Shinjuro held the Flame Hashira role before him.' },
+    ],
+  },
   faq: [
     { question: 'Where should I start reading the Demon Slayer manga after the anime?', answer: 'The Hashira Training arc ends at chapter 139, so continue from chapter 140. The AnimeSparks manga chapter finder lists each episode’s chapters.' },
   ],

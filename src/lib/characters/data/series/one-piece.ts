@@ -170,6 +170,20 @@ export const onePiece: SeriesData = {
     { id: 'gear-fourth', title: 'Luffy debuts Gear Fourth', summary: 'Luffy shows Gear Fourth after the time skip.', kind: 'transformation', characters: ['luffy'], when: 'Dressrosa', storyOrder: 110, manga: { ch: 783 }, anime: { ep: 725 }, arc: 'dressrosa', spoiler: 'new-world' },
     { id: 'gear-fifth', title: 'Luffy’s Devil Fruit awakens: Gear Fifth', summary: 'Luffy’s Devil Fruit awakens in Wano and he activates Gear 5 for the first time.', kind: 'transformation', characters: ['luffy'], when: 'Wano Country', storyOrder: 120, manga: { ch: 1044 }, anime: { ep: 1071 }, arc: 'wano', spoiler: 'wano' },
   ],
+  clans: [
+    { id: 'd-clan', name: 'The Clan of D.', summary: 'People whose names carry a middle “D.”. Luffy, Garp, Dragon, Roger, Ace, Rouge and Marshall D. Teach all carry it.', traits: [{ text: 'What the “D.” means has not been fully explained in the sections covered here.' }], members: ['luffy', 'garp', 'dragon', 'roger', 'ace', 'rouge', 'blackbeard'] },
+  ],
+  familyGuide: {
+    seo: { title: 'One Piece Family Tree: Monkey D. Luffy, Garp, Dragon, Roger and Ace', description: 'An interactive One Piece family tree: the Monkey D. family, the Gol D. Roger and Ace line, and the sworn brothers, with spoiler-protected reveals.' },
+    intro: [
+      'One Piece keeps its most important family ties out of sight for a long time. Luffy’s relatives are revealed gradually, and Ace’s parentage is one of the story’s biggest reveals.',
+      'The explorer shows the confirmed ties between the Monkey D. family, the line of Gol D. Roger and Portgas D. Rouge, and the sworn brothers who grew up together. Anything that reveals a parent or a fate is folded away until you choose how far you have got.',
+    ],
+    faq: [
+      { question: 'Are Luffy and Ace really brothers?', answer: 'They are sworn brothers who grew up in the same household. The tree marks that tie as a sworn bond; whether they are related by blood is a separate question.' },
+      { question: 'Who is Luffy’s grandfather?', answer: 'Monkey D. Garp. The reveal comes after Enies Lobby.', spoiler: 'skypiea-enies-lobby' },
+    ],
+  },
   faq: [
     { question: 'Has the One Piece anime caught up with the manga?', answer: 'No. The anime is in the Egghead arc (episodes 1086–1155 so far), while the manga has moved well beyond it. Use the AnimeSparks manga chapter finder for the chapter to continue from.' },
   ],

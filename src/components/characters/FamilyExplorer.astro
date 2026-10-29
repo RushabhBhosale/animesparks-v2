@@ -1,0 +1,82 @@
+---
+// Interactive explorer for one series: family trees (pan/zoom), relationship
+// network, clans and the full cast roster. All of it is real HTML/SVG; the
+// script only moves the camera and toggles visibility.
+import { familyForest, castGraph } from '../../lib/characters/graph.ts';
+import { characterPath } from '../../lib/characters/registry.ts';
+import FamilyTree from './FamilyTree.astro';
+import RelationshipGraph from './RelationshipGraph.astro';
+import Spoiler from './Spoiler.astro';
+import type { ResolvedSeries } from '../../lib/characters/types.ts';
+interface Props { series: ResolvedSeries }
+const { series } = Astro.props;
+const forest = familyForest(series.cast, series.relationships);
+const network = castGraph(series.cast, series.relationships.filter(item => item.type !== 'family'));
+const inTrees = new Set(forest.flatMap(tree => tree.nodes.map(node => node.id)));
+const byId = new Map(series.cast.map(member => [member.id, member]));
+const LEGEND = [['family', 'Parent / child'], ['romance', 'Partner'], ['friend', 'Sibling'], ['family', 'Lineage (skips generations, dashed)']] as const;
+---
+<div class="explorer" data-explorer>
+  <div class="explorer__tabs" role="tablist" aria-label="Explorer views">
+    <button type="button" role="tab" aria-selected="true" data-tab="family">Family tree</button>
+    <button type="button" role="tab" aria-selected="false" data-tab="network">Relationship network</button>
+    <button type="button" role="tab" aria-selected="false" data-tab="clans">Clan explorer</button>
+    <button type="button" role="tab" aria-selected="false" data-tab="roster">All characters</button>
+  </div>
+  <div class="explorer__bar">
+    <label class="tool-field"><span>Find a character</span><input class="tool-input" type="search" list="explorer-names" placeholder="Type a name" autocomplete="off" data-search /></label>
+    <datalist id="explorer-names"></datalist>
+    <div class="explorer__tools" role="group" aria-label="Map controls">
+      <button type="button" data-zoom-out aria-label="Zoom out">−</button>
+      <button type="button" data-zoom-in aria-label="Zoom in">+</button>
+      <button type="button" data-fit>Fit</button>
+      <button type="button" data-branch aria-pressed="false" title="Fade everyone except the selected character’s family">Focus branch</button>
+      <button type="button" data-fullscreen>Fullscreen</button>
+      <button type="button" data-share>Share</button>
+    </div>
+  </div>
+
+  <div class="explorer__panel" data-panel="family">
+    <div class="explorer__viewport" data-viewport tabindex="0" role="application" aria-label={`${series.title} family tree. Drag to pan, pinch or use the buttons to zoom.`}>
+      <div class="explorer__stage" data-stage>
+        {forest.map((tree, index) => <FamilyTree tree={tree} series={series} fixed idPrefix="cast-rel" label={`${series.title} family tree ${index + 1}`} />)}
+      </div>
+    </div>
+    <ul class="explorer__legend" aria-label="Legend">
+      <li><span style="--rel:var(--line-2)"></span>Parent to child</li><li><span style="--rel:var(--rel-romance)"></span>Partners</li><li><span style="--rel:var(--rel-friend)"></span>Siblings</li><li><span style="--rel:var(--rel-family)"></span>Lineage across generations</li>
+    </ul>
+    <p class="explorer__hint">Drag to pan, pinch or Ctrl/⌘ + scroll to zoom. Bold names open a profile; other names select the person. The page address keeps your selection so you can share it. A fully accessible list of every tie is below the map.</p>
+  </div>
+
+  <div class="explorer__panel" data-panel="network" hidden>
+    <div style="padding:var(--sp-4)">
+      <RelationshipGraph graph={network} series={series} label={`${series.title} friendships, rivalries and alliances`} idPrefix="cast-rel" />
+    </div>
+  </div>
+
+  <div class="explorer__panel" data-panel="clans" hidden>
+    <div class="clan-grid" style="padding:var(--sp-4)">
+      {(series.clans || []).map(clan => (
+        <article class="clan-card" id={`clan-${clan.id}`}>
+          <h3>{clan.name}</h3>
+          <p>{clan.summary}</p>
+          <ul>{clan.traits.map(trait => <li><Spoiler series={series} after={trait.spoiler} label="Spoiler trait">{trait.text}</Spoiler></li>)}</ul>
+          <div class="clan-card__members">{clan.members.map(id => { const member = byId.get(id); return member ? (member.profile ? <a href={characterPath(member.profile)}>{member.name}</a> : <span>{member.name}</span>) : null; })}</div>
+        </article>
+      ))}
+      {!(series.clans || []).length && <p class="timeline-empty">No clans are recorded for this series yet.</p>}
+    </div>
+  </div>
+
+  <div class="explorer__panel" data-panel="roster" hidden>
+    <div style="padding:var(--sp-4)">
+      <p class="lede" style="margin:0 0 var(--sp-3);color:var(--ink-2);font-size:var(--text-sm)">Every character recorded for {series.short}, including people with no known family or relationships yet. {series.cast.length} entries; coverage of the full series roster has not been measured.</p>
+      <div class="clan-card__members">
+        {series.cast.map(member => member.profile ? <a href={characterPath(member.profile)}>{member.name}</a> : <span title={inTrees.has(member.id) ? 'Appears in a family tree' : 'No family connections recorded'}>{member.name}</span>)}
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  import '../../scripts/characters/explorer.ts';
+</script>

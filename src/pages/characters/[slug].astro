@@ -21,6 +21,7 @@ import { SITE } from '../../lib/content/seo';
 import { refLabel } from '../../lib/characters/format.ts';
 import { egoGraph, familyTree } from '../../lib/characters/graph.ts';
 import { articlesForCharacter, seriesToolLinks } from '../../lib/characters/links.ts';
+import { familySeries, familyPath } from '../../lib/characters/family.ts';
 import { characterPath, getRegistry, hubPath } from '../../lib/characters/registry.ts';
 import { profileJsonLd, CHARACTERS_IMAGE } from '../../lib/characters/seo.ts';
 
@@ -32,6 +33,7 @@ export function getStaticPaths() {
 const registry = getRegistry();
 const profile = registry.bySlug.get(Astro.props.slug)!;
 const series = registry.seriesBySlug.get(profile.series)!;
+const hasFamilyPage = familySeries().some(item => item.slug === profile.series);
 const hasHub = registry.hubs.some(item => item.slug === series.slug);
 const { english } = await getBuildData();
 const [toolLinks] = await Promise.all([seriesToolLinks(series, english)]);
@@ -89,6 +91,7 @@ const crumbs: Array<[string, string?]> = [['Home', '/'], ['Characters', '/charac
               <h3 style="margin:var(--sp-8) 0 var(--sp-3);font-size:var(--text-xl)">Family tree</h3>
               <FamilyTree tree={tree} label={`Family tree around ${profile.name}`} />
             </>)}
+            {hasFamilyPage && <p class="prose" style="margin-top:var(--sp-4)"><a href={`${familyPath(profile.series)}#c=${profile.id}&view=family`}>Open {profile.name} in the {series.short} family tree explorer</a>.</p>}
             <RelationshipList relationships={relationships} series={series} focus={profile.id} />
           </section>
 

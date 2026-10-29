@@ -3,8 +3,8 @@ import { characterPath } from '../../lib/characters/registry.ts';
 import type { FamilyTree } from '../../lib/characters/graph.ts';
 import { checkpointIndex } from '../../lib/characters/format.ts';
 import type { SeriesData } from '../../lib/characters/types.ts';
-interface Props { tree: FamilyTree; label: string; idPrefix?: string; series?: SeriesData }
-const { tree, label, idPrefix = 'rel', series } = Astro.props;
+interface Props { tree: FamilyTree; label: string; idPrefix?: string; series?: SeriesData; fixed?: boolean }
+const { tree, label, idPrefix = 'rel', series, fixed = false } = Astro.props;
 const lockOf = (spoiler?: string) => (series ? checkpointIndex(series, spoiler) : -1);
 // A relative whose every link is spoiler-protected stays hidden until the first of them unlocks.
 const nodeLock = (id: string) => {
@@ -30,8 +30,8 @@ const paths = tree.links.map(link => {
     : { d: `M${left.x + W / 2},${left.y} H${right.x - W / 2}`, kind: link.kind, link };
 });
 ---
-<div class="graph-wrap">
-  <svg viewBox={`0 0 ${tree.width} ${tree.height}`} role="group" aria-label={label}>
+<div class={fixed ? 'tree-fixed' : 'graph-wrap'}>
+  <svg viewBox={`0 0 ${tree.width} ${tree.height}`} width={fixed ? tree.width : undefined} height={fixed ? tree.height : undefined} role="group" aria-label={label} data-family-tree>
     <g aria-hidden="true">
       {Array.from({ length: tree.generations }, (_, generation) => (
         <g>
@@ -42,7 +42,7 @@ const paths = tree.links.map(link => {
     </g>
     <g>
       {paths.map(path => (
-        <a href={`#${idPrefix}-${path.link.relationship.id}`} data-spoiler-idx={lockOf(path.link.relationship.spoiler) >= 0 ? lockOf(path.link.relationship.spoiler) : undefined} data-spoiler-hide={lockOf(path.link.relationship.spoiler) >= 0 ? '' : undefined} {...(lockOf(path.link.relationship.spoiler) >= 0 ? { hidden: true } : {})}>
+        <a href={`#${idPrefix}-${path.link.relationship.id}`} data-a={path.link.from.id} data-b={path.link.to.id} data-spoiler-idx={lockOf(path.link.relationship.spoiler) >= 0 ? lockOf(path.link.relationship.spoiler) : undefined} data-spoiler-hide={lockOf(path.link.relationship.spoiler) >= 0 ? '' : undefined} {...(lockOf(path.link.relationship.spoiler) >= 0 ? { hidden: true } : {})}>
           <path class={`tree-line tree-line--${path.kind}`} d={path.d} />
           <path d={path.d} stroke="transparent" stroke-width="14" fill="none" />
           <title>{path.link.from.name} · {path.link.to.name}: {path.link.relationship.roles ? `${path.link.relationship.roles.a} / ${path.link.relationship.roles.b}` : path.link.relationship.kin}</title>
@@ -51,7 +51,7 @@ const paths = tree.links.map(link => {
     </g>
     <g>
       {tree.nodes.map(node => (
-        <g class={`node${node.focus ? ' node--focus' : ''}${node.profile ? '' : ' node--plain'}`} data-spoiler-idx={nodeLock(node.id) >= 0 ? nodeLock(node.id) : undefined} data-spoiler-hide={nodeLock(node.id) >= 0 ? '' : undefined} {...(nodeLock(node.id) >= 0 ? { hidden: true } : {})} transform={`translate(${node.x - W / 2},${node.y - H / 2})`}>
+        <g class={`node${node.focus ? ' node--focus' : ''}${node.profile ? '' : ' node--plain'}`} data-id={node.id} data-name={node.name} data-spoiler-idx={nodeLock(node.id) >= 0 ? nodeLock(node.id) : undefined} data-spoiler-hide={nodeLock(node.id) >= 0 ? '' : undefined} {...(nodeLock(node.id) >= 0 ? { hidden: true } : {})} transform={`translate(${node.x - W / 2},${node.y - H / 2})`}>
           {node.profile && !node.focus
             ? <a href={characterPath(node.profile)} aria-label={`${node.name}: character profile`}><rect width={W} height={H} /><text x={W / 2} y={H / 2}>{clip(node.name)}</text></a>
             : <g><rect width={W} height={H} /><text x={W / 2} y={H / 2}>{clip(node.name)}</text></g>}

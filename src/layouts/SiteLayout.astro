@@ -159,6 +159,7 @@ const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003
         <a href="/my-anime-list">{lang === 'es' ? 'Mi lista de anime' : 'My anime list'}</a>
         <a href="/tools">{lang === 'es' ? 'Herramientas de anime' : 'Anime tools'}</a>
         {lang === 'en' && <a href="/characters">Character encyclopedia</a>}
+        {lang === 'en' && <a href="/family-trees">Anime family trees</a>}
         <a href="/blogs/es" hreflang="es">{copy.spanishEdition}</a>
       </nav>
 

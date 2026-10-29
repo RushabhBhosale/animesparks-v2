@@ -17,6 +17,7 @@ import { SITE } from '../../../lib/content/seo';
 import { ABILITY_KIND_LABEL, checkpointIndex, refLabel } from '../../../lib/characters/format.ts';
 import { castGraph, familyForest } from '../../../lib/characters/graph.ts';
 import { seriesArticles, seriesToolLinks } from '../../../lib/characters/links.ts';
+import { familySeries, familyPath } from '../../../lib/characters/family.ts';
 import { characterPath, getRegistry, hubPath, latestVerified } from '../../../lib/characters/registry.ts';
 import { CHARACTERS_IMAGE, crumbList } from '../../../lib/characters/seo.ts';
 
@@ -29,6 +30,7 @@ const registry = getRegistry();
 const series = registry.seriesBySlug.get(Astro.props.slug)!;
 const { english } = await getBuildData();
 const toolLinks = await seriesToolLinks(series, english);
+const hasFamilyPage = familySeries().some(item => item.slug === series.slug);
 const articles = seriesArticles(series, english);
 const path = hubPath(series.slug);
 // The relationship map shows friends, rivals and enemies plus family ties that involve a profiled character; the full family history lives in the family trees.
@@ -74,6 +76,7 @@ const faq = [...series.faq, { question: `Which ${series.short} characters have p
       {forest.length > 0 && (
         <section class="char-section" id="families" aria-labelledby="families-title">
           <h2 id="families-title">{series.short} family trees</h2>
+          {hasFamilyPage && <p class="lede"><a href={familyPath(series.slug)}>Open the interactive {series.short} family tree explorer</a> with search, zoom and clan views.</p>}
           <p class="lede">Every family connection in the series, including characters who do not have a profile yet. Bold names open a profile; lines open the explanation in the relationship map above.</p>
           {forest.map((tree, index) => <FamilyTree tree={tree} series={series} idPrefix="cast-rel" label={`${series.title} family tree ${index + 1}`} />)}
         </section>

@@ -1,3 +1,4 @@
+export {};
 // Client-side filtering for the character directory. The URL never changes,
 // so filtered views cannot create indexable duplicates.
 const root = document.querySelector<HTMLElement>('[data-directory]');

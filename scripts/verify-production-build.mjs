@@ -99,7 +99,7 @@ assert.ok(canonicalRoutes.size === publicArticlePaths.length, 'article canonical
 console.log(`[production-safety] Passed indexability, canonical, sitemap, robots, H1 and JSON-LD checks for ${publicArticlePaths.length} published article routes and ${expectedSitemapTags.size} indexable tags.`);
 
 // Character encyclopedia: every route in the inventory is indexable, canonical, in the sitemap and has a heading and structured data.
-const characterPaths = inventory.filter(path => path === '/characters' || path.startsWith('/characters/'));
+const characterPaths = inventory.filter(path => path === '/characters' || path.startsWith('/characters/') || path === '/family-trees' || path.startsWith('/family-trees/'));
 assert.ok(characterPaths.length >= 10, 'character encyclopedia routes are missing');
 const sitemapPaths = new Set(urls.map(url => new URL(url).pathname));
 for (const path of characterPaths) {
@@ -110,7 +110,7 @@ for (const path of characterPaths) {
   assert.match(html, /"@type":"BreadcrumbList"/, `missing breadcrumbs: ${path}`);
   assert.ok(sitemapPaths.has(path), `character route missing from the sitemap: ${path}`);
   // Spoiler-gated content must stay folded in the markup (the shield works without JavaScript).
-  if (path !== '/characters') assert.match(html, /<details class="spoiler"/, `no spoiler shield on ${path}`);
+  if (path !== '/characters' && path !== '/family-trees') assert.match(html, /<details class="spoiler"/, `no spoiler shield on ${path}`);
 }
 console.log(`[characters] Passed indexability, canonical, sitemap, breadcrumb and spoiler-shield checks for ${characterPaths.length} character routes.`);
 

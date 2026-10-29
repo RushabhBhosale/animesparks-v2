@@ -362,6 +362,25 @@ export const naruto: SeriesData = {
     { id: 'final-battle', title: 'Naruto and Sasuke’s final battle', summary: 'The two fight with the full powers they have developed.', kind: 'battle', characters: ['naruto', 'sasuke'], when: 'End of the war', storyOrder: 110, anime: { ep: 476, ed: 'shippuden' }, manga: { ch: 696 }, arc: 'finale', spoiler: 'finale' },
     { id: 'epilogue', title: 'The epilogue', summary: 'The story jumps ahead and shows where the characters end up.', kind: 'milestone', characters: ['naruto', 'sasuke', 'sakura', 'sarada', 'hinata'], when: 'After the war', storyOrder: 120, manga: { ch: 700 }, arc: 'finale', spoiler: 'finale' },
   ],
+  clans: [
+    { id: 'uchiha', name: 'Uchiha clan', summary: 'A Konoha clan known for the Sharingan eye technique. Fugaku led its police force and was the father of Itachi and Sasuke.', traits: [{ text: 'The Sharingan, with the Mangekyō form unlocked after a deep personal loss.' }, { text: 'The clan traces its line back to Indra Otsutsuki.', spoiler: 'finale' }], members: ['madara', 'izuna', 'fugaku', 'mikoto', 'itachi', 'shisui', 'sasuke', 'sarada'] },
+    { id: 'senju', name: 'Senju clan', summary: 'The clan of Hashirama and Tobirama Senju, the First and Second Hokage. Tsunade is Hashirama’s granddaughter.', traits: [{ text: 'The clan traces its line back to Ashura Otsutsuki.', spoiler: 'finale' }], members: ['hashirama', 'tobirama', 'tsunade'] },
+    { id: 'uzumaki', name: 'Uzumaki clan', summary: 'The clan of Kushina and Mito Uzumaki, whose members have been jinchūriki of the Nine-Tails. Naruto is Kushina’s son.', traits: [{ text: 'Large chakra reserves and a tradition of sealing techniques.' }], members: ['mito', 'kushina', 'naruto', 'boruto', 'himawari'] },
+    { id: 'hyuga', name: 'Hyuga clan', summary: 'A Konoha clan with the Byakugan eye technique. Hinata, Hanabi and Neji belong to its main and branch families.', traits: [{ text: 'The Byakugan, a wide-ranging sight technique.' }], members: ['hiashi', 'hizashi', 'hinata', 'hanabi', 'neji'] },
+    { id: 'otsutsuki', name: 'Otsutsuki clan', summary: 'The origin of chakra in the story’s history.', traits: [{ text: 'Kaguya is the mother of Hagoromo and Hamura; Hagoromo’s sons are Indra and Ashura.' }], members: ['kaguya', 'hagoromo', 'hamura', 'indra', 'ashura'] },
+  ],
+  familyGuide: {
+    seo: { title: 'Naruto Family Tree: Uchiha, Senju, Uzumaki and Hyuga Families', description: 'An interactive Naruto family tree covering the Uchiha, Senju, Uzumaki, Hyuga and Otsutsuki families, with spoiler-protected connections and links to every profile.' },
+    intro: [
+      'Naruto’s world is organised around clans, and almost every major conflict traces back to one family tie. The Uchiha and Hyuga carry eye techniques, the Senju and Uzumaki are linked through the village’s founding, and Naruto’s own parents tie several of these threads together.',
+      'This explorer draws every family connection recorded in the manga as a layered tree: parents above their children, siblings side by side, partners joined by a line. Connections that reveal major story twists stay hidden until you say how far you have watched or read.',
+    ],
+    faq: [
+      { question: 'Who are Naruto’s parents?', answer: 'Minato Namikaze and Kushina Uzumaki. Choose “Shippuden up to episode 133” or later in the spoiler selector to see them in the tree.', spoiler: 'akatsuki' },
+      { question: 'Which clan is Sasuke from?', answer: 'The Uchiha clan. His parents are Fugaku and Mikoto, and his older brother is Itachi.' },
+      { question: 'Are the Uchiha and Senju related?', answer: 'The story links both clans to the Otsutsuki family. Reveal later checkpoints to see how.', spoiler: 'finale' },
+    ],
+  },
   faq: [
     { question: 'Do I need to watch Naruto before Naruto: Shippuden?', answer: 'Yes. Shippuden continues directly from the original series, and its first arc picks up two and a half years after the Valley of the End.' },
     { question: 'Why do episode numbers on these pages mention “Shippuden”?', answer: 'The two anime series number their episodes separately. References marked “Shippuden” are Naruto: Shippuden episodes; unmarked ones are the original Naruto.' },

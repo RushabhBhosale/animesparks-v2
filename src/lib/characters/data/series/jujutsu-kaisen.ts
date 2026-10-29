@@ -214,6 +214,22 @@ export const jujutsuKaisen: SeriesData = {
     { id: 'yuta-in-gojo', title: 'Yuta fights in Gojo’s body', summary: 'The figure that looks like Gojo turns out to be Yuta, whose brain was moved into Gojo’s body with Kenjaku’s technique.', kind: 'reveal', characters: ['yuta', 'gojo', 'sukuna', 'yuji'], when: '25 December 2018', storyOrder: 160, manga: { ch: 261 }, arc: 'shinjuku', spoiler: 'shinjuku' },
     { id: 'sukuna-defeated', title: 'Sukuna is defeated', summary: 'Yuji’s Black Flash in chapter 267 ends the fight, and Sukuna dies in chapter 268 after refusing Yuji’s offer to let him live inside him.', kind: 'death', characters: ['yuji', 'sukuna', 'megumi'], when: '25 December 2018', storyOrder: 170, manga: { ch: 268 }, arc: 'shinjuku', spoiler: 'finale' },
   ],
+  clans: [
+    { id: 'gojo', name: 'Gojo clan', summary: 'One of the three great sorcerer families. Satoru Gojo inherited both Limitless and Six Eyes, the first person in roughly four hundred years said to have both.', traits: [{ text: 'The Limitless technique and the Six Eyes.' }, { text: 'Yuta Okkotsu is a distant relative of Satoru Gojo.', spoiler: 'culling-game' }], members: ['gojo', 'yuta'] },
+    { id: 'zenin', name: 'Zenin clan', summary: 'Another of the three great families, home of the Ten Shadows Technique that Megumi inherits.', traits: [{ text: 'Toji was born into the Zenin clan, and Megumi is his son.', spoiler: 'season-2' }], members: ['toji', 'megumi'] },
+    { id: 'itadori', name: 'Itadori family', summary: 'Yuji’s family: his grandfather Wasuke raised him.', traits: [{ text: 'Yuji’s brother Choso is a Death Painting, a connection revealed over the Shibuya arc.', spoiler: 'season-3' }], members: ['wasuke', 'yuji', 'choso'] },
+  ],
+  familyGuide: {
+    seo: { title: 'Jujutsu Kaisen Family Tree: Gojo, Zenin and Itadori Families', description: 'Who is related to whom in Jujutsu Kaisen: an interactive family tree of the Gojo, Zenin and Itadori families with spoiler-protected connections.' },
+    intro: [
+      'Jujutsu Kaisen’s sorcerer world is built on inherited techniques, so families matter: the Gojo clan’s Limitless, the Zenin clan’s Ten Shadows Technique, and the bonds that cut across them.',
+      'The explorer maps the verified family ties in the manga and anime. Connections that change how a character reads, such as who a character’s father is, stay folded away until you pick your spoiler level.',
+    ],
+    faq: [
+      { question: 'Who is related to whom in Jujutsu Kaisen?', answer: 'Megumi and Tsumiki are stepsiblings, Yuji was raised by his grandfather Wasuke, and several sorcerers belong to the Gojo and Zenin clans. The tree shows each tie you have unlocked.' },
+      { question: 'Is Gojo related to Yuta?', answer: 'Yes, as a distant relative. Raise your spoiler level to see it in the tree.', spoiler: 'culling-game' },
+    ],
+  },
   faq: [
     { question: 'Has the Jujutsu Kaisen anime caught up with the manga?', answer: 'No. The manga ended at chapter 271 in 2024, while the anime has covered chapters 1–181 across three seasons. A fourth season, Culling Game Part 2, was announced without a release date.' },
     { question: 'Where should I start reading the manga after the anime?', answer: 'Begin at chapter 182, where season 3 stops. The AnimeSparks manga chapter finder lists the exact chapters each episode adapts.' },

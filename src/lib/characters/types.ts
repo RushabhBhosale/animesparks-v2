@@ -265,6 +265,23 @@ export interface TimelineEvent {
   spoiler?: CheckpointId;
 }
 
+export interface Clan {
+  id: string;
+  name: string;
+  /** Spoiler-free description. */
+  summary: string;
+  /** Inherited traits, each with its own spoiler level. */
+  traits: Array<{ text: string; spoiler?: CheckpointId }>;
+  members: string[];
+}
+
+export interface FamilyGuide {
+  /** Page title and description must stay spoiler-free. */
+  seo: { title: string; description: string };
+  intro: string[];
+  faq: Faq[];
+}
+
 export interface SeriesData {
   slug: string;
   title: string;
@@ -285,6 +302,8 @@ export interface SeriesData {
   relationships: Relationship[];
   timeline: TimelineEvent[];
   faq: Faq[];
+  clans?: Clan[];
+  familyGuide?: FamilyGuide;
 }
 
 // ── Derived (render-time) types ──────────────────────────────────────────

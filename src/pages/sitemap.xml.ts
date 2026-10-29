@@ -10,6 +10,7 @@ import { ARC_LANDINGS, MANGA_LANDINGS } from '../lib/tools/landings';
 import { hasMoviePage } from '../lib/tools/movies';
 import { getRecLandingPages } from '../lib/tools/rec-landings';
 import { characterPath, getRegistry, hubPath } from '../lib/characters/registry';
+import { familyPath, familySeries } from '../lib/characters/family';
 
 const characterRegistry = getRegistry();
 const staticPaths = ['/', '/blogs', '/blogs/es', '/my-anime-list', '/categories', '/trending', '/contact', '/about', '/privacy', '/sitemap'];
@@ -46,6 +47,8 @@ export const GET: APIRoute = async () => {
     ...tools.franchises.filter(hasMoviePage).map(franchise => ({ url: `${SITE}/tools/anime-watch-order/${franchise.slug}/movies`, modified: xmlDate(franchise.fetchedAt) })),
     { url: `${SITE}/characters`, modified: xmlDate(characterRegistry.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) },
     ...characterRegistry.hubs.map(series => ({ url: `${SITE}${hubPath(series.slug)}`, modified: xmlDate(series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) })),
+    { url: `${SITE}/family-trees` },
+    ...familySeries().map(series => ({ url: `${SITE}${familyPath(series.slug)}`, modified: xmlDate(series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) })),
     ...characterRegistry.profiles.map(profile => ({ url: `${SITE}${characterPath(profile.slug)}`, modified: xmlDate(profile.meta.verifiedAt) })),
     ...tags.map(tag => ({ url: `${SITE}/tags/${encodeURIComponent(tag)}` })),
     ...articles.map(article => {
