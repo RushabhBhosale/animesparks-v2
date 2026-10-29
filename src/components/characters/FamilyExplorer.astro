@@ -2,16 +2,14 @@
 // Interactive explorer for one series: family trees (pan/zoom), relationship
 // network, clans and the full cast roster. All of it is real HTML/SVG; the
 // script only moves the camera and toggles visibility.
-import { familyForest, castGraph } from '../../lib/characters/graph.ts';
+import { familyForest } from '../../lib/characters/graph.ts';
 import { characterPath } from '../../lib/characters/registry.ts';
 import FamilyTree from './FamilyTree.astro';
-import RelationshipGraph from './RelationshipGraph.astro';
 import Spoiler from './Spoiler.astro';
 import type { ResolvedSeries } from '../../lib/characters/types.ts';
 interface Props { series: ResolvedSeries }
 const { series } = Astro.props;
 const forest = familyForest(series.cast, series.relationships);
-const network = castGraph(series.cast, series.relationships.filter(item => item.type !== 'family'));
 const inTrees = new Set(forest.flatMap(tree => tree.nodes.map(node => node.id)));
 const byId = new Map(series.cast.map(member => [member.id, member]));
 const LEGEND = [['family', 'Parent / child'], ['romance', 'Partner'], ['friend', 'Sibling'], ['family', 'Lineage (skips generations, dashed)']] as const;
@@ -19,7 +17,6 @@ const LEGEND = [['family', 'Parent / child'], ['romance', 'Partner'], ['friend',
 <div class="explorer" data-explorer>
   <div class="explorer__tabs" role="tablist" aria-label="Explorer views">
     <button type="button" role="tab" aria-selected="true" data-tab="family">Family tree</button>
-    <button type="button" role="tab" aria-selected="false" data-tab="network">Relationship network</button>
     <button type="button" role="tab" aria-selected="false" data-tab="clans">Clan explorer</button>
     <button type="button" role="tab" aria-selected="false" data-tab="roster">All characters</button>
   </div>
@@ -48,12 +45,6 @@ const LEGEND = [['family', 'Parent / child'], ['romance', 'Partner'], ['friend',
     <p class="explorer__hint">Drag to pan, pinch or Ctrl/⌘ + scroll to zoom. Bold names open a profile; other names select the person. The page address keeps your selection so you can share it. A fully accessible list of every tie is below the map.</p>
   </div>
 
-  <div class="explorer__panel" data-panel="network" hidden>
-    <div style="padding:var(--sp-4)">
-      <RelationshipGraph graph={network} series={series} label={`${series.title} friendships, rivalries and alliances`} idPrefix="cast-rel" />
-    </div>
-  </div>
-
   <div class="explorer__panel" data-panel="clans" hidden>
     <div class="clan-grid" style="padding:var(--sp-4)">
       {(series.clans || []).map(clan => (
@@ -70,7 +61,7 @@ const LEGEND = [['family', 'Parent / child'], ['romance', 'Partner'], ['friend',
 
   <div class="explorer__panel" data-panel="roster" hidden>
     <div style="padding:var(--sp-4)">
-      <p class="lede" style="margin:0 0 var(--sp-3);color:var(--ink-2);font-size:var(--text-sm)">Every character recorded for {series.short}, including people with no known family or relationships yet. {series.cast.length} entries; coverage of the full series roster has not been measured.</p>
+      <p class="lede" style="margin:0 0 var(--sp-3);color:var(--ink-2);font-size:var(--text-sm)">The characters with curated profiles or relationships in the encyclopedia. The complete roster is on the full family tree page.</p>
       <div class="clan-card__members">
         {series.cast.map(member => member.profile ? <a href={characterPath(member.profile)}>{member.name}</a> : <span title={inTrees.has(member.id) ? 'Appears in a family tree' : 'No family connections recorded'}>{member.name}</span>)}
       </div>

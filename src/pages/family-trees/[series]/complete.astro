@@ -1,0 +1,59 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import '../../../styles/tools.css';
+import '../../../styles/characters.css';
+import AdUnit from '../../../components/AdUnit.astro';
+import ToolHero from '../../../components/tools/ToolHero.astro';
+import SpoilerBar from '../../../components/characters/SpoilerBar.astro';
+import RosterExplorer from '../../../components/characters/RosterExplorer.astro';
+import { SITE } from '../../../lib/content/seo';
+import { familyPath, familySeries } from '../../../lib/characters/family.ts';
+import { characterPath } from '../../../lib/characters/registry.ts';
+import { getRoster, rosterStats } from '../../../lib/characters/roster.ts';
+import { CHARACTERS_IMAGE, crumbList } from '../../../lib/characters/seo.ts';
+
+export const prerender = true;
+export function getStaticPaths() {
+  return familySeries().filter(series => getRoster(series.slug)).map(series => ({ params: { series: series.slug }, props: { slug: series.slug } }));
+}
+const series = familySeries().find(item => item.slug === Astro.props.slug)!;
+const roster = getRoster(series.slug)!;
+const stats = rosterStats(series.slug)!;
+const path = `${familyPath(series.slug)}/complete`;
+const title = `Complete ${series.short} Family Tree: Every Character and Clan`;
+const description = `The complete ${series.short} family tree explorer: ${stats.characters} characters grouped by clan, searchable, with family links, affiliations and spoiler protection.`;
+const byClan = roster.clans.map((name, index) => ({ name, members: roster.nodes.filter(node => node.clan.includes(index)) })).sort((a, b) => b.members.length - a.members.length);
+const crawlable = byClan.slice(0, 12);
+---
+<SiteLayout title={title} socialTitle={title} description={description} canonical={`${SITE}${path}`} image={CHARACTERS_IMAGE}
+  jsonLd={[crumbList([['Family trees', '/family-trees'], [`${series.short} family tree`, familyPath(series.slug)], ['Complete family tree', path]]), { '@context': 'https://schema.org', '@type': 'WebPage', name: title, description, url: `${SITE}${path}`, about: { '@type': 'TVSeries', name: series.title } }]} showFooterAd>
+  <main>
+    <ToolHero crumbs={[['Home', '/'], ['Family trees', '/family-trees'], [series.short, familyPath(series.slug)], ['Complete tree']]} kicker="Complete family tree" title={`Complete ${series.short} family tree`} deck={`Every character recorded for ${series.short}, grouped by clan. Search any name, open a clan or a person’s family tree, and share the exact view.`}
+      facts={[[String(stats.characters), 'characters'], [String(stats.clans), 'clans and families'], [String(stats.connected), 'with family links']]} />
+    <div class="shell"><SpoilerBar series={series} /></div>
+    <div class="shell tool-main">
+      <RosterExplorer series={series} clans={roster.clans.map((name, index) => ({ name, count: byClan.find(item => item.name === name)!.members.length }))} src={`${familyPath(series.slug)}/roster.json`} />
+
+      <section class="char-section" aria-labelledby="about-title">
+        <h2 id="about-title">About this roster</h2>
+        <div class="prose">
+          <p>This explorer lists {stats.characters} characters from {series.short}, with their clan, affiliation and the family links recorded for them. Less important characters appear with their name and recorded facts only; characters with a full AnimeSparks profile show a summary and a link.</p>
+          <p>Coverage: the roster is imported from the Narutopedia’s character category ({roster.importedAt}) under CC BY-SA, and only factual fields are used. It has not been checked against an independent roster, so AnimeSparks does not claim it is complete, and unnamed or anime-only characters may be missing. Family ties come from the relatives each character lists, not from fan theories. Ties that give away a story twist are hidden until you set your spoiler level above.</p>
+        </div>
+      </section>
+
+      <section class="char-section" aria-labelledby="names-title">
+        <h2 id="names-title">Largest {series.short} clans and families</h2>
+        <p class="lede">Names are listed here so you can browse without the interactive map.</p>
+        <div class="tool-faq">
+          {crawlable.map(clan => (
+            <details><summary>{clan.name} ({clan.members.length})</summary>
+              <p>{clan.members.map((member, index) => <>{index > 0 && ', '}{member.profile ? <a href={characterPath(member.profile.slug)}>{member.name}</a> : member.name}</>)}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+      <div class="tool-ad-slot"><AdUnit slot="horizontal2" /></div>
+    </div>
+  </main>
+</SiteLayout>

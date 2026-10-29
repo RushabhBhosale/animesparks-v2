@@ -48,7 +48,7 @@ export const GET: APIRoute = async () => {
     { url: `${SITE}/characters`, modified: xmlDate(characterRegistry.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) },
     ...characterRegistry.hubs.map(series => ({ url: `${SITE}${hubPath(series.slug)}`, modified: xmlDate(series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) })),
     { url: `${SITE}/family-trees` },
-    ...familySeries().map(series => ({ url: `${SITE}${familyPath(series.slug)}`, modified: xmlDate(series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) })),
+    ...familySeries().flatMap(series => [familyPath(series.slug), `${familyPath(series.slug)}/complete`].map(path => ({ url: `${SITE}${path}`, modified: xmlDate(series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) }))),
     ...characterRegistry.profiles.map(profile => ({ url: `${SITE}${characterPath(profile.slug)}`, modified: xmlDate(profile.meta.verifiedAt) })),
     ...tags.map(tag => ({ url: `${SITE}/tags/${encodeURIComponent(tag)}` })),
     ...articles.map(article => {

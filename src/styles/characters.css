@@ -293,3 +293,48 @@ a.char-card:hover { border-color: var(--line-2); background: var(--surface2); }
 .clan-card__members { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-3); }
 .clan-card__members a, .clan-card__members span { padding: 2px 8px; border: 1px solid var(--line-2); font-size: var(--text-xs); color: var(--ink); }
 .clan-card__members span { color: var(--ink-3); border-style: dashed; }
+
+/* ── Complete family tree (roster explorer) ───────────────── */
+.roster { display: grid; grid-template-columns: 280px minmax(0, 1fr) 320px; gap: var(--sp-4); align-items: start; }
+.roster:fullscreen { background: var(--bg); padding: var(--sp-4); height: 100vh; overflow: auto; }
+.roster > * { min-width: 0; border: 1px solid var(--line-2); background: var(--surface); }
+.roster__side, .roster__detail { padding: var(--sp-4); max-height: 82vh; overflow: auto; position: sticky; top: 76px; }
+.roster__search { position: relative; }
+.roster__suggest { position: absolute; z-index: 20; left: 0; right: 0; margin: 4px 0 0; padding: 0; list-style: none; background: var(--surface2); border: 1px solid var(--line-2); max-height: 320px; overflow: auto; }
+.roster__suggest:empty { display: none; }
+.roster__suggest button, .roster-list button, .roster-loose button, .roster-chips button, .roster__clans button { font: inherit; color: var(--ink); background: transparent; border: 0; cursor: pointer; text-align: left; }
+.roster__suggest button { display: flex; flex-direction: column; width: 100%; padding: var(--sp-2) var(--sp-3); font-size: var(--text-sm); }
+.roster__suggest button:hover, .roster__clans button:hover { background: var(--surface); }
+.roster__suggest small { color: var(--ink-3); }
+.roster__h { margin: var(--sp-5) 0 var(--sp-2); font-size: var(--text-xs); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.roster__clans { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.roster__clans button { display: flex; justify-content: space-between; width: 100%; padding: var(--sp-2) var(--sp-3); font-size: var(--text-sm); border: 1px solid transparent; }
+.roster__clans button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.roster__clans b { color: var(--ink-3); font-weight: 400; }
+.roster__status { margin: 0; flex: 1; color: var(--ink-2); font-size: var(--text-sm); }
+.roster__main .explorer__bar { align-items: center; }
+.roster__viewport { height: min(72vh, 680px); }
+.roster:fullscreen .roster__viewport { height: 78vh; }
+.roster-clans { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-3); width: min(1000px, 92vw); }
+.roster-clan { display: flex; flex-direction: column; gap: 4px; padding: var(--sp-4); border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.roster-clan:hover { border-color: var(--accent); }
+.roster-clan strong { font-size: var(--text-lg); } .roster-clan span { color: var(--ink-2); font-size: var(--text-sm); } .roster-clan small { color: var(--ink-3); font-size: var(--text-xs); line-height: 1.4; }
+.roster--list .explorer__viewport { overflow: auto; touch-action: auto; cursor: auto; }
+.roster--list .explorer__stage { position: static; transform: none !important; width: auto; padding: 0; }
+.roster-list { list-style: none; margin: 0; padding: 0; columns: 3 220px; }
+.roster-list button { display: flex; flex-direction: column; width: 100%; padding: var(--sp-2) var(--sp-4); border-bottom: 1px solid var(--line); break-inside: avoid; }
+.roster-list span { color: var(--ink-3); font-size: var(--text-xs); }
+.roster-loose { width: min(900px, 90vw); padding: var(--sp-4); border: 1px dashed var(--line-2); }
+.roster-loose h3 { margin: 0 0 var(--sp-2); font-size: var(--text-sm); color: var(--ink-2); }
+.roster-loose button, .roster-chips button, .roster-chips span { display: inline-block; margin: 0 6px 6px 0; padding: 2px 9px; border: 1px solid var(--line-2); font-size: var(--text-xs); }
+.roster-loose button:hover, .roster-chips button:hover { border-color: var(--accent); }
+.roster__detail h2 { margin: 0 0 var(--sp-2); font-family: var(--font-body); font-size: var(--text-2xl); letter-spacing: -.03em; }
+.roster__detail h3 { margin: var(--sp-4) 0 var(--sp-2); font-size: var(--text-xs); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.roster__detail p, .roster__detail dd, .roster__detail li { color: var(--ink-2); font-size: var(--text-sm); line-height: 1.55; }
+.roster__detail dt { color: var(--ink-3); font-size: var(--text-xs); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-top: var(--sp-2); }
+.roster__detail dd { margin: 2px 0 0; }
+.roster-other { margin: 0; padding-left: 1.1em; }
+.stat-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin: 0 0 var(--sp-5); }
+.stat-row > div { padding: var(--sp-3) var(--sp-5); border: 1px solid var(--line-2); background: var(--surface); }
+.stat-row dt { color: var(--ink-3); font-size: var(--text-xs); } .stat-row dd { margin: 0; font-size: var(--text-2xl); font-weight: 700; letter-spacing: -.03em; }
+@media (max-width: 1100px) { .roster { grid-template-columns: minmax(0, 1fr); } .roster__side, .roster__detail { position: static; max-height: none; } }

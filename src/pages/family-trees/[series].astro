@@ -14,6 +14,7 @@ import { SITE } from '../../lib/content/seo';
 import { familyCounts, familyPath, familySeries } from '../../lib/characters/family.ts';
 import { seriesArticles, seriesToolLinks } from '../../lib/characters/links.ts';
 import { hubPath } from '../../lib/characters/registry.ts';
+import { compactRoster, rosterStats } from '../../lib/characters/roster.ts';
 import { CHARACTERS_IMAGE, crumbList } from '../../lib/characters/seo.ts';
 
 export const prerender = true;
@@ -26,6 +27,9 @@ const { english } = await getBuildData();
 const toolLinks = await seriesToolLinks(series, english);
 const articles = seriesArticles(series, english);
 const counts = familyCounts(series);
+const roster = rosterStats(series.slug);
+const rosterClans = compactRoster(series.slug)?.clans ?? [];
+const topClans = [...rosterClans].sort((a, b) => b.count - a.count).slice(0, 12);
 const path = familyPath(series.slug);
 const familyTies = series.relationships.filter(item => item.type === 'family');
 const verified = series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)!;
@@ -36,9 +40,22 @@ const publicFaq = faq.filter(item => !item.spoiler);
   jsonLd={[crumbList([['Family trees', '/family-trees'], [`${series.short} family tree`, path]]), { '@context': 'https://schema.org', '@type': 'WebPage', name: guide.seo.title, description: guide.seo.description, url: `${SITE}${path}`, dateModified: verified, about: { '@type': 'TVSeries', name: series.title } }, ...(publicFaq.length ? [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: publicFaq.map(item => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })) }] : [])]} showFooterAd>
   <main>
     <ToolHero crumbs={[['Home', '/'], ['Family trees', '/family-trees'], [series.short]]} kicker="Family tree explorer" title={`${series.short} family tree`} deck={guide.intro[0]}
-      facts={[[String(counts.people), 'characters with family ties'], [String(counts.ties), 'verified connections'], [String(series.cast.length), 'characters recorded']]} />
+      facts={roster ? [[String(roster.characters), 'characters in the full tree'], [String(roster.clans), 'clans and families'], [String(counts.ties), 'curated, verified ties']] : [[String(counts.people), 'characters with family ties'], [String(counts.ties), 'verified connections']]} />
     <div class="shell"><SpoilerBar series={series} /></div>
     <div class="shell tool-main">
+      {roster && (
+        <section class="char-section" style="margin-top:0" aria-labelledby="complete-title">
+          <h2 id="complete-title">Open the complete {series.short} family tree</h2>
+          <dl class="stat-row">
+            <div><dt>Characters</dt><dd>{roster.characters}</dd></div>
+            <div><dt>Clans and families</dt><dd>{roster.clans}</dd></div>
+            <div><dt>With family links</dt><dd>{roster.connected}</dd></div>
+          </dl>
+          <p class="lede">The preview below shows the best-documented families. The full explorer lists every character recorded for {series.short}, grouped by clan, with search, family trees you can pan and zoom, and a detail panel for each person.</p>
+          <p><a class="tool-button tool-button--primary" href={`${familyPath(series.slug)}/complete`}>Show the complete family tree ({roster.characters} characters) →</a></p>
+          <ul class="jump-nav" style="margin-top:var(--sp-4)">{topClans.map(clan => <li><a href={`${familyPath(series.slug)}/complete#clan=${encodeURIComponent(clan.name)}&view=tree`}>{clan.name} ({clan.count})</a></li>)}</ul>
+        </section>
+      )}
       <FamilyExplorer series={series} />
 
       <section class="char-section" aria-labelledby="intro-title">

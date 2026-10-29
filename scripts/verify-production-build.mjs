@@ -110,7 +110,8 @@ for (const path of characterPaths) {
   assert.match(html, /"@type":"BreadcrumbList"/, `missing breadcrumbs: ${path}`);
   assert.ok(sitemapPaths.has(path), `character route missing from the sitemap: ${path}`);
   // Spoiler-gated content must stay folded in the markup (the shield works without JavaScript).
-  if (path !== '/characters' && path !== '/family-trees') assert.match(html, /<details class="spoiler"/, `no spoiler shield on ${path}`);
+  if (path.endsWith('/complete')) assert.match(html, /data-spoiler-bar/, `no spoiler bar on ${path}`);
+  else if (path !== '/characters' && path !== '/family-trees') assert.match(html, /<details class="spoiler"/, `no spoiler shield on ${path}`);
 }
 console.log(`[characters] Passed indexability, canonical, sitemap, breadcrumb and spoiler-shield checks for ${characterPaths.length} character routes.`);
 
