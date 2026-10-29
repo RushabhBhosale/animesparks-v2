@@ -9,9 +9,10 @@ import { compactKey, expandQuery, searchTokens } from './normalize.ts';
 import { scoreEntry, type SearchableEntry } from './search.ts';
 import { topK } from './top-k.ts';
 
-const FIELD = '\u0001';
-const BODY = '\u0002';
-const clean = (value: string) => value.replace(/[\u0001\u0002\r\n]/g, ' ');
+// Printable separators: the file is published as a static asset next to the JSON indexes.
+const FIELD = '¦';
+const BODY = '‡';
+const clean = (value: string) => value.replace(/[¦‡\r\n]/g, ' ');
 
 /**
  * One line per entry: `slug FIELD key FIELD title-words FIELD rank FIELD title BODY json`.
@@ -92,7 +93,7 @@ export class LineIndex<T extends { s: string }> {
 
   bySlug(slug: string): Omit<T, 'k'> | undefined {
     const { text } = this;
-    if (!slug || /[\u0001\u0002\r\n]/.test(slug)) return undefined;
+    if (!slug || /[¦‡\r\n]/.test(slug)) return undefined;
     const prefix = `${slug}${FIELD}`;
     const start = text.startsWith(prefix) ? 0 : text.indexOf(`\n${prefix}`) + 1;
     // indexOf() = -1 yields start 0, which is only valid when the first line matched.

@@ -29,7 +29,7 @@ export function loadToolData<T>(assets: Assets, requestUrl: string, path: `/tool
 }
 
 /** Plain-text counterpart of loadToolData, for the line-oriented search indexes. */
-export function loadToolText(assets: Assets, requestUrl: string, path: `/tools-data/${string}.txt`): Promise<string> {
+export function loadToolText(assets: Assets, requestUrl: string, path: `/tools-data/${string}.json`): Promise<string> {
   let pending = cache.get(path) as Promise<string> | undefined;
   if (!pending) {
     const url = new URL(path, requestUrl).toString();

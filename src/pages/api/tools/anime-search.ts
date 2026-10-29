@@ -10,7 +10,7 @@ import type { AnimeIndexEntry } from '../../../lib/tools/types';
 
 async function answer(requestUrl: string, slug: string, query: string): Promise<Response> {
   try {
-    const index = new LineIndex<AnimeIndexEntry>(await loadToolText(env.ASSETS, requestUrl, '/tools-data/anime-lines.txt'));
+    const index = new LineIndex<AnimeIndexEntry>(await loadToolText(env.ASSETS, requestUrl, '/tools-data/anime-lines.json'));
     if (slug) {
       const match = index.bySlug(slug);
       if (match) return jsonResponse({ result: match });

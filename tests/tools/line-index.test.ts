@@ -59,7 +59,7 @@ test('slug lookup finds the first, middle and last entries and rejects misses', 
   assert.equal(lines.bySlug('boruto')?.t, 'Boruto: Naruto Next Generations');
   assert.equal(lines.bySlug('piece'), undefined);
   assert.equal(lines.bySlug('naruto-'), undefined);
-  assert.equal(lines.bySlug('x\u0001y'), undefined);
+  assert.equal(lines.bySlug('x¦y'), undefined);
   assert.equal(lines.bySlug(''), undefined);
   assert.equal(lines.bySlug('one-piece')?.hasOwnProperty('k'), false, 'search key is not exposed');
 });
