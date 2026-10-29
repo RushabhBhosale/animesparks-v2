@@ -1,0 +1,169 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import '../../../styles/tools.css';
+import '../../../styles/characters.css';
+import AdUnit from '../../../components/AdUnit.astro';
+import ToolHero from '../../../components/tools/ToolHero.astro';
+import RelatedReading from '../../../components/tools/RelatedReading.astro';
+import SpoilerBar from '../../../components/characters/SpoilerBar.astro';
+import Spoiler from '../../../components/characters/Spoiler.astro';
+import CharacterCard from '../../../components/characters/CharacterCard.astro';
+import RelationshipGraph from '../../../components/characters/RelationshipGraph.astro';
+import RelationshipList from '../../../components/characters/RelationshipList.astro';
+import TimelineExplorer from '../../../components/characters/TimelineExplorer.astro';
+import { getBuildData } from '../../../lib/content/build-data';
+import { SITE } from '../../../lib/content/seo';
+import { ABILITY_KIND_LABEL, checkpointIndex, refLabel } from '../../../lib/characters/format.ts';
+import { castGraph } from '../../../lib/characters/graph.ts';
+import { seriesArticles, seriesToolLinks } from '../../../lib/characters/links.ts';
+import { characterPath, getRegistry, hubPath, latestVerified } from '../../../lib/characters/registry.ts';
+import { CHARACTERS_IMAGE, crumbList } from '../../../lib/characters/seo.ts';
+
+export const prerender = true;
+export function getStaticPaths() {
+  return getRegistry().hubs.map(series => ({ params: { series: series.slug }, props: { slug: series.slug } }));
+}
+
+const registry = getRegistry();
+const series = registry.seriesBySlug.get(Astro.props.slug)!;
+const { english } = await getBuildData();
+const toolLinks = await seriesToolLinks(series, english);
+const articles = seriesArticles(series, english);
+const path = hubPath(series.slug);
+const graph = castGraph(series.cast, series.relationships);
+const allAbilities = series.profiles.flatMap(profile => profile.abilities.map(ability => ({ ability, profile })));
+const kinds = [...new Set(allAbilities.map(item => item.ability.kind))];
+const verified = latestVerified(series.profiles)!;
+const title = `${series.title} Characters: Profiles, Relationships and Timeline`;
+const description = `${series.title} character hub: ${series.profiles.length} verified profiles, a cast relationship map, power index, spoiler-protected death tracker and timeline.`;
+const faq = [...series.faq, { question: `Which ${series.short} characters have profiles?`, answer: `${series.profiles.map(item => item.name).join(', ')}. Each profile covers biography, abilities, relationships, battles, a timeline and a spoiler-protected status tracker.` }];
+---
+<SiteLayout title={title} socialTitle={title} description={description} canonical={`${SITE}${path}`} image={CHARACTERS_IMAGE}
+  jsonLd={[crumbList([['Characters', '/characters'], [`${series.short} characters`, path]]), {
+    '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description, url: `${SITE}${path}`, dateModified: verified,
+    about: { '@type': 'TVSeries', name: series.title },
+    mainEntity: { '@type': 'ItemList', itemListElement: series.profiles.map((profile, index) => ({ '@type': 'ListItem', position: index + 1, url: `${SITE}${characterPath(profile.slug)}`, name: profile.name })) },
+  }, { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(item => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })) }]} showFooterAd>
+  <main>
+    <ToolHero crumbs={[['Home', '/'], ['Characters', '/characters'], [series.short]]} kicker={`${series.title} hub`} title={`${series.title} characters`}
+      deck={series.intro} facts={[[String(series.profiles.length), 'profiles'], [String(series.relationships.length), 'mapped relationships'], [String(series.timeline.length), 'timeline events']]} />
+    <div class="shell"><SpoilerBar series={series} /></div>
+    <div class="shell tool-main">
+      <nav aria-label="On this page"><ul class="jump-nav">
+        {[['cast', 'Characters'], ['relationships', 'Relationship map'], ['powers', 'Powers and transformations'], ['status', 'Death tracker'], ['timeline', 'Timeline'], ['arcs', 'Arcs'], ['guides', 'Guides and articles']].map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}
+      </ul></nav>
+
+      <p class="tool-note tool-note--muted" style="margin-top:var(--sp-6)"><strong>What this covers.</strong> Manga: {series.coverage.manga}. Anime: {series.coverage.anime}. Checked {new Date(series.coverage.asOf).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.</p>
+
+      <section class="char-section" id="cast" aria-labelledby="cast-title">
+        <h2 id="cast-title">{series.short} character profiles</h2>
+        <div class="char-grid">{series.profiles.map(profile => <CharacterCard profile={profile} series={series} />)}</div>
+      </section>
+
+      <section class="char-section" id="relationships" aria-labelledby="relationships-title">
+        <h2 id="relationships-title">{series.short} relationship map</h2>
+        <p class="lede">Who stands where, and how the connections shift over the story. Bold names open that character’s profile; lines open the explanation.</p>
+        <RelationshipGraph graph={graph} series={series} label={`${series.title} relationship map`} idPrefix="cast-rel" />
+        <RelationshipList relationships={series.relationships} series={series} idPrefix="cast-rel" />
+      </section>
+
+      <section class="char-section" id="powers" aria-labelledby="powers-title">
+        <h2 id="powers-title">{series.short} powers and transformations</h2>
+        <p class="lede">The rules that govern fights in {series.short}, and an index of every ability profiled here. Each entry links to the character page, where its strengths, limits and battles are written out.</p>
+        <div class="system-grid">
+          {series.powerSystems.map(system => (
+            <article class="system-card" id={`system-${system.id}`}>
+              <h3>{system.name}</h3>
+              <p>{system.summary}</p>
+              <h4>How it works</h4><ul>{system.rules.map(rule => <li>{rule}</li>)}</ul>
+              <h4>Limits</h4><ul>{system.limits.map(limit => <li>{limit}</li>)}</ul>
+              <p style="margin-top:var(--sp-3)"><span class="ref">Introduced: {refLabel(system.introduced, series)}</span></p>
+            </article>
+          ))}
+        </div>
+        <div data-rowfilter style="margin-top:var(--sp-8)">
+          <div class="timeline-tools">
+            <label class="tool-field"><span>Character</span><select class="tool-select" data-rf="character"><option value="">Everyone</option>{series.profiles.map(profile => <option value={profile.id}>{profile.name}</option>)}</select></label>
+            <label class="tool-field"><span>Type</span><select class="tool-select" data-rf="kind"><option value="">All types</option>{kinds.map(kind => <option value={kind}>{ABILITY_KIND_LABEL[kind]}</option>)}</select></label>
+          </div>
+          <div class="table-wrap"><table class="ledger">
+            <caption class="sr-only">Abilities, techniques and transformations</caption>
+            <thead><tr><th scope="col">Ability</th><th scope="col">Character</th><th scope="col">Type</th><th scope="col">Shown in</th></tr></thead>
+            <tbody>
+              {allAbilities.map(({ ability, profile }) => {
+                const idx = checkpointIndex(series, ability.spoiler);
+                return (
+                  <tr class="rf-row" data-rf-row data-character={profile.id} data-kind={ability.kind} data-spoiler-idx={idx >= 0 ? idx : undefined} data-spoiler-hide={idx >= 0 ? '' : undefined} hidden={idx >= 0}>
+                    <td><a href={`${characterPath(profile.slug)}#ability-${ability.id}`}><strong>{ability.name}</strong></a><br />{ability.summary}</td>
+                    <td><a href={characterPath(profile.slug)}>{profile.name}</a></td>
+                    <td>{ABILITY_KIND_LABEL[ability.kind]}</td>
+                    <td class="ref">{refLabel(ability.introduced, series)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table></div>
+          <p class="timeline-empty" data-rf-empty hidden>No visible abilities match these filters.</p>
+        </div>
+      </section>
+
+      <section class="char-section" id="status" aria-labelledby="status-title">
+        <h2 id="status-title">{series.short} death tracker</h2>
+        <p class="lede">Alive, dead, sealed, revived or used by someone else: status for each profiled character, split by anime and manga. Rows stay folded until your spoiler level reaches them.</p>
+        <div class="table-wrap"><table class="ledger">
+          <thead><tr><th scope="col">Character</th><th scope="col">Manga</th><th scope="col">Anime so far</th><th scope="col">Details</th></tr></thead>
+          <tbody>
+            {series.profiles.map(profile => (
+              <tr>
+                <td><a href={characterPath(profile.slug)}><strong>{profile.name}</strong></a></td>
+                <td colspan="2">
+                  <Spoiler series={series} after={profile.status.spoiler} label="Reveal status">
+                    <span class={`state-${profile.status.manga.state}`}><strong>{profile.status.manga.label}</strong></span> in the manga · <span class={`state-${profile.status.anime.state}`}><strong>{profile.status.anime.label}</strong></span> in the anime
+                  </Spoiler>
+                </td>
+                <td><a href={`${characterPath(profile.slug)}#status`}>Verified events and references</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table></div>
+      </section>
+
+      <section class="char-section" id="timeline" aria-labelledby="timeline-title">
+        <h2 id="timeline-title">{series.short} timeline explorer</h2>
+        <p class="lede">Filter by character or event type, and switch between story order (in-world dates) and release order (how the anime, then the manga, showed it).</p>
+        <TimelineExplorer series={series} events={series.timeline} />
+      </section>
+
+      <section class="char-section" id="arcs" aria-labelledby="arcs-title">
+        <h2 id="arcs-title">{series.short} arcs</h2>
+        <ol class="arc-list">
+          {series.arcs.map(arc => (
+            <li>
+              <Spoiler series={series} after={arc.spoiler} label="Spoiler arc">
+                <h3>{arc.name}</h3>
+                <span class="ref">{[arc.anime && `Anime episodes ${arc.anime.start}–${arc.anime.end}`, arc.manga && `Manga chapters ${arc.manga.start}–${arc.manga.end}`].filter(Boolean).join(' · ') || 'Not yet animated'}</span>
+                <p>{arc.summary}</p>
+              </Spoiler>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section class="char-section" id="guides" aria-labelledby="guides-title">
+        <h2 id="guides-title">{series.short} guides on AnimeSparks</h2>
+        {toolLinks.length > 0 && <ul class="link-list">{toolLinks.map(link => <li><a href={link.href}>{link.label}</a>: {link.note}.</li>)}</ul>}
+      </section>
+      <RelatedReading articles={articles} heading={`${series.short} articles`} />
+
+      <div class="tool-ad-slot"><AdUnit slot="horizontal2" /></div>
+
+      <section class="char-section" aria-labelledby="faq-title">
+        <h2 id="faq-title">{series.short} character FAQ</h2>
+        <div class="tool-faq">{faq.map(item => <details><summary>{item.question}</summary><p>{item.answer}</p></details>)}</div>
+      </section>
+    </div>
+  </main>
+</SiteLayout>
+<script>
+  import '../../../scripts/characters/rowfilter.ts';
+</script>

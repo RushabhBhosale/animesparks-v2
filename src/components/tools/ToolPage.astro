@@ -9,6 +9,7 @@ import ToolHero from './ToolHero.astro';
 import ToolFaq from './ToolFaq.astro';
 import RelatedReading from './RelatedReading.astro';
 import RelatedTools from './RelatedTools.astro';
+import SeriesCharactersLinks from '../characters/SeriesCharactersLinks.astro';
 import { SITE } from '../../lib/content/seo';
 import type { ArticleCard } from '../../lib/content/types';
 import { toolApplication, toolBreadcrumbs, TOOLS_IMAGE } from '../../lib/tools/seo';
@@ -60,6 +61,7 @@ const structured = [
       </section>
       {faq.length > 0 && <ToolFaq faq={faq} />}
       <slot name="after-faq" />
+      <SeriesCharactersLinks path={path} />
       <RelatedTools current={toolSlug} />
       <RelatedReading articles={related} heading={relatedHeading} />
       <p class="tool-credit">

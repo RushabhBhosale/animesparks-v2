@@ -9,7 +9,9 @@ import { LIVE_TOOLS, toolPath } from '../lib/tools/registry';
 import { ARC_LANDINGS, MANGA_LANDINGS } from '../lib/tools/landings';
 import { hasMoviePage } from '../lib/tools/movies';
 import { getRecLandingPages } from '../lib/tools/rec-landings';
+import { characterPath, getRegistry, hubPath } from '../lib/characters/registry';
 
+const characterRegistry = getRegistry();
 const staticPaths = ['/', '/blogs', '/blogs/es', '/my-anime-list', '/categories', '/trending', '/contact', '/about', '/privacy', '/sitemap'];
 export const prerender = true;
 export const GET: APIRoute = async () => {
@@ -42,6 +44,9 @@ export const GET: APIRoute = async () => {
     })),
     ...(await getRecLandingPages(englishCards)).map(({ landing }) => ({ url: `${SITE}/tools/anime-recommendations/${landing.slug}` })),
     ...tools.franchises.filter(hasMoviePage).map(franchise => ({ url: `${SITE}/tools/anime-watch-order/${franchise.slug}/movies`, modified: xmlDate(franchise.fetchedAt) })),
+    { url: `${SITE}/characters`, modified: xmlDate(characterRegistry.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) },
+    ...characterRegistry.hubs.map(series => ({ url: `${SITE}${hubPath(series.slug)}`, modified: xmlDate(series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) })),
+    ...characterRegistry.profiles.map(profile => ({ url: `${SITE}${characterPath(profile.slug)}`, modified: xmlDate(profile.meta.verifiedAt) })),
     ...tags.map(tag => ({ url: `${SITE}/tags/${encodeURIComponent(tag)}` })),
     ...articles.map(article => {
       const url = `${SITE}${article.language === 'es' ? '/es' : ''}/blog/${article.slug}`;

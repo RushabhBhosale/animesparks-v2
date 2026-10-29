@@ -1,0 +1,21 @@
+---
+import { characterPath } from '../../lib/characters/registry.ts';
+import { initials, searchText } from '../../lib/characters/search.ts';
+import type { CharacterProfile, ResolvedSeries } from '../../lib/characters/types.ts';
+interface Props { profile: CharacterProfile; series: ResolvedSeries; filterable?: boolean }
+const { profile, series, filterable = false } = Astro.props;
+---
+<a class="char-card" href={characterPath(profile.slug)}
+  data-char-card={filterable ? '' : undefined}
+  data-search={filterable ? searchText(profile, series) : undefined}
+  data-series={filterable ? series.slug : undefined}
+  data-affiliations={filterable ? profile.affiliations.join('|') : undefined}
+  data-abilities={filterable ? profile.abilityTags.join('|') : undefined}>
+  <span class="monogram" aria-hidden="true">{initials(profile.name)}</span>
+  <span>
+    <span class="char-card__series">{series.title}</span>
+    <h3>{profile.name}</h3>
+    <p>{profile.role}</p>
+    <span class="char-card__tags">{profile.abilityTags.slice(0, 3).map(tag => <span>{tag}</span>)}</span>
+  </span>
+</a>

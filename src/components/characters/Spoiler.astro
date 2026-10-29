@@ -1,0 +1,18 @@
+---
+// Folds content away until the reader's spoiler level reaches `after`. The
+// content stays in the HTML (crawlable, works without JavaScript); only its
+// presentation is collapsed.
+import { checkpointIndex } from '../../lib/characters/format.ts';
+import type { CheckpointId, SeriesData } from '../../lib/characters/types.ts';
+
+interface Props { series: Pick<SeriesData, 'checkpoints'>; after?: CheckpointId; label?: string }
+const { series, after, label = 'Spoiler' } = Astro.props;
+const index = checkpointIndex(series, after);
+const checkpoint = series.checkpoints[index];
+---
+{after && index >= 0 ? (
+  <details class="spoiler" data-spoiler-idx={index}>
+    <summary>{label}<small>{checkpoint?.label}</small></summary>
+    <div class="spoiler__body"><slot /></div>
+  </details>
+) : <slot />}

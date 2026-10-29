@@ -1,0 +1,42 @@
+---
+import { ABILITY_KIND_LABEL, CONFIDENCE_LABEL, refLabel } from '../../lib/characters/format.ts';
+import type { Ability, Battle, SeriesData } from '../../lib/characters/types.ts';
+import Spoiler from './Spoiler.astro';
+interface Props { abilities: Ability[]; battles?: Battle[]; series: SeriesData; showOwner?: (ability: Ability) => string | undefined; idPrefix?: string }
+const { abilities, battles = [], series, idPrefix = '' } = Astro.props;
+const forms = abilities.filter(item => item.kind === 'transformation' || item.kind === 'power-up').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+const rest = abilities.filter(item => !forms.includes(item));
+const battleTitle = new Map(battles.map(item => [item.id, item.title]));
+const systemName = new Map(series.powerSystems.map(item => [item.id, item.name]));
+const groups = [
+  { id: 'abilities', title: 'Abilities and techniques', items: rest },
+  { id: 'transformations', title: 'Transformations and power-ups, in order', items: forms },
+].filter(group => group.items.length > 0);
+---
+{groups.map(group => (
+  <div class="ability-group">
+    <h3>{group.title}</h3>
+    {group.id === 'transformations' && (
+      <ol class="ability__sequence">{group.items.map(item => <li>{item.name}</li>)}</ol>
+    )}
+    {group.items.map(ability => {
+      const body = (
+        <details class="ability" id={`${idPrefix}ability-${ability.id}`}>
+          <summary>
+            <h4>{ability.name}{ability.native && <small lang="ja">{ability.native}</small>}</h4>
+            <span class="ability__meta"><span>{ABILITY_KIND_LABEL[ability.kind]}</span><span class={`chip chip--${ability.confidence}`}>{CONFIDENCE_LABEL[ability.confidence]}</span></span>
+            <p class="ability__blurb">{ability.summary}</p>
+          </summary>
+          <div class="ability__body">
+            <div><h5>Strengths</h5><ul>{ability.strengths.map(text => <li>{text}</li>)}</ul></div>
+            <div><h5>Limits and weaknesses</h5><ul>{ability.limits.map(text => <li>{text}</li>)}</ul></div>
+            <div><h5>Shown in</h5><p>{refLabel(ability.introduced, series)}{ability.system && systemName.get(ability.system) ? <> · part of <a href={`#system-${ability.system}`}>{systemName.get(ability.system)}</a></> : null}</p></div>
+            {ability.battles && ability.battles.length > 0 && <div><h5>Significant battles</h5><p>{ability.battles.map(id => battleTitle.get(id)).filter(Boolean).join('; ')}</p></div>}
+            {ability.evolution && <div class="span-all"><h5>How it evolves</h5><p>{ability.evolution}</p></div>}
+          </div>
+        </details>
+      );
+      return ability.spoiler ? <Spoiler series={series} after={ability.spoiler} label="Spoiler ability">{body}</Spoiler> : body;
+    })}
+  </div>
+))}

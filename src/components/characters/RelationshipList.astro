@@ -1,0 +1,38 @@
+---
+import { RELATION_LABEL, refLabel } from '../../lib/characters/format.ts';
+import { characterPath } from '../../lib/characters/registry.ts';
+import type { Relationship, SeriesData } from '../../lib/characters/types.ts';
+import Spoiler from './Spoiler.astro';
+import PersonLink from './PersonLink.astro';
+interface Props { relationships: Relationship[]; series: SeriesData; focus?: string; idPrefix?: string }
+const { relationships, series, focus, idPrefix = 'rel' } = Astro.props;
+const cast = new Map(series.cast.map(member => [member.id, member]));
+const name = (id: string) => cast.get(id)?.name ?? id;
+const href = (id: string) => (cast.get(id)?.profile ? characterPath(cast.get(id)!.profile!) : undefined);
+---
+<div class="relation-list">
+  {relationships.map(item => {
+    const other = focus ? (item.a === focus ? item.b : item.a) : undefined;
+    const title = other ? name(other) : `${name(item.a)} and ${name(item.b)}`;
+    const roleFor = other && item.roles ? (item.a === focus ? item.roles.a : item.roles.b) : undefined;
+    const row = (
+      <details class="relation" id={`${idPrefix}-${item.id}`} data-type={item.type}>
+        <summary>
+          <h3>{other ? <PersonLink name={name(other)} href={href(other)} /> : <><PersonLink name={name(item.a)} href={href(item.a)} /> and <PersonLink name={name(item.b)} href={href(item.b)} /></>}</h3>
+          <span class="relation__type">{RELATION_LABEL[item.type]}{item.roles && !other ? ` · ${item.roles.a} / ${item.roles.b}` : roleFor ? ` · ${item.a === focus ? item.roles!.b : item.roles!.a}` : ''}</span>
+        </summary>
+        <p class="relation__summary">{item.summary}</p>
+        <ol>
+          {item.evolution.map(step => (
+            <li>
+              <Spoiler series={series} after={step.spoiler} label="Spoiler: later development">
+                <strong>{step.stage}.</strong> {step.text} {step.ref && <span class="ref">({refLabel(step.ref, series)})</span>}
+              </Spoiler>
+            </li>
+          ))}
+        </ol>
+      </details>
+    );
+    return item.spoiler ? <Spoiler series={series} after={item.spoiler} label={`Spoiler: connection to ${title}`}>{row}</Spoiler> : row;
+  })}
+</div>

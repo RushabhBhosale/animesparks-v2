@@ -1,0 +1,202 @@
+import type { SeriesData } from '../../types.ts';
+
+// Verified 2026-10-29 from the manga and anime, cross-checked with the
+// Narutopedia's citations (see data/characters/SOURCES.md). Classic Naruto
+// episodes carry no `ed`; Naruto: Shippuden episodes use ed: 'shippuden'.
+export const naruto: SeriesData = {
+  slug: 'naruto',
+  title: 'Naruto',
+  short: 'Naruto',
+  articleNames: ['Naruto', 'Naruto: Shippuden', 'Naruto / Boruto'],
+  toolKeys: { franchise: 'naruto', manga: 'naruto', arc: 'naruto', anime: ['naruto', 'naruto-shippuden'] },
+  editions: [{ id: 'shippuden', label: 'Shippuden', offset: 1000 }],
+  intro: 'Masashi Kishimoto’s Naruto ran for 700 chapters and has two anime series: Naruto (220 episodes) and Naruto: Shippuden (500 episodes). Their episode numbers restart, so every reference here says which series it means. These profiles cover the original story and Shippuden. The Boruto sequel is a separate story and is not covered. Spoilers follow the story’s big turns: the Uchiha clan’s fate, the truth about Itachi, the war and the ending.',
+  coverage: {
+    manga: 'Complete: chapters 1–700 of the original manga',
+    anime: 'Naruto (episodes 1–220) and Naruto: Shippuden (episodes 1–500) in full',
+    asOf: '2026-10-29',
+  },
+  checkpoints: [
+    { id: 'part-1', label: 'Naruto (episodes 1–220)', covers: 'Part I of the manga, chapters 1–238, through the Valley of the End and Sasuke’s departure.' },
+    { id: 'akatsuki', label: 'Shippuden up to episode 133', covers: 'The Kazekage rescue, the Akatsuki hunts and the Tale of Jiraiya, manga chapters 239–383.' },
+    { id: 'brothers', label: 'Shippuden episodes 134–143', covers: 'The fight between Sasuke and Itachi, manga chapters 380–415.' },
+    { id: 'pain-summit', label: 'Shippuden episodes 144–214', covers: 'Pain’s assault and the Five Kage Summit, manga chapters 416–484.' },
+    { id: 'war', label: 'Shippuden episodes 215–375', covers: 'The Fourth Shinobi World War, manga chapters 485–637.' },
+    { id: 'finale', label: 'Shippuden episodes 376–500', covers: 'The war’s end, Kaguya and the epilogue, manga chapters 638–700.' },
+  ],
+  arcs: [
+    { id: 'land-of-waves', name: 'Land of Waves', anime: { start: 1, end: 19 }, manga: { start: 1, end: 33 }, summary: 'Team 7’s first long mission, escorting a bridge builder.' },
+    { id: 'chunin-exams', name: 'Chūnin Exams', anime: { start: 20, end: 67 }, manga: { start: 34, end: 114 }, summary: 'The exam arc that introduces most of the cast, ending with an attack on Konoha.' },
+    { id: 'sasuke-recovery', name: 'Sasuke Recovery Mission', anime: { start: 107, end: 135 }, manga: { start: 173, end: 238 }, summary: 'Sasuke leaves the village; Naruto and his friends chase him, ending at the Valley of the End.' },
+    { id: 'itachi-pursuit', name: 'Itachi Pursuit Mission', anime: { start: 113, end: 126, ed: 'shippuden' }, summary: 'Team 7 and Team 8 track Itachi and Kisame.' },
+    { id: 'brothers', name: 'Fated Battle Between Brothers', anime: { start: 134, end: 143, ed: 'shippuden' }, manga: { start: 380, end: 415 }, summary: 'Sasuke confronts Itachi.', spoiler: 'brothers' },
+    { id: 'pain', name: 'Pain’s Assault', anime: { start: 152, end: 175, ed: 'shippuden' }, manga: { start: 403, end: 450 }, summary: 'The Akatsuki leader attacks Konoha.', spoiler: 'pain-summit' },
+    { id: 'kage-summit', name: 'Five Kage Summit', anime: { start: 197, end: 214, ed: 'shippuden' }, manga: { start: 451, end: 484 }, summary: 'The Kage meet while Sasuke takes his own path.', spoiler: 'pain-summit' },
+    { id: 'war', name: 'Fourth Shinobi World War', anime: { start: 215, end: 375, ed: 'shippuden' }, manga: { start: 485, end: 637 }, summary: 'The united shinobi forces fight Tobi and the reincarnated dead.', spoiler: 'war' },
+    { id: 'finale', name: 'The Ten-Tails and Kaguya', anime: { start: 376, end: 479, ed: 'shippuden' }, manga: { start: 638, end: 700 }, summary: 'The final stage of the war and the story’s conclusion.', spoiler: 'finale' },
+  ],
+  powerSystems: [
+    {
+      id: 'chakra', name: 'Chakra and jutsu',
+      summary: 'Chakra is the energy ninja use for techniques, mixing physical and spiritual energy. Techniques are grouped into ninjutsu, genjutsu and taijutsu.',
+      rules: ['Many techniques are performed with hand seals and need a matching chakra nature.', 'Genjutsu trick the target’s senses, and can be countered by disrupting the chakra flow.'],
+      limits: ['A ninja’s chakra reserves are finite and each technique has its own cost.'],
+      introduced: { ep: 1, ch: 1 },
+    },
+    {
+      id: 'sharingan', name: 'Sharingan and Mangekyō',
+      summary: 'The Uchiha clan’s eye technique. It lets the user read and copy techniques, and the Mangekyō form unlocks stronger, individual abilities at the price of the user’s eyesight.',
+      rules: ['The Mangekyō is awakened after an intense emotional trauma, usually the loss of someone close.', 'Each Mangekyō user has their own set of abilities.'],
+      limits: ['Heavy use of the Mangekyō damages the eyes over time.'],
+      introduced: { other: 'Land of Waves arc (episodes 1–19)' },
+    },
+  ],
+  cast: [
+    { id: 'naruto', name: 'Naruto Uzumaki', profile: 'naruto-uzumaki' },
+    { id: 'sasuke', name: 'Sasuke Uchiha', profile: 'sasuke-uchiha' },
+    { id: 'itachi', name: 'Itachi Uchiha', profile: 'itachi-uchiha' },
+    { id: 'kakashi', name: 'Kakashi Hatake' },
+    { id: 'jiraiya', name: 'Jiraiya' },
+    { id: 'minato', name: 'Minato Namikaze' },
+    { id: 'kushina', name: 'Kushina Uzumaki' },
+    { id: 'sakura', name: 'Sakura Haruno' },
+    { id: 'hinata', name: 'Hinata Hyuga' },
+    { id: 'shisui', name: 'Shisui Uchiha' },
+    { id: 'fugaku', name: 'Fugaku Uchiha' },
+    { id: 'mikoto', name: 'Mikoto Uchiha' },
+    { id: 'tobi', name: 'Tobi' },
+    { id: 'sarada', name: 'Sarada Uchiha' },
+  ],
+  relationships: [
+    {
+      id: 'naruto-sasuke', a: 'naruto', b: 'sasuke', type: 'rival', roles: { a: 'rival and friend', b: 'rival and friend' },
+      summary: 'Teammates on Team 7 who start as competitors and become each other’s defining bond.',
+      evolution: [
+        { stage: 'Teammates', text: 'Naruto and Sasuke are placed on the same team in the first arcs and compete constantly.', ref: { ep: 4 } },
+        { stage: 'The Valley of the End', text: 'Sasuke leaves the village to pursue strength, and Naruto catches up with him at the Valley of the End.', ref: { ch: 229, ep: 133 }, spoiler: 'part-1' },
+        { stage: 'The last fight', text: 'In the final battle, Naruto and Sasuke fight to a conclusion that decides what their bond means.', ref: { ch: 696, ep: 476, ed: 'shippuden' }, spoiler: 'finale' },
+      ],
+    },
+    {
+      id: 'itachi-sasuke', a: 'itachi', b: 'sasuke', type: 'family', kin: 'sibling', roles: { a: 'older brother', b: 'younger brother' },
+      summary: 'Itachi is Sasuke’s older brother and the reason for Sasuke’s revenge, which the story spends hundreds of chapters re-examining.',
+      evolution: [
+        { stage: 'The brother Sasuke admired', text: 'As children, Sasuke adored Itachi and looked for every chance to spend time with him.', ref: { ch: 580 }, spoiler: 'war' },
+        { stage: 'The fight', text: 'Sasuke finally fights Itachi after training with Orochimaru, and Itachi dies at the end of the battle.', ref: { ch: 401, ep: 141, ed: 'shippuden' }, spoiler: 'brothers' },
+        { stage: 'The truth', text: 'Itachi’s reasons for destroying the clan are revealed, and Sasuke, in a later conversation, hears them from Itachi directly.', ref: { ch: 590 }, spoiler: 'war' },
+      ],
+    },
+    {
+      id: 'naruto-kakashi', a: 'kakashi', b: 'naruto', type: 'mentor', roles: { a: 'teacher', b: 'student' },
+      summary: 'Kakashi leads Team 7 and is Naruto’s first teacher.',
+      evolution: [{ stage: 'First lesson', text: 'Naruto tells Kakashi in chapter 4 that he plans to become the greatest Hokage.', ref: { ch: 4 } }],
+    },
+    {
+      id: 'naruto-jiraiya', a: 'jiraiya', b: 'naruto', type: 'mentor', roles: { a: 'teacher', b: 'student' },
+      summary: 'Jiraiya trains Naruto and is also Naruto’s godfather.',
+      evolution: [
+        { stage: 'Naruto’s name', text: 'Naruto was named after the hero of Jiraiya’s first novel, which makes Jiraiya his godfather.', ref: { ch: 382 }, spoiler: 'akatsuki' },
+        { stage: 'After Jiraiya', text: 'After Jiraiya’s death, Naruto talks with Minato and listens to Nagato’s story, and it changes how he thinks about hatred.', ref: { ch: 448 }, spoiler: 'pain-summit' },
+      ],
+    },
+    {
+      id: 'minato-naruto', a: 'minato', b: 'naruto', type: 'family', kin: 'parent', roles: { a: 'father', b: 'son' },
+      summary: 'Minato, the Fourth Hokage, is Naruto’s father. He sealed the Nine-Tails inside the newborn Naruto.',
+      evolution: [{ stage: 'The sealing', text: 'Minato decides that the Nine-Tails can only be stopped by sealing it in his own son.', ref: { ch: 503 }, spoiler: 'war' }],
+      spoiler: 'akatsuki',
+    },
+    {
+      id: 'kushina-naruto', a: 'kushina', b: 'naruto', type: 'family', kin: 'parent', roles: { a: 'mother', b: 'son' },
+      summary: 'Kushina, the Nine-Tails’ previous jinchūriki, is Naruto’s mother.',
+      evolution: [{ stage: 'The night of the attack', text: 'Tobi captures Kushina and releases the Nine-Tails from her to devastate Konoha.', ref: { ch: 500 }, spoiler: 'war' }],
+      spoiler: 'akatsuki',
+    },
+    {
+      id: 'minato-kushina', a: 'minato', b: 'kushina', type: 'family', kin: 'spouse', roles: { a: 'husband', b: 'wife' },
+      summary: 'Minato and Kushina are Naruto’s parents.',
+      evolution: [{ stage: 'Protecting their son', text: 'After Minato saves Kushina, the two try to protect the village and Naruto from the Nine-Tails.', ref: { ch: 501 }, spoiler: 'war' }],
+      spoiler: 'akatsuki',
+    },
+    {
+      id: 'fugaku-itachi', a: 'fugaku', b: 'itachi', type: 'family', kin: 'parent', roles: { a: 'father', b: 'son' },
+      summary: 'Fugaku is the head of the Uchiha police force and the father of Itachi and Sasuke.',
+      evolution: [{ stage: 'The last request', text: 'Before they die, Itachi’s parents tell him they are proud of him and ask him to take care of Sasuke.', ref: { ch: 590 }, spoiler: 'war' }],
+    },
+    {
+      id: 'fugaku-sasuke', a: 'fugaku', b: 'sasuke', type: 'family', kin: 'parent', roles: { a: 'father', b: 'son' },
+      summary: 'Sasuke is Fugaku and Mikoto’s younger son.',
+      evolution: [{ stage: 'Fugaku’s view of Itachi', text: 'Fugaku tells Sasuke that Itachi is a closed-off person and that even he can no longer understand him.', ref: { ch: 145 }, spoiler: 'part-1' }],
+    },
+    {
+      id: 'mikoto-itachi', a: 'mikoto', b: 'itachi', type: 'family', kin: 'parent', roles: { a: 'mother', b: 'son' },
+      summary: 'Itachi was the first child of Fugaku and Mikoto.',
+      evolution: [{ stage: 'Born into the clan', text: 'Itachi is the first child born to Mikoto and Fugaku.', ref: { other: 'Itachi Shinden' } }],
+    },
+    {
+      id: 'mikoto-sasuke', a: 'mikoto', b: 'sasuke', type: 'family', kin: 'parent', roles: { a: 'mother', b: 'son' },
+      summary: 'Mikoto is Sasuke’s mother.',
+      evolution: [{ stage: 'Family', text: 'Mikoto and Fugaku have Sasuke when Itachi is five.', ref: { other: 'Itachi Shinden' } }],
+    },
+    {
+      id: 'fugaku-mikoto', a: 'fugaku', b: 'mikoto', type: 'family', kin: 'spouse', roles: { a: 'husband', b: 'wife' },
+      summary: 'Fugaku and Mikoto are the parents of Itachi and Sasuke.',
+      evolution: [{ stage: 'The clan’s end', text: 'Their deaths are the event the Uchiha storyline turns on.', ref: { ch: 590 }, spoiler: 'war' }],
+    },
+    {
+      id: 'itachi-shisui', a: 'itachi', b: 'shisui', type: 'friend', roles: { a: 'best friend', b: 'best friend' },
+      summary: 'Itachi’s closest friend, a gifted Uchiha whose fate shaped Itachi’s choices.',
+      evolution: [
+        { stage: 'Friends', text: 'Shisui offers to train with Itachi when Itachi is five, and the two become close.', ref: { other: 'Itachi Shinden' } },
+        { stage: 'The last gift', text: 'Shisui entrusts one of his eyes to Itachi and asks him to protect the village and the clan.', ref: { ch: 590 }, spoiler: 'war' },
+      ],
+      spoiler: 'war',
+    },
+    {
+      id: 'itachi-naruto', a: 'itachi', b: 'naruto', type: 'ally', roles: { a: 'protector', b: 'protected' },
+      summary: 'Itachi shows Naruto kindness whenever they meet and gives him help in the fight over Sasuke.',
+      evolution: [{ stage: 'The crow', text: 'Itachi stores a special crow inside Naruto to be used for Sasuke’s sake.', ref: { ch: 403 }, spoiler: 'brothers' }],
+      spoiler: 'brothers',
+    },
+    {
+      id: 'sasuke-sakura', a: 'sasuke', b: 'sakura', type: 'romance', roles: { a: 'husband', b: 'wife' },
+      summary: 'Sakura loves Sasuke from the start of the story; the epilogue shows them as a family.',
+      evolution: [
+        { stage: 'The night he left', text: 'Sasuke tells Sakura before leaving that revenge is his purpose of living.', ref: { ch: 181 }, spoiler: 'part-1' },
+        { stage: 'Family', text: 'Sasuke and Sakura later marry and have a daughter, Sarada.', ref: { ch: '700+6' }, spoiler: 'finale' },
+      ],
+    },
+    {
+      id: 'sasuke-sarada', a: 'sasuke', b: 'sarada', type: 'family', kin: 'parent', roles: { a: 'father', b: 'daughter' },
+      summary: 'Sasuke and Sakura’s daughter.',
+      evolution: [{ stage: 'A distant father', text: 'Sasuke leaves Konoha when Sarada is young, so she remembers little of him.', ref: { ch: '700+8' }, spoiler: 'finale' }],
+      spoiler: 'finale',
+    },
+    {
+      id: 'naruto-hinata', a: 'hinata', b: 'naruto', type: 'romance', roles: { a: 'wife', b: 'husband' },
+      summary: 'Hinata is shy around Naruto from the first arcs and supports him throughout; the two marry in the epilogue.',
+      evolution: [
+        { stage: 'Friends', text: 'During the Chūnin Exams, Naruto and Hinata begin to support each other and he starts to like her as a friend.', ref: { ch: 98 } },
+        { stage: 'The epilogue', text: 'The final chapters show them with a family of their own.', ref: { ch: 700 }, spoiler: 'finale' },
+      ],
+    },
+  ],
+  timeline: [
+    { id: 'nine-tails-sealing', title: 'The Nine-Tails attacks Konoha and is sealed in Naruto', summary: 'Tobi releases the Nine-Tails from Kushina, and Minato seals it inside his newborn son, Naruto.', kind: 'milestone', characters: ['naruto', 'minato', 'kushina', 'tobi'], when: 'October 10, the year of Naruto’s birth', storyOrder: 10, manga: { ch: 500 }, spoiler: 'war' },
+    { id: 'uchiha-massacre', title: 'The Uchiha clan is destroyed', summary: 'Itachi kills almost the entire Uchiha clan in one night and spares only Sasuke.', kind: 'milestone', characters: ['itachi', 'sasuke', 'fugaku', 'mikoto'], when: 'When Sasuke is seven', storyOrder: 20, manga: { ch: 222 }, spoiler: 'part-1' },
+    { id: 'itachi-truth', title: 'Itachi’s reasons are revealed', summary: 'The reason behind the massacre is shown through Itachi’s own memories.', kind: 'reveal', characters: ['itachi', 'sasuke', 'shisui'], when: 'During the war', storyOrder: 25, manga: { ch: 590 }, spoiler: 'war' },
+    { id: 'team-7', title: 'Team 7 meets Kakashi', summary: 'Naruto, Sasuke and Sakura are placed under Kakashi, and Naruto tells him he will become the greatest Hokage.', kind: 'milestone', characters: ['naruto', 'sasuke', 'sakura', 'kakashi'], when: 'Part I', storyOrder: 30, anime: { ep: 4 }, manga: { ch: 4 } },
+    { id: 'chunin-exams', title: 'The Chūnin Exams', summary: 'The exams bring most of the cast together and end with an attack on Konoha.', kind: 'arc', characters: ['naruto', 'sasuke', 'hinata'], when: 'Part I', storyOrder: 40, anime: { ep: 20 }, manga: { ch: 34 }, arc: 'chunin-exams' },
+    { id: 'sasuke-leaves', title: 'Sasuke leaves Konoha', summary: 'Sasuke chooses revenge and leaves the village, and Naruto leads the chase.', kind: 'milestone', characters: ['sasuke', 'naruto', 'sakura'], when: 'End of Part I', storyOrder: 50, manga: { ch: 181 }, arc: 'sasuke-recovery', spoiler: 'part-1' },
+    { id: 'valley-of-the-end', title: 'Naruto and Sasuke at the Valley of the End', summary: 'The two fight on the statues of the first Hokage and Madara.', kind: 'battle', characters: ['naruto', 'sasuke'], when: 'End of Part I', storyOrder: 60, anime: { ep: 133 }, manga: { ch: 229 }, arc: 'sasuke-recovery', spoiler: 'part-1' },
+    { id: 'brothers-fight', title: 'Sasuke fights Itachi', summary: 'Sasuke faces his brother after training with Orochimaru, and Itachi’s long-hidden illness and plan come out.', kind: 'battle', characters: ['sasuke', 'itachi', 'naruto'], when: 'Part II', storyOrder: 70, anime: { ep: 134, ed: 'shippuden' }, manga: { ch: 380 }, arc: 'brothers', spoiler: 'brothers' },
+    { id: 'itachi-death', title: 'Itachi dies', summary: 'Itachi dies at the end of his fight with Sasuke, after a last touch on Sasuke’s forehead.', kind: 'death', characters: ['itachi', 'sasuke'], when: 'Part II', storyOrder: 80, anime: { ep: 141, ed: 'shippuden' }, manga: { ch: 401 }, arc: 'brothers', spoiler: 'brothers' },
+    { id: 'itachi-reincarnated', title: 'Itachi is reanimated and ends Kabuto’s control', summary: 'During the war Itachi is summoned by the Impure World Reincarnation and then works to undo it.', kind: 'milestone', characters: ['itachi', 'sasuke', 'naruto'], when: 'Fourth Shinobi World War', storyOrder: 90, manga: { ch: 590 }, arc: 'war', spoiler: 'war' },
+    { id: 'sage-mode', title: 'Naruto uses Sage Mode', summary: 'Naruto shows a complete Sage Mode in the Pain arc.', kind: 'transformation', characters: ['naruto'], when: 'Part II', storyOrder: 100, manga: { ch: 418 }, arc: 'pain', spoiler: 'pain-summit' },
+    { id: 'final-battle', title: 'Naruto and Sasuke’s final battle', summary: 'The two fight with the full powers they have developed.', kind: 'battle', characters: ['naruto', 'sasuke'], when: 'End of the war', storyOrder: 110, anime: { ep: 476, ed: 'shippuden' }, manga: { ch: 696 }, arc: 'finale', spoiler: 'finale' },
+    { id: 'epilogue', title: 'The epilogue', summary: 'The story jumps ahead and shows where the characters end up.', kind: 'milestone', characters: ['naruto', 'sasuke', 'sakura', 'sarada', 'hinata'], when: 'After the war', storyOrder: 120, manga: { ch: 700 }, arc: 'finale', spoiler: 'finale' },
+  ],
+  faq: [
+    { question: 'Do I need to watch Naruto before Naruto: Shippuden?', answer: 'Yes. Shippuden continues directly from the original series, and its first arc picks up two and a half years after the Valley of the End.' },
+    { question: 'Why do episode numbers on these pages mention “Shippuden”?', answer: 'The two anime series number their episodes separately. References marked “Shippuden” are Naruto: Shippuden episodes; unmarked ones are the original Naruto.' },
+  ],
+};

@@ -1,0 +1,15 @@
+---
+import { refLabel } from '../../lib/characters/format.ts';
+import type { Block, SeriesData } from '../../lib/characters/types.ts';
+import Spoiler from './Spoiler.astro';
+interface Props { blocks: Block[]; series: SeriesData }
+const { blocks, series } = Astro.props;
+---
+<div class="prose">
+  {blocks.map(block => (
+    <Spoiler series={series} after={block.spoiler} label={block.heading ? `Spoiler: ${block.heading}` : 'Spoiler'}>
+      {block.heading && <h3>{block.heading}</h3>}
+      <p>{block.text}{block.ref && <span class="ref"> ({refLabel(block.ref, series)})</span>}</p>
+    </Spoiler>
+  ))}
+</div>

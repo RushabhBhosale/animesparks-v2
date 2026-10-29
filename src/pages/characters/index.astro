@@ -1,0 +1,68 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import '../../styles/tools.css';
+import '../../styles/characters.css';
+import AdUnit from '../../components/AdUnit.astro';
+import ToolHero from '../../components/tools/ToolHero.astro';
+import CharacterCard from '../../components/characters/CharacterCard.astro';
+import { SITE } from '../../lib/content/seo';
+import { getRegistry, hubPath } from '../../lib/characters/registry.ts';
+import { CHARACTERS_IMAGE, crumbList } from '../../lib/characters/seo.ts';
+
+export const prerender = true;
+const registry = getRegistry();
+const entries = registry.profiles.map(profile => ({ profile, series: registry.seriesBySlug.get(profile.series)! }));
+const unique = (values: string[]) => [...new Set(values)].sort((a, b) => a.localeCompare(b));
+const affiliations = unique(entries.flatMap(item => item.profile.affiliations));
+const abilities = unique(entries.flatMap(item => item.profile.abilityTags));
+const title = 'Anime Character Encyclopedia: Profiles, Abilities and Timelines';
+const description = `${registry.profiles.length} in-depth anime character profiles with verified episode and chapter references, relationship maps, abilities and spoiler-protected status trackers.`;
+const faq = [
+  { question: 'How are these profiles verified?', answer: 'Every ability, event and status change carries an episode and/or manga chapter reference. Facts the story has not confirmed are labelled as estimates or unknown, and fan theories are not presented as canon.' },
+  { question: 'Will the profiles spoil the story?', answer: 'Major revelations are folded away by default. On any profile you can choose how far you have watched or read, and only content up to that point unfolds. The choice is stored on your device.' },
+  { question: 'Does the anime match the manga?', answer: 'Where the two differ, the page says so. Status, abilities and events are given separately for the anime and the manga when they diverge.' },
+];
+---
+<SiteLayout title={title} socialTitle={title} description={description} canonical={`${SITE}/characters`} image={CHARACTERS_IMAGE}
+  jsonLd={[crumbList([['Characters', '/characters']]), {
+    '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description, url: `${SITE}/characters`,
+    mainEntity: { '@type': 'ItemList', itemListElement: entries.map((item, index) => ({ '@type': 'ListItem', position: index + 1, url: `${SITE}/characters/${item.profile.slug}`, name: item.profile.name })) },
+  }, { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(item => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })) }]} showFooterAd>
+  <main>
+    <ToolHero crumbs={[['Home', '/'], ['Characters']]} kicker="Character encyclopedia" title="Anime character encyclopedia"
+      deck="Deep, carefully checked profiles instead of thin fact sheets: biography, abilities and transformations, relationship maps, timelines and a spoiler-protected status tracker, each tied to the episodes and chapters that prove it."
+      facts={[[String(registry.profiles.length), 'character profiles'], [String(registry.series.length), 'series'], ['Spoiler-safe', 'by default']]} />
+    <div class="shell tool-main" data-directory>
+      <form class="directory-filters" role="search" aria-label="Filter characters" onsubmit="return false">
+        <label class="tool-field span-2"><span>Search</span><input class="tool-input" type="search" placeholder="Name, alias, ability or anime" data-filter-query autocomplete="off" /></label>
+        <label class="tool-field"><span>Anime</span><select class="tool-select" data-filter-series><option value="">All anime</option>{registry.series.map(item => <option value={item.slug}>{item.title}</option>)}</select></label>
+        <label class="tool-field"><span>Affiliation</span><select class="tool-select" data-filter-affiliation><option value="">Any</option>{affiliations.map(item => <option value={item}>{item}</option>)}</select></label>
+        <label class="tool-field"><span>Ability</span><select class="tool-select" data-filter-ability><option value="">Any</option>{abilities.map(item => <option value={item}>{item}</option>)}</select></label>
+        <button type="button" class="tool-button" data-filter-reset>Reset</button>
+      </form>
+      <p class="directory-count" data-directory-count aria-live="polite">{registry.profiles.length} profiles</p>
+      <div class="char-grid">
+        {entries.map(item => <CharacterCard profile={item.profile} series={item.series} filterable />)}
+      </div>
+      <p class="directory-empty" data-directory-empty hidden>No profiles match these filters yet. New profiles are added as they are verified.</p>
+
+      <section class="char-section" aria-labelledby="series-title">
+        <h2 id="series-title">Browse by anime</h2>
+        <p class="lede">Series with several profiles have a hub: the full cast, a cast-wide relationship map, a power index, a death tracker and a timeline you can filter by character.</p>
+        <div class="series-strip">
+          {registry.hubs.map(item => <a href={hubPath(item.slug)}>{item.title}<small>{item.profiles.length} profiles</small></a>)}
+        </div>
+      </section>
+
+      <div class="tool-ad-slot"><AdUnit slot="horizontal2" /></div>
+
+      <section class="char-section" aria-labelledby="faq-title">
+        <h2 id="faq-title">About the encyclopedia</h2>
+        <div class="tool-faq">{faq.map(item => <details><summary>{item.question}</summary><p>{item.answer}</p></details>)}</div>
+      </section>
+    </div>
+  </main>
+</SiteLayout>
+<script>
+  import '../../scripts/characters/directory.ts';
+</script>

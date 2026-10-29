@@ -1,0 +1,18 @@
+---
+// Crawlable links from tool pages to the matching character hub and profiles.
+import { characterPath, getRegistry, hubPath } from '../../lib/characters/registry.ts';
+interface Props { path: string }
+const key = Astro.props.path.replace(/\/$/, '').split('/').pop() || '';
+const registry = getRegistry();
+const series = registry.series.find(item => [item.toolKeys.franchise, item.toolKeys.manga, item.toolKeys.arc, ...item.toolKeys.anime].includes(key));
+const hub = series && registry.hubs.some(item => item.slug === series.slug);
+---
+{series && (
+  <section class="tool-section" aria-labelledby="tool-characters-title">
+    <h2 id="tool-characters-title">{series.short} characters</h2>
+    <ul class="tool-guide" style="margin:0;padding-left:1.2em">
+      {series.profiles.map(profile => <li><a href={characterPath(profile.slug)}>{profile.name}</a>: {profile.role.toLowerCase()}, with a spoiler-protected timeline and status tracker.</li>)}
+      {hub && <li><a href={hubPath(series.slug)}>{series.short} relationship map, power index and timeline</a>.</li>}
+    </ul>
+  </section>
+)}

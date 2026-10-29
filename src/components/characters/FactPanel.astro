@@ -1,0 +1,24 @@
+---
+import { CONFIDENCE_LABEL, refLabel } from '../../lib/characters/format.ts';
+import type { CharacterProfile, SeriesData } from '../../lib/characters/types.ts';
+import Spoiler from './Spoiler.astro';
+interface Props { profile: CharacterProfile; series: SeriesData }
+const { profile, series } = Astro.props;
+---
+<section class="quick-facts" aria-labelledby="quick-facts-title">
+  <div class="quick-facts__head"><h2 id="quick-facts-title">Quick facts</h2></div>
+  <dl>
+    {profile.facts.map(fact => (
+      <div class="fact">
+        <dt><span>{fact.label}</span><span class={`chip chip--${fact.confidence}`} title={fact.note || CONFIDENCE_LABEL[fact.confidence]}>{CONFIDENCE_LABEL[fact.confidence]}</span></dt>
+        <dd>
+          {fact.spoiler
+            ? <Spoiler series={series} after={fact.spoiler} label="Hidden fact">{fact.value}</Spoiler>
+            : fact.value}
+          {(fact.note || fact.ref) && <small>{fact.note}{fact.note && fact.ref ? ' ' : ''}{fact.ref && <span class="ref">{refLabel(fact.ref, series)}</span>}</small>}
+        </dd>
+      </div>
+    ))}
+  </dl>
+  <p class="quick-facts__legend"><strong>Confirmed</strong>: stated in the manga, anime or official guidebooks. <strong>Estimate</strong>: approximate or derived. <strong>Unknown</strong>: not revealed.</p>
+</section>

@@ -1,0 +1,73 @@
+---
+import { checkpointIndex, refLabel } from '../../lib/characters/format.ts';
+import { orderingsDiffer, releaseOrdered, storyOrdered } from '../../lib/characters/timeline.ts';
+import { characterPath } from '../../lib/characters/registry.ts';
+import type { SeriesData, TimelineEvent } from '../../lib/characters/types.ts';
+import Spoiler from './Spoiler.astro';
+interface Props { series: SeriesData; events: TimelineEvent[]; filterByCharacter?: boolean; heading?: string }
+const { series, events, filterByCharacter = true } = Astro.props;
+const story = storyOrdered(events);
+const releaseIndex = new Map(releaseOrdered(events, series).map((event, index) => [event.id, index]));
+const differs = orderingsDiffer(events, series);
+const cast = new Map(series.cast.map(member => [member.id, member]));
+const kinds = [...new Set(events.map(event => event.kind))];
+const KIND = { arc: 'Arc', battle: 'Battle', death: 'Death or seal', transformation: 'Transformation', reveal: 'Reveal', milestone: 'Milestone' } as const;
+const involved = [...new Set(events.flatMap(event => event.characters))].filter(id => cast.has(id));
+const arcName = new Map(series.arcs.map(arc => [arc.id, arc.name]));
+---
+<div data-timeline>
+  <div class="timeline-tools">
+    {differs && (
+      <div class="tool-field"><span id="tl-order-label">Order</span>
+        <div class="tool-segment" role="group" aria-labelledby="tl-order-label">
+          <button type="button" aria-pressed="true" data-order="story">Story order</button>
+          <button type="button" aria-pressed="false" data-order="release">Release order</button>
+        </div>
+      </div>
+    )}
+    {filterByCharacter && involved.length > 1 && (
+      <label class="tool-field"><span>Character</span>
+        <select class="tool-select" data-filter="character">
+          <option value="">Everyone</option>
+          {involved.map(id => <option value={id}>{cast.get(id)!.name}</option>)}
+        </select>
+      </label>
+    )}
+    <label class="tool-field"><span>Event type</span>
+      <select class="tool-select" data-filter="kind">
+        <option value="">All events</option>
+        {kinds.map(kind => <option value={kind}>{KIND[kind]}</option>)}
+      </select>
+    </label>
+  </div>
+  {differs && <p class="tool-note tool-note--muted timeline-note" data-order-note aria-live="polite">Story order follows in-world dates. Switch to release order to see events in the order the anime, then the manga, first showed them.</p>}
+  <ol class="timeline" data-timeline-list>
+    {story.map(event => {
+      const spoilerIdx = checkpointIndex(series, event.spoiler);
+      const content = (
+        <>
+          <h3>{event.title}</h3>
+          <p>{event.summary}</p>
+          <div class="tl-event__tags">
+            <span class="ref">{refLabel(event.anime, series) ? `Anime ${refLabel(event.anime, series).toLowerCase()}` : 'Not animated'}</span>
+            <span class="ref">{refLabel(event.manga, series) ? `Manga ${refLabel(event.manga, series).toLowerCase()}` : ''}</span>
+            {event.arc && <span>{arcName.get(event.arc)}</span>}
+            {event.characters.filter(id => cast.get(id)?.profile).map(id => <a href={characterPath(cast.get(id)!.profile!)}>{cast.get(id)!.name}</a>)}
+          </div>
+        </>
+      );
+      return (
+        <li class="tl-event" id={`event-${event.id}`} data-kind={event.kind} data-characters={event.characters.join(' ')} data-story={event.storyOrder} data-release={releaseIndex.get(event.id)} data-spoiler-idx={spoilerIdx >= 0 ? spoilerIdx : undefined} data-spoiler-row={spoilerIdx >= 0 ? '' : undefined}>
+          <div class="tl-event__when">{event.when}</div>
+          <div>
+            {event.spoiler ? <Spoiler series={series} after={event.spoiler} label="Hidden event">{content}</Spoiler> : content}
+          </div>
+        </li>
+      );
+    })}
+  </ol>
+  <p class="timeline-empty" data-timeline-empty hidden>No visible events match. Raise your spoiler level or clear a filter.</p>
+</div>
+<script>
+  import '../../scripts/characters/timeline.ts';
+</script>

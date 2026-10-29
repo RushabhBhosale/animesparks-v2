@@ -1,0 +1,187 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import '../../styles/tools.css';
+import '../../styles/characters.css';
+import AdUnit from '../../components/AdUnit.astro';
+import ToolHero from '../../components/tools/ToolHero.astro';
+import RelatedReading from '../../components/tools/RelatedReading.astro';
+import SpoilerBar from '../../components/characters/SpoilerBar.astro';
+import Spoiler from '../../components/characters/Spoiler.astro';
+import FactPanel from '../../components/characters/FactPanel.astro';
+import Prose from '../../components/characters/Prose.astro';
+import AbilityList from '../../components/characters/AbilityList.astro';
+import RelationshipGraph from '../../components/characters/RelationshipGraph.astro';
+import RelationshipList from '../../components/characters/RelationshipList.astro';
+import FamilyTree from '../../components/characters/FamilyTree.astro';
+import TimelineExplorer from '../../components/characters/TimelineExplorer.astro';
+import StatusTracker from '../../components/characters/StatusTracker.astro';
+import CharacterCard from '../../components/characters/CharacterCard.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { SITE } from '../../lib/content/seo';
+import { refLabel } from '../../lib/characters/format.ts';
+import { egoGraph, familyTree } from '../../lib/characters/graph.ts';
+import { articlesForCharacter, seriesToolLinks } from '../../lib/characters/links.ts';
+import { characterPath, getRegistry, hubPath } from '../../lib/characters/registry.ts';
+import { profileJsonLd, CHARACTERS_IMAGE } from '../../lib/characters/seo.ts';
+
+export const prerender = true;
+export function getStaticPaths() {
+  return getRegistry().profiles.map(profile => ({ params: { slug: profile.slug }, props: { slug: profile.slug } }));
+}
+
+const registry = getRegistry();
+const profile = registry.bySlug.get(Astro.props.slug)!;
+const series = registry.seriesBySlug.get(profile.series)!;
+const hasHub = registry.hubs.some(item => item.slug === series.slug);
+const { english } = await getBuildData();
+const [toolLinks] = await Promise.all([seriesToolLinks(series, english)]);
+const articles = articlesForCharacter(profile, series, english);
+const path = characterPath(profile.slug);
+const relationships = series.relationships.filter(item => item.a === profile.id || item.b === profile.id);
+const ego = egoGraph(profile.id, series.cast, relationships);
+const tree = familyTree(profile.id, series.cast, series.relationships.filter(item => !item.spoiler));
+const events = series.timeline.filter(item => item.characters.includes(profile.id));
+const forms = profile.abilities.some(item => item.kind === 'transformation' || item.kind === 'power-up');
+const relatedProfiles = [...new Set([...profile.related, ...series.profiles.map(item => item.slug)])].filter(slug => slug !== profile.slug).map(slug => registry.bySlug.get(slug)!).filter(Boolean).slice(0, 6);
+const verified = new Date(profile.meta.verifiedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const sections: Array<[string, string]> = [
+  ['biography', 'Biography'], ['personality', 'Personality and development'], ['abilities', forms ? 'Abilities and transformations' : 'Abilities'],
+  ['relationships', 'Relationships'], ['battles', 'Major battles'], ['timeline', 'Timeline'], ['status', 'Status tracker'], ['appearances', 'Appearances'], ['related', 'Related'], ['faq', 'FAQ'], ['sources', 'Sources'],
+];
+const crumbs: Array<[string, string?]> = [['Home', '/'], ['Characters', '/characters'], ...(hasHub ? [[`${series.short}`, hubPath(series.slug)] as [string, string]] : []), [profile.name]];
+---
+<SiteLayout title={profile.seo.title} socialTitle={profile.seo.title} description={profile.seo.description} canonical={`${SITE}${path}`} image={CHARACTERS_IMAGE} jsonLd={profileJsonLd(profile, series, hasHub)} showFooterAd>
+  <main>
+    <ToolHero crumbs={crumbs} kicker={`${series.title} character guide`} title={profile.name} deck={profile.overview}
+      facts={[[profile.role, ''], ['Verified', verified]].filter(([value]) => value) as Array<[string, string]>} />
+    <div class="shell">
+      <SpoilerBar series={series} />
+    </div>
+    <div class="shell tool-main">
+      <div class="char-layout">
+        <div>
+          <nav aria-label="On this page"><ul class="jump-nav">{sections.map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}</ul></nav>
+
+          <section class="char-section" id="biography" aria-labelledby="biography-title" style="margin-top:var(--sp-10)">
+            <h2 id="biography-title">{profile.name}’s biography</h2>
+            <Prose blocks={profile.biography} series={series} />
+          </section>
+
+          <section class="char-section" id="personality" aria-labelledby="personality-title">
+            <h2 id="personality-title">Personality, motivations and development</h2>
+            <Prose blocks={profile.personality} series={series} />
+            <div class="prose"><h3>What drives {profile.name}</h3><ul>{profile.motivations.map(item => <li>{item}</li>)}</ul></div>
+            <Prose blocks={profile.development} series={series} />
+          </section>
+
+          <section class="char-section" id="abilities" aria-labelledby="abilities-title">
+            <h2 id="abilities-title">{profile.name}’s abilities{forms ? ' and transformations' : ''}</h2>
+            <p class="lede">Open an entry for its strengths, limits and where it appears. Entries describe what the story shows; they are not a power ranking.</p>
+            <AbilityList abilities={profile.abilities} battles={profile.battles} series={series} />
+          </section>
+
+          <section class="char-section" id="relationships" aria-labelledby="relationships-title">
+            <h2 id="relationships-title">{profile.name}’s relationships</h2>
+            <p class="lede">Every named connection that has a profile on AnimeSparks is linked. Open a card to see how the relationship changes over the story.</p>
+            <RelationshipGraph graph={ego} series={series} label={`Relationship diagram for ${profile.name}`} />
+            {tree && (<>
+              <h3 style="margin:var(--sp-8) 0 var(--sp-3);font-size:var(--text-xl)">Family tree</h3>
+              <FamilyTree tree={tree} label={`Family tree around ${profile.name}`} />
+            </>)}
+            <RelationshipList relationships={relationships} series={series} focus={profile.id} />
+          </section>
+
+          <section class="char-section" id="battles" aria-labelledby="battles-title">
+            <h2 id="battles-title">Major battles</h2>
+            <div class="prose">
+              {profile.battles.map(battle => (
+                <Spoiler series={series} after={battle.spoiler} label="Spoiler: battle">
+                  <h3 id={`battle-${battle.id}`}>{battle.title}</h3>
+                  <p><strong>Result:</strong> {battle.outcome} <span class="ref">({refLabel(battle.ref, series)})</span></p>
+                  <p>{battle.summary}{battle.event && <> <a href={`#event-${battle.event}`}>See it on the timeline</a>.</>}</p>
+                </Spoiler>
+              ))}
+            </div>
+          </section>
+
+          <section class="char-section" id="timeline" aria-labelledby="timeline-title">
+            <h2 id="timeline-title">{profile.name} timeline</h2>
+            <TimelineExplorer series={series} events={events} filterByCharacter={false} />
+            {hasHub && <p class="prose" style="margin-top:var(--sp-4)"><a href={`${hubPath(series.slug)}#timeline`}>Open the full {series.short} timeline</a> to filter by any character.</p>}
+          </section>
+
+          <section class="char-section" id="status" aria-labelledby="status-title">
+            <h2 id="status-title">Status tracker: is {profile.name} alive?</h2>
+            <p class="lede">Status can differ between the anime and the manga, and it can change: characters are sealed, revived or used by others. Each event below has its own spoiler protection and verified references.</p>
+            <StatusTracker profile={profile} series={series} />
+            {profile.adaptation.length > 0 && (
+              <div class="prose" style="margin-top:var(--sp-8)">
+                <h3>Anime and manga differences</h3>
+                {profile.adaptation.map(note => (
+                  <Spoiler series={series} after={note.spoiler} label="Spoiler: adaptation difference">
+                    <p><strong>{note.topic}.</strong> <em>Anime:</em> {note.anime} <em>Manga:</em> {note.manga}</p>
+                  </Spoiler>
+                ))}
+              </div>
+            )}
+            {profile.unconfirmed.length > 0 && (
+              <div class="prose" style="margin-top:var(--sp-8)">
+                <h3>Not confirmed by the story</h3>
+                <ul>{profile.unconfirmed.map(item => <li>{item}</li>)}</ul>
+              </div>
+            )}
+          </section>
+
+          <section class="char-section" id="appearances" aria-labelledby="appearances-title">
+            <h2 id="appearances-title">Anime and manga appearances</h2>
+            <div class="table-wrap"><table class="ledger">
+              <thead><tr><th scope="col">Medium</th><th scope="col">Title</th><th scope="col">Role</th></tr></thead>
+              <tbody>{profile.appearances.map(item => <tr><td>{item.medium.charAt(0).toUpperCase() + item.medium.slice(1)}</td><td>{item.title}</td><td>{item.detail}</td></tr>)}</tbody>
+            </table></div>
+            {toolLinks.length > 0 && (<>
+              <h3 style="margin:var(--sp-8) 0 var(--sp-3);font-size:var(--text-xl)">Plan your {series.short} viewing</h3>
+              <ul class="link-list">{toolLinks.map(link => <li><a href={link.href}>{link.label}</a>: {link.note}.</li>)}</ul>
+            </>)}
+          </section>
+
+          <section class="char-section" id="related" aria-labelledby="related-title">
+            <h2 id="related-title">Related characters{hasHub ? ` in ${series.short}` : ''}</h2>
+            <div class="char-grid">{relatedProfiles.map(item => <CharacterCard profile={item} series={registry.seriesBySlug.get(item.series)!} />)}</div>
+            {hasHub && <p class="prose" style="margin-top:var(--sp-5)"><a href={hubPath(series.slug)}>See every {series.short} character, relationship and timeline</a>.</p>}
+          </section>
+
+          <RelatedReading articles={articles} heading={`${series.short} articles on AnimeSparks`} />
+
+          <div class="tool-ad-slot"><AdUnit slot="horizontal2" /></div>
+
+          <section class="char-section" id="faq" aria-labelledby="faq-title">
+            <h2 id="faq-title">{profile.name} FAQ</h2>
+            <div class="tool-faq">
+              {profile.faq.map(item => (
+                <Spoiler series={series} after={item.spoiler} label="Spoiler question">
+                  <details><summary>{item.question}</summary><p>{item.answer}</p></details>
+                </Spoiler>
+              ))}
+            </div>
+          </section>
+
+          <section class="char-section" id="sources" aria-labelledby="sources-title">
+            <h2 id="sources-title">How this profile was checked</h2>
+            <p class="lede">Last verified {verified}. Covers {profile.meta.coverage}. Details are written by AnimeSparks from the manga and anime themselves, and cross-checked against the references below. Where something isn’t confirmed, the page says so.</p>
+            <ul class="sources-list">
+              {profile.meta.sources.map(source => <li>{source.url ? <a href={source.url} rel="nofollow noopener" target="_blank">{source.name}</a> : source.name}: {source.covers}</li>)}
+            </ul>
+          </section>
+        </div>
+        <aside class="char-aside" aria-label={`${profile.name} quick facts`}>
+          <FactPanel profile={profile} series={series} />
+          <div class="tool-aside-card">
+            <p class="kicker">Coverage</p>
+            <p>{profile.meta.coverage}.</p>
+            <p>Spoilers are folded away until you choose how far you have got.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</SiteLayout>

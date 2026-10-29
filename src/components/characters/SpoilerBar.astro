@@ -1,0 +1,16 @@
+---
+import type { SeriesData } from '../../lib/characters/types.ts';
+interface Props { series: Pick<SeriesData, 'slug' | 'title' | 'checkpoints'> }
+const { series } = Astro.props;
+---
+<div class="spoiler-bar" data-spoiler-bar data-series={series.slug} role="region" aria-label={`Spoiler controls for ${series.title}`}>
+  <label class="spoiler-bar__label" for={`spoiler-level-${series.slug}`}><strong>Spoiler shield</strong>I have watched or read through…</label>
+  <select class="tool-select" id={`spoiler-level-${series.slug}`} data-spoiler-select>
+    <option value="" data-idx="-1">Nothing yet: hide spoilers</option>
+    {series.checkpoints.map((checkpoint, index) => <option value={checkpoint.id} data-idx={index} data-covers={checkpoint.covers}>{checkpoint.label}</option>)}
+  </select>
+  <p class="spoiler-bar__note" data-spoiler-note aria-live="polite">Revelations that change how the story reads are folded away. Choose how far you have got to unfold everything up to that point. Your choice stays on this device.</p>
+</div>
+<script>
+  import '../../scripts/characters/spoilers.ts';
+</script>

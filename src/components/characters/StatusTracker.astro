@@ -1,0 +1,36 @@
+---
+import { refLabel } from '../../lib/characters/format.ts';
+import type { CharacterProfile, SeriesData } from '../../lib/characters/types.ts';
+import Spoiler from './Spoiler.astro';
+interface Props { profile: CharacterProfile; series: SeriesData }
+const { profile, series } = Astro.props;
+const status = profile.status;
+const KIND: Record<string, string> = { death: 'Death', revival: 'Revival', seal: 'Sealed', release: 'Released', 'near-death': 'Near death', 'body-swap': 'Body used by another', transformation: 'Transformation', 'alternate-timeline': 'Alternate timeline' };
+---
+<Spoiler series={series} after={status.spoiler} label={`Spoiler: ${profile.name}’s current status`}>
+  <dl class="status-now">
+    <div><dt>In the manga</dt><dd class={`state-${status.manga.state}`}>{status.manga.label}</dd></div>
+    <div><dt>In the anime so far</dt><dd class={`state-${status.anime.state}`}>{status.anime.label}</dd></div>
+  </dl>
+  <p class="prose" style="margin-top:var(--sp-4)"><span style="color:var(--ink-2)">{status.summary}</span></p>
+</Spoiler>
+{status.events.length > 0 && (
+  <ol class="status-events" aria-label={`${profile.name} status events`}>
+    {status.events.map(event => (
+      <li>
+        <Spoiler series={series} after={event.spoiler} label="Spoiler: status event">
+          <article class="status-event">
+            <h3><span class="status-kind">{KIND[event.kind]}</span>{event.title}</h3>
+            <dl>
+              {event.cause && <><dt>Cause</dt><dd>{event.cause}</dd></>}
+              <dt>What happens</dt><dd>{event.circumstances}</dd>
+              <dt>Why it matters</dt><dd>{event.significance}</dd>
+              <dt>Verified at</dt><dd><span class="ref">{[event.anime && `Anime ${refLabel(event.anime, series).toLowerCase()}`, event.manga && `Manga ${refLabel(event.manga, series).toLowerCase()}`].filter(Boolean).join(' · ') || 'Manga only'}</span></dd>
+              {event.adaptation && <><dt>Anime vs. manga</dt><dd>{event.adaptation}</dd></>}
+            </dl>
+          </article>
+        </Spoiler>
+      </li>
+    ))}
+  </ol>
+)}
