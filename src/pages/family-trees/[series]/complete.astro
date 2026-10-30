@@ -4,7 +4,7 @@ import { familyPath, familySeries } from '../../../lib/characters/family.ts';
 
 export const prerender = true;
 export function getStaticPaths() {
-  return familySeries().map(series => ({ params: { series: series.slug } }));
+  return familySeries().filter(series => series.slug === 'naruto').map(series => ({ params: { series: series.slug } }));
 }
 return Astro.redirect(familyPath(Astro.params.series!), 301);
 ---

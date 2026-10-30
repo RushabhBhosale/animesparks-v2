@@ -4,7 +4,7 @@
 // what they actually belong to (clan, team, rank, kind of creature), and those
 // lines are drawn differently so they never read as family.
 
-import type { RosterEdge } from './roster.ts';
+import type { ChartRules, RosterEdge } from './roster.ts';
 
 export interface ChartData {
   clans: Array<{ name: string; count: number }>;
@@ -14,6 +14,7 @@ export interface ChartData {
   personLock: Record<string, number>;
   bloodlines: Array<[string, string, number]>;
   male: string[];
+  rules: ChartRules;
   checkpoints: number;
 }
 export type BoxKind = 'person' | 'echo' | 'root' | 'branch' | 'clan' | 'team' | 'dot';
@@ -32,13 +33,9 @@ interface Block { w: number; h: number; ax: number; draw(x: number, y: number, f
 const JUNCTION = '~';
 const H = 34;
 const GAP = 16;
-const NOT_A_HOME = new Set(['Allied Shinobi Forces']);
 const BRANCH_MIN = 12;
 const SUB_BRANCH_MIN = 3;
 const MAJOR_CLAN = 8;
-const RANKS = ['Kage', 'Anbu', 'Jōnin', 'Tokubetsu Jōnin', 'Chūnin', 'Genin', 'Academy Student'];
-const ROLES = ['Daimyō', 'Samurai', 'Missing-nin', 'Mercenary Ninja', 'Ninja monk', 'Hunter-nin', 'Medical-nin', 'Sensor Type'];
-const NOT_A_SURNAME = new Set(['Daimyō', 'Mother', 'Father', 'Path', 'Bird', 'Minister', 'Zetsu', 'B', 'Panda', 'Partner', 'Hoshikage', 'Master', 'Son', 'Wife', 'Brother', 'Student', 'Ninja', 'Villager', 'Captain', 'Guard', 'Toad', 'Snake', 'Elder', 'Clone']);
 
 const textWidth = (text: string, size: number) => text.length * size * 0.56;
 const personWidth = (name: string) => Math.max(66, Math.ceil(textWidth(name, 13)) + 26);
@@ -61,6 +58,9 @@ export function visibleEdges(data: ChartData, level: number) {
 
 export function buildChart(data: ChartData, level: number, title: string, options: { familiesOnly?: boolean } = {}): Chart {
   const people = readPeople(data);
+  const { rules } = data;
+  const notSurname = new Set(rules.notSurname);
+  const preferHome = rules.preferHome ? new RegExp(rules.preferHome) : null;
   const male = new Set(data.male);
   const edges = visibleEdges(data, level);
 
@@ -114,7 +114,8 @@ export function buildChart(data: ChartData, level: number, title: string, option
   const echoesOf = new Map<string, string[]>();
   const crossPairs: Array<[string, string, LineKind]> = [];
   for (const { a, b } of couples) {
-    const preferA = Number(male.has(a)) - Number(male.has(b)) || Number(parent.has(a)) - Number(parent.has(b)) || (childCount.get(a) ?? 0) - (childCount.get(b) ?? 0);
+    const lead = (childCount.get(a) ?? 0) - (childCount.get(b) ?? 0);
+    const preferA = (Math.abs(lead) >= 3 ? lead : 0) || Number(male.has(a)) - Number(male.has(b)) || Number(parent.has(a)) - Number(parent.has(b)) || (childCount.get(a) ?? 0) - (childCount.get(b) ?? 0);
     const [host, guest] = preferA >= 0 ? [a, b] : [b, a];
     if (hostOf.has(host) || parent.has(guest) || hostOf.has(guest) || partnersOf.has(guest)) {
       // Both already have a place: keep both, join them with an echo and a line.
@@ -153,6 +154,11 @@ export function buildChart(data: ChartData, level: number, title: string, option
     holder.children.push(unit);
     attached.add(id);
   }
+  // In a unit whose children are not all shared, children hang from the host alone and the other parent gets a line.
+  const sharesAll = (unit: Unit, partner: string) => unit.children.every(child => candidates.get(child.id)?.some(item => item.id === partner));
+  for (const unit of units.values()) for (const partner of [...unit.partners, ...unit.echoes]) {
+    if (!sharesAll(unit, partner.id)) for (const child of unit.children) if (candidates.get(child.id)?.some(item => item.id === partner.id)) crossPairs.push([partner.id, child.id, 'cross']);
+  }
   // A partner's own parent still needs to reach them.
   for (const [guest, host] of hostOf) if (parent.has(guest) && !attached.has(host)) crossPairs.push([parent.get(guest)!, guest, 'cross']);
 
@@ -167,7 +173,7 @@ export function buildChart(data: ChartData, level: number, title: string, option
   }
 
   // ── 5. Branches: clan → village → series ──
-  const home = (person: Person) => { const list = person.affiliation.filter(name => !NOT_A_HOME.has(name)); return list.find(name => /gakure$/.test(name)) ?? list[0] ?? ''; };
+  const home = (person: Person) => { const list = person.affiliation.filter(name => !rules.notHome.includes(name)); return (preferHome && list.find(name => preferHome.test(name))) ?? list[0] ?? ''; };
   const roots = [...units.values()].filter(unit => !attached.has(unit.id) && (unit.host || unit.children.length)).sort((a, b) => a.id.localeCompare(b.id));
   const members = (unit: Unit, seen = new Set<string>()): Person[] => {
     if (seen.has(unit.id)) return [];
@@ -180,7 +186,7 @@ export function buildChart(data: ChartData, level: number, title: string, option
   const clanBranch = (name: string) => { if (!clanBranches.has(name)) clanBranches.set(name, { name, id: `c:${name}`, kids: [], loose: [] }); return clanBranches.get(name)!; };
   const homeless: Array<[string, Unit | Person]> = [];
   // A family name shared by people with no clan on record is still a real thing they have in common.
-  const surnameOf = (person: Person) => { const words = person.name.replace(/\(.*?\)/g, '').trim().split(/\s+/); return words.length === 2 && !NOT_A_SURNAME.has(words[1]) && !person.clans.length ? words[1] : ''; };
+  const surnameOf = (person: Person) => { const words = person.name.replace(/\(.*?\)/g, '').trim().split(/\s+/); const name = rules.surnameAt === 'first' ? words[0] : words[1]; return (rules.surnameAt === 'first' ? words.length >= 2 : words.length === 2) && !notSurname.has(name) && !person.clans.length ? name : ''; };
   const surnames = new Map<string, number>();
   for (const person of people.values()) { const name = surnameOf(person); if (name) surnames.set(name, (surnames.get(name) ?? 0) + 1); }
   for (const unit of roots) {
@@ -209,7 +215,7 @@ export function buildChart(data: ChartData, level: number, title: string, option
     if (rooted.has(branch.name)) continue;
     if (sourceClans.has(branch.name)) { standalone.push(branch); continue; }
     const everyone = [...branch.loose, ...branch.kids.flatMap(unit => members(unit))];
-    const name = mostCommon(everyone.map(home));
+    const name = rules.clanHomes?.[branch.name] ?? mostCommon(everyone.map(home));
     place(name).clans.push(branch);
     place(name).size += everyone.length;
   }
@@ -292,7 +298,7 @@ export function buildChart(data: ChartData, level: number, title: string, option
   const personBox = (person: Person, kind: BoxKind, x: number, y: number, parentId?: string) => addBox({ id: kind === 'echo' ? `e:${person.id}:${parentId}` : person.id, label: person.name, kind, x, y, w: personWidth(person.name), h: H, parent: parentId, profile: person.profile, target: kind === 'echo' ? person.id : undefined });
 
   // Hanging list: a spine with a name on each side, wrapped into several spines when long.
-  const spines = (list: Person[]): Block => {
+  const spines = (list: Person[], kind: BoxKind = 'person'): Block => {
     const sorted = [...list].sort(byName);
     const rows = Math.max(3, Math.min(30, Math.round(Math.sqrt(sorted.length * 2.6))));
     const perSpine = rows * 2;
@@ -319,8 +325,8 @@ export function buildChart(data: ChartData, level: number, title: string, option
           const width = personWidth(person.name);
           const onLeft = i % 2 === 0;
           const boxX = onLeft ? spine - stubs - width : spine + stubs;
-          personBox(person, 'person', boxX, top, from?.id);
-          if (from) lines.push({ d: `M${round(from.x)},${round(from.y)}V${round(from.busY ?? y)}H${round(x + ax)}V${round(y + 8)}H${round(spine)}V${round(top + H / 2)}H${round(onLeft ? spine - stubs : spine + stubs)}`, kind: from.kind, to: person.id });
+          const box = personBox(person, kind, boxX, top, from?.id);
+          if (from) lines.push({ d: `M${round(from.x)},${round(from.y)}V${round(from.busY ?? y)}H${round(x + ax)}V${round(y + 8)}H${round(spine)}V${round(top + H / 2)}H${round(onLeft ? spine - stubs : spine + stubs)}`, kind: from.kind, to: box.id });
         });
       });
     } };
@@ -338,7 +344,7 @@ export function buildChart(data: ChartData, level: number, title: string, option
     const others = [...unit.partners.map(person => ({ person, kind: 'person' as BoxKind })), ...unit.echoes.map(person => ({ person, kind: 'echo' as BoxKind }))];
     const hostW = personWidth(host.name);
     const w = hostW + others.reduce((total, item) => total + 22 + personWidth(item.person.name), 0);
-    const drop = others.length ? hostW + 11 : hostW / 2;
+    const drop = others.length && unit.children.length && others.some(item => sharesAll(unit, item.person.id)) ? hostW + 11 : hostW / 2;
     return { w, h: H, ax: hostW / 2, drop, draw(x: number, y: number, from?: Point): Point {
       personBox(host, 'person', x, y, from?.id);
       link(from, x + hostW / 2, y, host.id, from && (from.kind === 'branch' || from.kind === 'trunk') ? from.kind : unit.via);
@@ -361,14 +367,14 @@ export function buildChart(data: ChartData, level: number, title: string, option
       const team = person.teams.filter(name => (teamSize.get(name) ?? 0) >= 2).sort((a, b) => teamSize.get(a)! - teamSize.get(b)! || a.localeCompare(b))[0];
       if (team) return team;
       const species = person.species && !/^Human/.test(person.species) ? person.species : '';
-      return RANKS.find(rank => person.ranks.includes(rank)) ?? ROLES.find(role => person.classes.includes(role)) ?? (person.classes.includes('Summon') ? species || 'Summon' : species);
+      return rules.ranks.find(rank => person.ranks.includes(rank)) ?? rules.roles.find(role => person.classes.includes(role)) ?? (person.classes.includes('Summon') ? species || 'Summon' : species);
     };
     const groups = new Map<string, Person[]>();
     for (const person of list) { const name = label(person); if (!groups.has(name)) groups.set(name, []); groups.get(name)!.push(person); }
     const rest = [...(groups.get('') ?? [])];
     groups.delete('');
     for (const [name, group] of groups) if (group.length < 2) { rest.push(...group); groups.delete(name); }
-    const order = (name: string) => { const rank = RANKS.indexOf(name); return rank >= 0 ? rank + 100 : ROLES.includes(name) ? 200 : 0; };
+    const order = (name: string) => { const rank = rules.ranks.indexOf(name); return rank >= 0 ? rank + 100 : rules.roles.includes(name) ? 200 + rules.roles.indexOf(name) : 0; };
     const blocks = [...groups].sort((a, b) => order(a[0]) - order(b[0]) || a[0].localeCompare(b[0], undefined, { numeric: true })).map(([name, group]) => branchBlock({ id: `t:${scope}:${name}`, name, kind: 'team', kids: [], loose: group, line: 'branch' }));
     return rest.length ? [...blocks, spines(rest)] : blocks;
   };
@@ -395,10 +401,11 @@ export function buildChart(data: ChartData, level: number, title: string, option
     return stack(unitHeader(unit), all.length ? arrange(all, Math.max(1100, widthFor(all))) : undefined);
   }
 
-  const topBlocks: Array<{ block: Block; size: number }> = [];
+  const topBlocks: Array<{ block: Block; size: number; id?: string }> = [];
   for (const branch of standalone) topBlocks.push({ block: clanBlock(branch, 'branch'), size: Infinity });
   const small: Array<[string, { clans: ClanBranch[]; kids: Unit[]; loose: Person[]; size: number }]> = [];
   for (const [name, bucket] of places) {
+    if (rules.featured?.includes(name)) continue;
     if (!name || bucket.size >= BRANCH_MIN) {
       const label = name || 'No recorded home';
       topBlocks.push({ block: branchBlock({ id: `g:${label}`, name: label, kind: 'branch', kids: [...bucket.clans].sort((a, b) => clanSize(b) - clanSize(a)).map(branch => clanBlock(branch)).concat([...bucket.kids].sort((a, b) => members(b).length - members(a).length).map(unitBlock)), loose: bucket.loose, line: 'branch', grouped: true }), size: bucket.size });
@@ -415,6 +422,17 @@ export function buildChart(data: ChartData, level: number, title: string, option
       else { single.push(...bucket.loose); kids.push(...bucket.clans.map(branch => clanBlock(branch)), ...bucket.kids.map(unitBlock)); }
     }
     topBlocks.push({ block: branchBlock({ id: `g:${label}`, name: label, kind: 'branch', kids, loose: single, line: 'branch', grouped: true }), size });
+  }
+  // A featured group keeps its full line-up: members whose family lives elsewhere show as echoes.
+  for (const name of rules.featured ?? []) {
+    const bucket = places.get(name);
+    if (!bucket) continue;
+    const label = name;
+    const away = [...people.values()].filter(person => home(person) === name && !bucket.loose.includes(person) && !bucket.kids.some(unit => members(unit).includes(person)) && !bucket.clans.some(branch => branch.loose.includes(person) || branch.kids.some(unit => members(unit).includes(person))));
+    const index = topBlocks.findIndex(item => item.id === `g:${label}`);
+    const block = branchBlock({ id: `g:${label}`, name: label, kind: 'branch', kids: [...bucket.clans.map(branch => clanBlock(branch)), ...bucket.kids.map(unitBlock), ...(away.length ? [spines(away, 'echo')] : [])], loose: bucket.loose, line: 'branch', grouped: true });
+    if (index >= 0) topBlocks.splice(index, 1);
+    topBlocks.push({ block, size: Number.POSITIVE_INFINITY, id: `g:${label}` });
   }
   const ordered = topBlocks.sort((a, b) => b.size - a.size).map(item => item.block);
 

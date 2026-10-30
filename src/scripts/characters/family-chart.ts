@@ -21,8 +21,9 @@ function start(root: HTMLElement) {
   let linesTo = new Map<string, SVGPathElement[]>();
   let names: Array<{ id: string; name: string; folded: string }> = [];
   let branches: Array<{ id: string; name: string; x: number; y: number; w: number; h: number; up: string; top: boolean; major: boolean }> = [];
+  let labels: Array<{ id: string; cx: number; cy: number; pw: number; ph: number; top: boolean }> = [];
   const index = () => {
-    boxes = new Map(); linesTo = new Map(); names = []; branches = [];
+    boxes = new Map(); linesTo = new Map(); names = []; branches = []; labels = [];
     stage.querySelectorAll<SVGElement>('[data-id]').forEach(node => {
       const id = node.dataset.id!; boxes.set(id, node);
       if (node.dataset.b) {
@@ -35,6 +36,11 @@ function start(root: HTMLElement) {
       for (const id of line.dataset.to!.split('|')) { if (!linesTo.has(id)) linesTo.set(id, []); linesTo.get(id)!.push(line); }
     });
     names.sort((a, b) => a.name.localeCompare(b.name));
+    labels = branches.filter(item => item.id === 'root' || item.top || item.major).sort((a, b) => Number(b.id === 'root') - Number(a.id === 'root') || b.w * b.h - a.w * a.h).map(item => {
+      const node = boxes.get(item.id)!; const place = node.getAttribute('transform')!.match(/translate\(([\d.-]+) ([\d.-]+)\)/)!; const shape = node.querySelector('rect')!;
+      return { id: item.id, cx: Number(place[1]), cy: Number(place[2]), pw: Number(shape.getAttribute('width')), ph: Number(shape.getAttribute('height')), top: item.top || item.id === 'root' };
+    });
+    lastBranchSize = 0;
     const list = (title: string, items: typeof branches) => `<optgroup label="${title}">${items.sort((a, b) => a.name.localeCompare(b.name)).map(item => `<option value="${esc(item.id)}">${esc(item.name)}</option>`).join('')}</optgroup>`;
     jump.innerHTML = `<option value="">Jump to…</option>${list('Villages and lands', branches.filter(item => item.top))}${list('Clans', branches.filter(item => item.major && !item.top))}`;
     drawMini();
@@ -42,11 +48,24 @@ function start(root: HTMLElement) {
   const svgSize = () => { const svg = stage.querySelector('svg')!; return { w: svg.width.baseVal.value, h: svg.height.baseVal.value }; };
 
   // ── camera ──
-  let scale = 1; let x = 0; let y = 0; let minScale = 0.05; let flight = 0; let far = false; let hereTimer = 0;
+  let scale = 1; let x = 0; let y = 0; let minScale = 0.05; let flight = 0; let far = false; let hereTimer = 0; let lastBranchSize = 0; let lastClanSize = 0;
+  // Zoomed out, labels are drawn larger than life, so the biggest branches keep theirs and the rest wait.
+  const cullLabels = (branchSize: number, clanSize: number) => {
+    const kept: Array<{ x: number; y: number; w: number; h: number }> = [];
+    for (const item of labels) {
+      const size = (item.top ? branchSize : clanSize) * scale;
+      const box = { x: item.cx * scale, y: item.cy * scale, w: item.pw * size, h: item.ph * size };
+      const clash = kept.some(other => Math.abs(box.x - other.x) < (box.w + other.w) / 2 + 6 && Math.abs(box.y - other.y) < (box.h + other.h) / 2 + 3);
+      boxes.get(item.id)?.classList.toggle('is-culled', clash);
+      if (!clash) kept.push(box);
+    }
+  };
   const zoomVars = () => {
     const step = (value: number) => Math.round(value * 4) / 4;
-    stage.style.setProperty('--branch', String(step(Math.min(5, Math.max(1, 0.5 / scale)))));
-    stage.style.setProperty('--clan', String(step(Math.min(3.5, Math.max(1, 0.35 / scale)))));
+    const branchSize = step(Math.min(5, Math.max(1, 0.5 / scale))); const clanSize = step(Math.min(3.5, Math.max(1, 0.35 / scale)));
+    if (branchSize !== lastBranchSize || clanSize !== lastClanSize) { lastBranchSize = branchSize; lastClanSize = clanSize; cullLabels(branchSize, clanSize); }
+    stage.style.setProperty('--branch', String(branchSize));
+    stage.style.setProperty('--clan', String(clanSize));
     stage.style.setProperty('--line', String(step(Math.min(10, Math.max(1, 0.9 / scale)))));
     const nowFar = scale < 0.26;
     if (nowFar !== far) { far = nowFar; root.classList.toggle('fc--far', far); }

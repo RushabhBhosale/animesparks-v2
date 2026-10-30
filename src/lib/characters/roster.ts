@@ -4,21 +4,44 @@
 // family tree" page loads lazily. Nothing here runs per request.
 
 import naruto from '../../../data/characters/rosters/naruto.json' with { type: 'json' };
+import onePiece from '../../../data/characters/rosters/one-piece.json' with { type: 'json' };
 import { getRegistry } from './registry.ts';
 import { checkpointIndex } from './format.ts';
 
 interface RawCharacter {
   id: string; name: string; clan: string[]; status?: string; affiliation: string[]; kekkei: string[];
   family: Array<{ id: string; name: string; relation: string }>;
-  team?: string[]; rank?: string[]; species?: string; classes?: string[];
+  team?: string[]; rank?: string[]; species?: string; classes?: string[]; male?: boolean;
 }
 interface RawRoster { source: string; importedAt: string; total: number; characters: RawCharacter[] }
 
 export type EdgeKind = 'parent' | 'spouse' | 'sibling' | 'lineage';
+export interface ChartRules { surnameAt: 'first' | 'last'; notSurname: string[]; notHome: string[]; preferHome?: string; ranks: string[]; roles: string[]; featured?: string[]; clanHomes?: Record<string, string> }
 /** How a parent or sibling tie came about, when it is not by birth. */
 export type EdgeFlag = 'adoptive' | 'created';
 export type RosterEdge = [string, string, EdgeKind, number?, EdgeFlag?];
-const RAW: Record<string, RawRoster> = { naruto: naruto as RawRoster };
+const RAW: Record<string, RawRoster> = { naruto: naruto as RawRoster, 'one-piece': onePiece as RawRoster };
+
+/** How each series' roster reads: where a family name sits, what counts as a home, and how to sort people with no family. */
+const CHART_RULES: Record<string, ChartRules> = {
+  naruto: {
+    surnameAt: 'last', notSurname: ['Daimyō', 'Mother', 'Father', 'Path', 'Bird', 'Minister', 'Zetsu', 'B', 'Panda', 'Partner', 'Hoshikage', 'Master', 'Son', 'Wife', 'Brother', 'Student', 'Ninja', 'Villager', 'Captain', 'Guard', 'Toad', 'Snake', 'Elder', 'Clone'],
+    notHome: ['Allied Shinobi Forces'], preferHome: 'gakure$',
+    ranks: ['Kage', 'Anbu', 'Jōnin', 'Tokubetsu Jōnin', 'Chūnin', 'Genin', 'Academy Student'],
+    roles: ['Daimyō', 'Samurai', 'Missing-nin', 'Mercenary Ninja', 'Ninja monk', 'Hunter-nin', 'Medical-nin', 'Sensor Type'],
+  },
+  'one-piece': {
+    surnameAt: 'first', notSurname: ['Mr.', 'Miss', 'Mrs.', 'Ms.', 'Dr.', 'Doctor', 'Sir', 'Lady', 'Lord', 'King', 'Queen', 'Prince', 'Princess', 'Captain', 'Big', 'Little', 'Red', 'Black', 'White', 'Blue', 'Gold', 'Golden', 'Old', 'Great', 'Mad', 'Fake', 'The', 'Don', 'Saint', 'St.', 'Master', 'Unnamed', 'Pirate', 'Marine', 'General', 'Chief', 'Mister', 'Baby'],
+    notHome: ['Straw Hat Grand Fleet', 'Ninja-Pirate-Mink-Samurai Alliance', 'Worst Generation', 'Eleven Supernovas', 'Alliance', 'Charlotte Family'],
+    ranks: ['Fleet Admiral', 'Admirals', 'Vice Admirals', 'Rear Admirals', 'Commodores', 'All-Stars', 'Headliners', 'Shinuchi', 'Gifters', 'Pleasures', 'Waiters', 'Division Commanders', 'Captains', 'Officers', 'Royalty', 'Nobles', 'Doctors', 'Samurai', 'Pirates', 'Soldiers'],
+    roles: [], featured: ['Straw Hat Pirates'], clanHomes: { Monkey: 'Straw Hat Pirates' },
+  },
+};
+const CREDITS: Record<string, { name: string; url: string }> = {
+  naruto: { name: 'Narutopedia', url: 'https://naruto.fandom.com/' },
+  'one-piece': { name: 'One Piece Wiki', url: 'https://onepiece.fandom.com/' },
+};
+export const rosterCredit = (seriesSlug: string) => CREDITS[seriesSlug];
 
 /** Clan founders, sourced from each clan's Narutopedia article: [clan, ancestor, spoiler checkpoint]. */
 const BLOODLINES: Record<string, Array<[string, string, string]>> = {
@@ -51,7 +74,7 @@ function interpret(relation: string): { kind: EdgeKind; listedIsA: boolean; gene
   if (has('creator', 'progenitor', 'genetic template', 'genetic source')) return { kind: 'parent', listedIsA: true, flag: 'created' };
   if (has('creation', 'creations', 'clone', 'altered clone')) return { kind: 'parent', listedIsA: false, flag: 'created' };
   if (has('ramet')) return { kind: 'sibling', listedIsA: true, flag: 'created' };
-  const flag: EdgeFlag | undefined = /adoptive|foster|step/.test(r) ? 'adoptive' : undefined;
+  const flag: EdgeFlag | undefined = /adoptive|foster|step|sworn/.test(r) ? 'adoptive' : undefined;
   if (has('in-law', 'godfather', 'godson', 'godmother', 'cousin', 'uncle', 'aunt', 'nephew', 'niece', 'granduncle', 'grandnephew', 'grandniece')) return null;
   if (r.includes('great-great')) return { kind: 'lineage', listedIsA: r.includes('father') || r.includes('mother'), generations: 4, flag };
   if (has('great-grandfather', 'great-grandmother', 'great grandfather', 'great grandmother')) return { kind: 'lineage', listedIsA: true, generations: 3, flag };
@@ -104,6 +127,7 @@ export function getRoster(seriesSlug: string) {
   const male = new Set<string>();
   const known = new Set(raw.characters.map(item => item.id));
   for (const item of raw.characters) {
+    if (item.male) male.add(item.id);
     for (const entry of item.family) {
       const read = readRelative(entry, known);
       const f = { ...read, id: resolveRelative(seriesSlug, item.id, read.id, read.relation) };
@@ -145,7 +169,7 @@ export function getRoster(seriesSlug: string) {
     source: raw.source, importedAt: raw.importedAt,
     clans: [...clans.keys()],
     nodes: list, edges: [...edges.values()], locked, personLock, bloodlines, male: [...male],
-    checkpoints: series.checkpoints.length, rosterTotal: raw.total,
+    rules: CHART_RULES[seriesSlug], checkpoints: series.checkpoints.length, rosterTotal: raw.total,
   };
 }
 
@@ -159,7 +183,7 @@ export function compactRoster(seriesSlug: string) {
     importedAt: roster.importedAt, source: roster.source, total: roster.rosterTotal,
     clans: roster.clans.map((name, index) => ({ name, count: counts[index] })),
     n: roster.nodes.map(node => [node.id, node.name, node.clan, node.status || '', node.affiliation, node.kekkei, node.other.map(o => [o.id, o.name, o.relation]), node.profile ? [node.profile.slug, node.profile.role, node.profile.overview] : 0, node.team, node.rank, node.species, node.classes]),
-    e: roster.edges, locked: roster.locked, personLock: roster.personLock, bloodlines: roster.bloodlines, male: roster.male, checkpoints: roster.checkpoints,
+    e: roster.edges, locked: roster.locked, personLock: roster.personLock, bloodlines: roster.bloodlines, male: roster.male, rules: roster.rules, checkpoints: roster.checkpoints,
   };
 }
 

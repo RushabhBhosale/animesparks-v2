@@ -327,7 +327,7 @@ a.char-card:hover { border-color: var(--line-2); background: var(--surface2); }
 .fc--far .fc-n--person text, .fc--far .fc-n--echo text { display: none; }
 .fc--far .fc-n--person rect { fill: color-mix(in srgb, var(--rel-family) 42%, var(--surface2)); stroke: none; }
 .fc--far .fc-n--profile rect { fill: var(--accent); }
-.fc--farther .fc-n--clan:not(.fc-n--major), .fc--far .fc-n--team { display: none; }
+.fc--farther .fc-n--clan:not(.fc-n--major), .fc--far .fc-n--team, .fc-n.is-culled { display: none; }
 .fc-crumbs { position: absolute; z-index: 15; top: var(--sp-2); left: var(--sp-2); right: var(--sp-2); display: flex; align-items: center; gap: 4px; pointer-events: none; overflow-x: auto; color: var(--ink-3); font-size: var(--text-sm); }
 .fc-crumbs button { flex: none; padding: 5px 11px; border: 1px solid var(--line-2); background: var(--surface2); color: var(--ink); font: inherit; cursor: pointer; pointer-events: auto; white-space: nowrap; }
 .fc-crumbs button:hover { border-color: var(--accent); }

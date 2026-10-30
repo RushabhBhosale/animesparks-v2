@@ -5,6 +5,7 @@ import '../../styles/characters.css';
 import FamilyChart from '../../components/characters/FamilyChart.astro';
 import { SITE } from '../../lib/content/seo';
 import { familyPath, familySeries } from '../../lib/characters/family.ts';
+import { rosterCredit } from '../../lib/characters/roster.ts';
 import { CHARACTERS_IMAGE, crumbList } from '../../lib/characters/seo.ts';
 
 export const prerender = true;
@@ -14,6 +15,7 @@ export function getStaticPaths() {
 const series = familySeries().find(item => item.slug === Astro.props.slug)!;
 const guide = series.familyGuide!;
 const path = familyPath(series.slug);
+const credit = rosterCredit(series.slug);
 const verified = series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)!;
 ---
 <SiteLayout title={guide.seo.title} socialTitle={guide.seo.title} description={guide.seo.description} canonical={`${SITE}${path}`} image={CHARACTERS_IMAGE}
@@ -21,6 +23,6 @@ const verified = series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)
   <main class="fc-page">
     <h1 class="fc-page__title">{series.short} Family Tree</h1>
     <FamilyChart series={series} src={`${path}/roster.json`} />
-    <p class="fc-credit">Character data from <a href="https://naruto.fandom.com/" rel="nofollow noopener">Narutopedia</a>, CC BY-SA.</p>
+    <p class="fc-credit">Character data from <a href={credit.url} rel="nofollow noopener">{credit.name}</a>, CC BY-SA.</p>
   </main>
 </SiteLayout>

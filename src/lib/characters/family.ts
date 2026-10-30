@@ -3,7 +3,7 @@ import { getRegistry } from './registry.ts';
 import type { ResolvedSeries } from './types.ts';
 
 /** Series whose explorer is published. Others have data but wait for roster research. */
-export const PUBLISHED_FAMILY_SERIES = ['naruto'];
+export const PUBLISHED_FAMILY_SERIES = ['naruto', 'one-piece'];
 
 export const familyPath = (series: string) => `/family-trees/${series}`;
 

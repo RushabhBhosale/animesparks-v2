@@ -24,7 +24,7 @@ const description = `Anime family trees for ${list.map(item => item.short).join(
           return (
             <article class="clan-card">
               <h3><a href={familyPath(item.slug)}>{item.short} family tree</a></h3>
-              {stats && <p>{stats.characters} characters · {stats.clans} clans and families</p>}
+              {stats && <p>{stats.characters} characters{stats.clans > 0 ? ` · ${stats.clans} clans and families` : ''}</p>}
               <p><a href={familyPath(item.slug)}>Open the {item.short} family tree →</a></p>
             </article>
           );
