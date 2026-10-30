@@ -2,19 +2,9 @@
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import '../../styles/tools.css';
 import '../../styles/characters.css';
-import AdUnit from '../../components/AdUnit.astro';
-import ToolHero from '../../components/tools/ToolHero.astro';
-import RelatedReading from '../../components/tools/RelatedReading.astro';
-import SpoilerBar from '../../components/characters/SpoilerBar.astro';
-import FamilyExplorer from '../../components/characters/FamilyExplorer.astro';
-import RelationshipList from '../../components/characters/RelationshipList.astro';
-import CharacterCard from '../../components/characters/CharacterCard.astro';
-import { getBuildData } from '../../lib/content/build-data';
+import FamilyChart from '../../components/characters/FamilyChart.astro';
 import { SITE } from '../../lib/content/seo';
-import { familyCounts, familyPath, familySeries } from '../../lib/characters/family.ts';
-import { seriesArticles, seriesToolLinks } from '../../lib/characters/links.ts';
-import { hubPath } from '../../lib/characters/registry.ts';
-import { compactRoster, rosterStats } from '../../lib/characters/roster.ts';
+import { familyPath, familySeries } from '../../lib/characters/family.ts';
 import { CHARACTERS_IMAGE, crumbList } from '../../lib/characters/seo.ts';
 
 export const prerender = true;
@@ -23,74 +13,14 @@ export function getStaticPaths() {
 }
 const series = familySeries().find(item => item.slug === Astro.props.slug)!;
 const guide = series.familyGuide!;
-const { english } = await getBuildData();
-const toolLinks = await seriesToolLinks(series, english);
-const articles = seriesArticles(series, english);
-const counts = familyCounts(series);
-const roster = rosterStats(series.slug);
-const rosterClans = compactRoster(series.slug)?.clans ?? [];
-const topClans = [...rosterClans].sort((a, b) => b.count - a.count).slice(0, 12);
 const path = familyPath(series.slug);
-const familyTies = series.relationships.filter(item => item.type === 'family');
 const verified = series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)!;
-const faq = guide.faq;
-const publicFaq = faq.filter(item => !item.spoiler);
 ---
 <SiteLayout title={guide.seo.title} socialTitle={guide.seo.title} description={guide.seo.description} canonical={`${SITE}${path}`} image={CHARACTERS_IMAGE}
-  jsonLd={[crumbList([['Family trees', '/family-trees'], [`${series.short} family tree`, path]]), { '@context': 'https://schema.org', '@type': 'WebPage', name: guide.seo.title, description: guide.seo.description, url: `${SITE}${path}`, dateModified: verified, about: { '@type': 'TVSeries', name: series.title } }, ...(publicFaq.length ? [{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: publicFaq.map(item => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })) }] : [])]} showFooterAd>
-  <main>
-    <ToolHero crumbs={[['Home', '/'], ['Family trees', '/family-trees'], [series.short]]} kicker="Family tree explorer" title={`${series.short} family tree`} deck={guide.intro[0]}
-      facts={roster ? [[String(roster.characters), 'characters in the full tree'], [String(roster.clans), 'clans and families'], [String(counts.ties), 'curated, verified ties']] : [[String(counts.people), 'characters with family ties'], [String(counts.ties), 'verified connections']]} />
-    <div class="shell"><SpoilerBar series={series} /></div>
-    <div class="shell tool-main">
-      {roster && (
-        <section class="char-section" style="margin-top:0" aria-labelledby="complete-title">
-          <h2 id="complete-title">Open the complete {series.short} family tree</h2>
-          <dl class="stat-row">
-            <div><dt>Characters</dt><dd>{roster.characters}</dd></div>
-            <div><dt>Clans and families</dt><dd>{roster.clans}</dd></div>
-            <div><dt>With family links</dt><dd>{roster.connected}</dd></div>
-          </dl>
-          <p class="lede">The preview below shows the best-documented families. The full explorer lists every character recorded for {series.short}, grouped by clan, with search, family trees you can pan and zoom, and a detail panel for each person.</p>
-          <p><a class="tool-button tool-button--primary" href={`${familyPath(series.slug)}/complete`}>Show the complete family tree ({roster.characters} characters) →</a></p>
-          <ul class="jump-nav" style="margin-top:var(--sp-4)">{topClans.map(clan => <li><a href={`${familyPath(series.slug)}/complete#clan=${encodeURIComponent(clan.name)}&view=tree`}>{clan.name} ({clan.count})</a></li>)}</ul>
-        </section>
-      )}
-      <FamilyExplorer series={series} />
-
-      <section class="char-section" aria-labelledby="intro-title">
-        <h2 id="intro-title">{series.short} families and how the tree works</h2>
-        <div class="prose">{guide.intro.map(text => <p>{text}</p>)}<p>Coverage: the tree includes every family tie recorded in the Character Encyclopedia for {series.short}. It is not a complete roster of the series, and people without recorded family appear in the “All characters” view as separate entries. Fan theories are never drawn as confirmed ties.</p></div>
-      </section>
-
-      <section class="char-section" aria-labelledby="clans-title">
-        <h2 id="clans-title">{series.short} clans and families explained</h2>
-        <div class="clan-grid">
-          {(series.clans || []).map(clan => <article class="clan-card"><h3>{clan.name}</h3><p>{clan.summary}</p></article>)}
-        </div>
-      </section>
-
-      <section class="char-section" aria-labelledby="ties-title">
-        <h2 id="ties-title">Every family connection, as a list</h2>
-        <p class="lede">The same ties as the diagram, in a searchable list. Open an entry to see how the relationship develops.</p>
-        <label class="tool-field" style="max-width:420px"><span>Filter the list</span><input class="tool-input" type="search" placeholder="Name or relationship" data-list-filter /></label>
-        <RelationshipList relationships={familyTies} series={series} idPrefix="fam-rel" />
-      </section>
-
-      <section class="char-section" aria-labelledby="chars-title">
-        <h2 id="chars-title">Profiles in the {series.short} family tree</h2>
-        <div class="char-grid">{series.profiles.map(profile => <CharacterCard profile={profile} series={series} />)}</div>
-        <ul class="link-list" style="margin-top:var(--sp-5)">
-          <li><a href={hubPath(series.slug)}>{series.short} character hub</a>: relationship map, power index and timeline.</li>
-          {toolLinks.map(link => <li><a href={link.href}>{link.label}</a>: {link.note}.</li>)}
-        </ul>
-      </section>
-      <RelatedReading articles={articles} heading={`${series.short} articles`} />
-      <div class="tool-ad-slot"><AdUnit slot="horizontal2" /></div>
-      <section class="char-section" aria-labelledby="faq-title">
-        <h2 id="faq-title">{series.short} family tree FAQ</h2>
-        <div class="tool-faq">{faq.map(item => <details><summary>{item.spoiler ? 'Spoiler question: open to read' : item.question}</summary><p>{item.spoiler ? `${item.question} ${item.answer}` : item.answer}</p></details>)}</div>
-      </section>
-    </div>
+  jsonLd={[crumbList([['Family trees', '/family-trees'], [`${series.short} family tree`, path]]), { '@context': 'https://schema.org', '@type': 'WebPage', name: guide.seo.title, description: guide.seo.description, url: `${SITE}${path}`, dateModified: verified, about: { '@type': 'TVSeries', name: series.title } }]} showFooterAd>
+  <main class="fc-page">
+    <h1 class="fc-page__title">{series.short} Family Tree</h1>
+    <FamilyChart series={series} src={`${path}/roster.json`} />
+    <p class="fc-credit">Character data from <a href="https://naruto.fandom.com/" rel="nofollow noopener">Narutopedia</a>, CC BY-SA.</p>
   </main>
 </SiteLayout>

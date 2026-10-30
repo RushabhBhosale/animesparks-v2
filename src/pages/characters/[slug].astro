@@ -91,7 +91,7 @@ const crumbs: Array<[string, string?]> = [['Home', '/'], ['Characters', '/charac
               <h3 style="margin:var(--sp-8) 0 var(--sp-3);font-size:var(--text-xl)">Family tree</h3>
               <FamilyTree tree={tree} label={`Family tree around ${profile.name}`} />
             </>)}
-            {hasFamilyPage && <p class="prose" style="margin-top:var(--sp-4)"><a href={`${familyPath(profile.series)}#c=${profile.id}&view=family`}>Open {profile.name} in the {series.short} family tree explorer</a>.</p>}
+            {hasFamilyPage && <p class="prose" style="margin-top:var(--sp-4)"><a href={`${familyPath(profile.series)}#c=${profile.slug}`}>Open {profile.name} in the {series.short} family tree</a>.</p>}
             <RelationshipList relationships={relationships} series={series} focus={profile.id} />
           </section>
 

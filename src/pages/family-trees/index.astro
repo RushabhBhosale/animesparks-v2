@@ -4,39 +4,32 @@ import '../../styles/tools.css';
 import '../../styles/characters.css';
 import ToolHero from '../../components/tools/ToolHero.astro';
 import { SITE } from '../../lib/content/seo';
-import { familyCounts, familyPath, familySeries } from '../../lib/characters/family.ts';
+import { familyPath, familySeries } from '../../lib/characters/family.ts';
+import { rosterStats } from '../../lib/characters/roster.ts';
 import { CHARACTERS_IMAGE, crumbList } from '../../lib/characters/seo.ts';
 
 export const prerender = true;
 const list = familySeries();
 const title = 'Anime Family Trees: Interactive Clan and Relationship Explorer';
-const description = `Interactive anime family trees for ${list.map(item => item.short).join(', ')}: explore clans and bloodlines with spoiler protection and links to every character profile.`;
+const description = `Anime family trees for ${list.map(item => item.short).join(', ')}: every character in one linked tree you can search, pan and zoom.`;
 ---
 <SiteLayout title={title} socialTitle={title} description={description} canonical={`${SITE}/family-trees`} image={CHARACTERS_IMAGE}
   jsonLd={[crumbList([['Family trees', '/family-trees']]), { '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description, url: `${SITE}/family-trees`, mainEntity: { '@type': 'ItemList', itemListElement: list.map((item, index) => ({ '@type': 'ListItem', position: index + 1, url: `${SITE}${familyPath(item.slug)}`, name: `${item.short} family tree` })) } }]} showFooterAd>
   <main>
-    <ToolHero crumbs={[['Home', '/'], ['Family trees']]} kicker="Family tree explorer" title="Anime family trees" deck="Pan, zoom and search interactive family trees, clan maps and relationship networks. Every tie is checked against the story, and anything that gives away a twist stays hidden until you say how far you have got." facts={[[String(list.length), 'series'], ['Spoiler-safe', 'by default']]} />
+    <ToolHero crumbs={[['Home', '/'], ['Family trees']]} kicker="Family tree explorer" title="Anime family trees" deck="Every character in one linked tree you can search, pan and zoom." facts={[[String(list.length), 'series']]} />
     <div class="shell tool-main">
       <div class="clan-grid">
         {list.map(item => {
-          const counts = familyCounts(item);
+          const stats = rosterStats(item.slug);
           return (
             <article class="clan-card">
               <h3><a href={familyPath(item.slug)}>{item.short} family tree</a></h3>
-              <p>{item.familyGuide!.intro[0]}</p>
-              <p>{counts.people} characters with family ties · {counts.ties} connections · {counts.clans} clans</p>
-              <p><a href={familyPath(item.slug)}>Open the {item.short} explorer →</a></p>
+              {stats && <p>{stats.characters} characters · {stats.clans} clans and families</p>}
+              <p><a href={familyPath(item.slug)}>Open the {item.short} family tree →</a></p>
             </article>
           );
         })}
       </div>
-      <section class="char-section" aria-labelledby="about-title">
-        <h2 id="about-title">How the explorer works</h2>
-        <div class="prose">
-          <p>Each series page has four views: a family tree with pan, zoom and fullscreen, a relationship network for friendships, rivalries and alliances, a clan explorer, and a list of every character recorded for that series. Selecting a character updates the page address, so you can share exactly what you are looking at.</p>
-          <p>Coverage grows series by series. A series page lists the characters recorded so far; it does not claim to include every character in the story, and fan theories are never shown as confirmed relationships. See the <a href="/characters">character encyclopedia</a> for full profiles.</p>
-        </div>
-      </section>
     </div>
   </main>
 </SiteLayout>

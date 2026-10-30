@@ -3,8 +3,8 @@ import { characterPath } from '../../lib/characters/registry.ts';
 import type { FamilyTree } from '../../lib/characters/graph.ts';
 import { checkpointIndex } from '../../lib/characters/format.ts';
 import type { SeriesData } from '../../lib/characters/types.ts';
-interface Props { tree: FamilyTree; label: string; idPrefix?: string; series?: SeriesData; fixed?: boolean }
-const { tree, label, idPrefix = 'rel', series, fixed = false } = Astro.props;
+interface Props { tree: FamilyTree; label: string; idPrefix?: string; series?: SeriesData }
+const { tree, label, idPrefix = 'rel', series } = Astro.props;
 const lockOf = (spoiler?: string) => (series ? checkpointIndex(series, spoiler) : -1);
 // A relative whose every link is spoiler-protected stays hidden until the first of them unlocks.
 const nodeLock = (id: string) => {
@@ -30,16 +30,8 @@ const paths = tree.links.map(link => {
     : { d: `M${left.x + W / 2},${left.y} H${right.x - W / 2}`, kind: link.kind, link };
 });
 ---
-<div class={fixed ? 'tree-fixed' : 'graph-wrap'}>
-  <svg viewBox={`0 0 ${tree.width} ${tree.height}`} width={fixed ? tree.width : undefined} height={fixed ? tree.height : undefined} role="group" aria-label={label} data-family-tree>
-    <g aria-hidden="true">
-      {Array.from({ length: tree.generations }, (_, generation) => (
-        <g>
-          <line x1="0" x2={tree.width} y1={44 + generation * 112 + 56} y2={44 + generation * 112 + 56} stroke="var(--line)" stroke-dasharray="2 6" opacity={generation < tree.generations - 1 ? 1 : 0} />
-          <text x="8" y={44 + generation * 112 - 24} class="tree-label" style="text-anchor:start">Generation {generation + 1}</text>
-        </g>
-      ))}
-    </g>
+<div class="graph-wrap">
+  <svg viewBox={`0 0 ${tree.width} ${tree.height}`} role="group" aria-label={label} data-family-tree>
     <g>
       {paths.map(path => (
         <a href={`#${idPrefix}-${path.link.relationship.id}`} data-a={path.link.from.id} data-b={path.link.to.id} data-spoiler-idx={lockOf(path.link.relationship.spoiler) >= 0 ? lockOf(path.link.relationship.spoiler) : undefined} data-spoiler-hide={lockOf(path.link.relationship.spoiler) >= 0 ? '' : undefined} {...(lockOf(path.link.relationship.spoiler) >= 0 ? { hidden: true } : {})}>
@@ -60,4 +52,3 @@ const paths = tree.links.map(link => {
     </g>
   </svg>
 </div>
-<p class="graph-hint">Solid lines connect parents and children, dashed amber lines skip generations, a pink line joins partners and a dashed blue line joins siblings. Dotted lines show other family ties.</p>

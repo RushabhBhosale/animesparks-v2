@@ -17,7 +17,7 @@ export const GET: APIRoute = async () => {
     ...categories.map(category => `/categories/${category.slug}`),
     ...articlePages.map(article => `${article.language === 'es' ? '/es' : ''}/blog/${article.slug}`),
     ...tags.map(tag => `/tags/${encodeURIComponent(tag)}`),
-    '/family-trees', ...familySeries().flatMap(series => [familyPath(series.slug), `${familyPath(series.slug)}/complete`]),
+    '/family-trees', ...familySeries().map(series => familyPath(series.slug)),
     '/characters', ...getRegistry().hubs.map(series => hubPath(series.slug)), ...getRegistry().profiles.map(profile => characterPath(profile.slug)),
     '/tools', ...LIVE_TOOLS.map(toolPath),
     ...franchises.map(franchise => `/tools/anime-watch-order/${franchise.slug}`),

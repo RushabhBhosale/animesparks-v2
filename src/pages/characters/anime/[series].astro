@@ -41,7 +41,7 @@ const allAbilities = series.profiles.flatMap(profile => profile.abilities.map(ab
 const kinds = [...new Set(allAbilities.map(item => item.ability.kind))];
 const verified = latestVerified(series.profiles)!;
 const title = `${series.title} Characters: Profiles, Relationships and Timeline`;
-const description = `${series.title} character hub: ${series.profiles.length} verified profiles, a cast relationship map, power index, spoiler-protected death tracker and timeline.`;
+const description = `${series.title} character hub: ${series.profiles.length} verified profiles, ${hasFamilyPage ? 'the full family tree' : 'a cast relationship map'}, power index, spoiler-protected death tracker and timeline.`;
 const faq = [...series.faq, { question: `Which ${series.short} characters have profiles?`, answer: `${series.profiles.map(item => item.name).join(', ')}. Each profile covers biography, abilities, relationships, battles, a timeline and a spoiler-protected status tracker.` }];
 ---
 <SiteLayout title={title} socialTitle={title} description={description} canonical={`${SITE}${path}`} image={CHARACTERS_IMAGE}
@@ -56,7 +56,7 @@ const faq = [...series.faq, { question: `Which ${series.short} characters have p
     <div class="shell"><SpoilerBar series={series} /></div>
     <div class="shell tool-main">
       <nav aria-label="On this page"><ul class="jump-nav">
-        {[['cast', 'Characters'], ['relationships', 'Relationship map'], ['families', 'Family trees'], ['powers', 'Powers and transformations'], ['status', 'Death tracker'], ['timeline', 'Timeline'], ['arcs', 'Arcs'], ['guides', 'Guides and articles']].map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}
+        {[['cast', 'Characters'], ...(hasFamilyPage ? [['families', 'Family tree']] : [['relationships', 'Relationship map'], ['families', 'Family trees']]), ['powers', 'Powers and transformations'], ['status', 'Death tracker'], ['timeline', 'Timeline'], ['arcs', 'Arcs'], ['guides', 'Guides and articles']].map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}
       </ul></nav>
 
       <p class="tool-note tool-note--muted" style="margin-top:var(--sp-6)"><strong>What this covers.</strong> Manga: {series.coverage.manga}. Anime: {series.coverage.anime}. Checked {new Date(series.coverage.asOf).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.</p>
@@ -66,21 +66,27 @@ const faq = [...series.faq, { question: `Which ${series.short} characters have p
         <div class="char-grid">{series.profiles.map(profile => <CharacterCard profile={profile} series={series} />)}</div>
       </section>
 
-      <section class="char-section" id="relationships" aria-labelledby="relationships-title">
-        <h2 id="relationships-title">{series.short} relationship map</h2>
-        <p class="lede">Who stands where, and how the connections shift over the story. Bold names open that character’s profile; lines open the explanation.</p>
-        <RelationshipGraph graph={graph} series={series} label={`${series.title} relationship map`} idPrefix="cast-rel" />
-        <RelationshipList relationships={series.relationships} series={series} idPrefix="cast-rel" />
-      </section>
-
-      {forest.length > 0 && (
+      {hasFamilyPage ? (
         <section class="char-section" id="families" aria-labelledby="families-title">
-          <h2 id="families-title">{series.short} family trees</h2>
-          {hasFamilyPage && <p class="lede"><a href={familyPath(series.slug)}>Open the interactive {series.short} family tree explorer</a> with search, zoom and clan views.</p>}
-          <p class="lede">Every family connection in the series, including characters who do not have a profile yet. Bold names open a profile; lines open the explanation in the relationship map above.</p>
-          {forest.map((tree, index) => <FamilyTree tree={tree} series={series} idPrefix="cast-rel" label={`${series.title} family tree ${index + 1}`} />)}
+          <h2 id="families-title">{series.short} family tree</h2>
+          <p><a class="tool-button tool-button--primary" href={familyPath(series.slug)}>Open the {series.short} family tree</a></p>
         </section>
-      )}
+      ) : (<>
+        <section class="char-section" id="relationships" aria-labelledby="relationships-title">
+          <h2 id="relationships-title">{series.short} relationship map</h2>
+          <p class="lede">Who stands where, and how the connections shift over the story. Bold names open that character’s profile; lines open the explanation.</p>
+          <RelationshipGraph graph={graph} series={series} label={`${series.title} relationship map`} idPrefix="cast-rel" />
+          <RelationshipList relationships={series.relationships} series={series} idPrefix="cast-rel" />
+        </section>
+
+        {forest.length > 0 && (
+          <section class="char-section" id="families" aria-labelledby="families-title">
+            <h2 id="families-title">{series.short} family trees</h2>
+            <p class="lede">Every family connection in the series, including characters who do not have a profile yet. Bold names open a profile; lines open the explanation in the relationship map above.</p>
+            {forest.map((tree, index) => <FamilyTree tree={tree} series={series} idPrefix="cast-rel" label={`${series.title} family tree ${index + 1}`} />)}
+          </section>
+        )}
+      </>)}
 
       <section class="char-section" id="powers" aria-labelledby="powers-title">
         <h2 id="powers-title">{series.short} powers and transformations</h2>
