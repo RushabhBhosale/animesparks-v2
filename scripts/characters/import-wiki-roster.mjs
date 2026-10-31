@@ -115,6 +115,10 @@ const clean = text => text.replace(/\s*\([^)]*\)/g, '').replace(/^(?:ally|allies
 // Anything still carrying wiki or HTML syntax is not a value.
 const tidy = text => (text && !/[|={}<>\[\]"]/.test(text) ? text : '');
 const NOT_FAMILY = /counterpart|alternate|timeline|fusion|fusee|potara|component|unborn|hypothetical|what if|universe|edolas|unnamed|unknown|apparent|supposed|claimed|reincarnat|\bsee\b|template|\bjjl\b|jojolion|online|\bgame\b|movie|film|\bova\b|\bau\b|figure|spiritual|contracted|previous|former spirit/i;
+// Pages in a character category that are not a single character: wiki sub-pages ("Renji Abarai/Anime Continuity"),
+// continuity variants, and groups listed as if they were people. A series can list more in `exclude`
+// (Demon Slayer's "Spider Demon (Mother)" and the like are a pretend family, not relatives).
+const NOT_A_CHARACTER = /\/|\((?:\d{4} )?anime\)|\(manga\)|\bcontinuity\b|\bencyclopedia\b|\bFINAL\b|\b(?:clan|family|gang|corps|team|squad|division|organization|army|tribe)$/i;
 const FORMER = /\((?:former|formerly|ex-|previous|past|defected|disbanded|deceased)/i;
 const LOOKS_LIKE_CHARACTER = ['gender', 'status', 'race', 'species', 'affiliation', 'affiliations', 'occupation', 'relatives', 'family', 'allrelatives', 'birthday', 'age', 'kanji', 'romaji', 'alias', 'height', 'bloodtype', 'debut', 'mangadebut', 'animedebut', 'manga', 'anime'];
 const plural = text => text.replace(/\b(brother|sister|parent|cousin|uncle|aunt|nephew|niece|sibling|grandparent|grandchild|son|daughter|grandson|granddaughter|child)s\b/gi, '$1').replace(/\bchildren\b/gi, 'child').replace(/\bbrothers\b/gi, 'brother');
@@ -153,7 +157,7 @@ function relatives(value) {
 
 const people = new Map();
 for (const [requested, { title, text }] of Object.entries(cache.text)) {
-  if (!text || /^\s*#redirect/i.test(text)) continue;
+  if (!text || /^\s*#redirect/i.test(text) || NOT_A_CHARACTER.test(title) || (series.exclude && new RegExp(series.exclude).test(title))) continue;
   const fields = readParams(text);
   if (LOOKS_LIKE_CHARACTER.filter(name => name in fields).length < 3) continue;
   const id = idOf(title);
@@ -192,7 +196,7 @@ for (let i = 0; i < names.length; i += 50) {
 for (const person of people.values()) for (const relative of person.family) if (alias.has(relative.id) && people.has(alias.get(relative.id))) { relative.id = alias.get(relative.id); relative.name = people.get(relative.id).name; }
 const GHOST = /unnamed|^(?:mr|mrs|ms|miss|dr)\.?\s|'s\s|’s\s|\band\b|^(?:older|younger|elder|eldest|youngest)\b|^(?:mother|father|grandfather|grandmother|brother|sister|parents?|child|children|wife|husband|son|daughter|uncle|aunt|ancestors?|relatives?|family)$/i;
 for (const person of people.values()) {
-  person.family = person.family.map(relative => people.has(relative.id) ? { ...relative, relation: relative.relation || 'Relative' } : relative).filter(relative => people.has(relative.id) || (relative.relation && !GHOST.test(relative.name)));
+  person.family = person.family.map(relative => people.has(relative.id) ? { ...relative, relation: relative.relation || 'Relative' } : relative).filter(relative => people.has(relative.id) || (relative.relation && !GHOST.test(relative.name) && /^[^a-z:/]/.test(relative.name) && !/[:/]|\([^)]*\)/.test(relative.name)));
   person.family = person.family.filter((relative, index, list) => relative.id && relative.id !== person.id && list.findIndex(other => other.id === relative.id && other.relation === relative.relation) === index);
   for (const relative of person.family) if (people.has(relative.id)) relative.name = people.get(relative.id).name;
 }

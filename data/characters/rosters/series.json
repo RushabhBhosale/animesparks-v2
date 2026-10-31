@@ -74,7 +74,8 @@
    "Male Characters",
    "Female Characters"
   ],
-  "depth": 2
+  "depth": 2,
+  "exclude": "^Spider Demon \\("
  },
  {
   "slug": "jujutsu-kaisen",
