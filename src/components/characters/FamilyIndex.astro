@@ -1,0 +1,81 @@
+---
+// Below-the-tree content for a family tree page: the whole tree as a list,
+// a short FAQ, profiles, related reading and the other trees. Prerendered, so
+// it is real HTML for search engines and for readers without the diagram.
+import Card from '../Card.astro';
+import type { FamilyIndex } from '../../lib/characters/family-index.ts';
+import { familyPath } from '../../lib/characters/family.ts';
+import type { FamilySeries } from '../../lib/characters/family.ts';
+import { characterPath, getRegistry, hubPath } from '../../lib/characters/registry.ts';
+import { rosterCredit } from '../../lib/characters/roster.ts';
+import type { ArticleCard } from '../../lib/content/types';
+
+interface Props { series: FamilySeries; index: FamilyIndex; trees: Array<FamilySeries & { count: number }>; articles: ArticleCard[]; faq: Array<{ question: string; answer: string }> }
+const { series, index, trees, articles, faq } = Astro.props;
+const registry = getRegistry();
+const profiles = registry.profiles.filter(profile => profile.series === series.slug);
+const hub = registry.hubs.find(item => item.slug === series.slug);
+const credit = rosterCredit(series.slug);
+const others = trees.filter(item => item.slug !== series.slug);
+const format = (value: number) => value.toLocaleString('en-US');
+const anchor = (id: string) => `group-${id.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}`;
+---
+<div class="shell fc-more">
+  <section aria-labelledby="fc-list-title">
+    <h2 id="fc-list-title">{series.short} family tree as a list</h2>
+    <p class="fc-more__lede">{format(index.people)} characters in {format(index.groups)} groups. Each name sits under the clan, team, rank or home it belongs to; the line beside a name says who they are related to, where the source records it.</p>
+    <nav class="fc-more__jump" aria-label={`${series.short} groups`}>
+      {index.branches.map(branch => <a href={`#${anchor(branch.id)}`}>{branch.label} <span>{format(branch.count)}</span></a>)}
+    </nav>
+    {index.branches.map(branch => (
+      <section class="fc-more__branch" id={anchor(branch.id)} aria-labelledby={`${anchor(branch.id)}-title`}>
+        <h3 id={`${anchor(branch.id)}-title`}>{branch.label} <span>{format(branch.count)} characters</span></h3>
+        {branch.groups.map(group => (
+          <div class="fc-more__group">
+            {branch.groups.length > 1 || group.label !== branch.label ? <h4>{group.label === branch.label ? 'Everyone else' : group.label}</h4> : null}
+            <ul>
+              {group.people.map(person => (
+                <li>{person.profile ? <a href={characterPath(person.profile)}>{person.name}</a> : person.name}{person.note ? <small>{person.note}</small> : null}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
+    ))}
+  </section>
+
+  <section aria-labelledby="fc-faq-title">
+    <h2 id="fc-faq-title">{series.short} family tree: questions</h2>
+    <div class="tool-faq">
+      {faq.map(item => <details><summary>{item.question}</summary><p>{item.answer}</p></details>)}
+    </div>
+  </section>
+
+  {(profiles.length > 0 || hub) && (
+    <section aria-labelledby="fc-profiles-title">
+      <h2 id="fc-profiles-title">{series.short} character profiles</h2>
+      <ul class="fc-more__links">
+        {profiles.map(profile => <li><a href={characterPath(profile.slug)}>{profile.name}</a>: {profile.role}</li>)}
+        {hub && <li><a href={hubPath(series.slug)}>All {series.short} character profiles</a>: relationship cards, powers and a spoiler-protected timeline.</li>}
+      </ul>
+    </section>
+  )}
+
+  {articles.length > 0 && (
+    <section aria-labelledby="fc-articles-title">
+      <h2 id="fc-articles-title">{series.short} articles</h2>
+      <div class="card-grid card-grid--3">
+        {articles.slice(0, 6).map(article => <Card article={article} variant="compact" showExcerpt={false} />)}
+      </div>
+    </section>
+  )}
+
+  <section aria-labelledby="fc-more-trees-title">
+    <h2 id="fc-more-trees-title">More anime family trees</h2>
+    <ul class="fc-more__chips">
+      {others.map(item => <li><a href={familyPath(item.slug)}>{item.short} <span>{format(item.count)}</span></a></li>)}
+    </ul>
+  </section>
+
+  <p class="fc-more__source">Character data from <a href={credit?.url} rel="nofollow noopener">{credit?.name}</a>, licensed CC BY-SA. AnimeSparks adds the layout and the grouping.</p>
+</div>

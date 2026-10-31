@@ -175,3 +175,45 @@ describe('every published series', () => {
     });
   }
 });
+
+describe('family data quality', () => {
+  for (const slug of PUBLISHED_FAMILY_SERIES) {
+    it(`${slug}: no sub-page names, contradictions or family loops`, () => {
+      const roster = getRoster(slug)!;
+      const name = new Map(roster.nodes.map(node => [node.id, node.name]));
+      // Naruto and One Piece were reviewed by hand ("Vegapunk/Atlas" is a real character); the wiki imports must not carry sub-pages.
+      if (!['naruto', 'one-piece'].includes(slug)) for (const node of roster.nodes) assert.ok(!/[/:]/.test(node.name), `not a single character: ${node.name}`);
+      const key = (a: string, b: string) => [a, b].sort().join('|');
+      const parent = new Set<string>(); const sibling = new Set<string>(); const spouse = new Set<string>(); const birth = new Map<string, string[]>();
+      for (const [a, b, kind, , flag] of roster.edges) {
+        if (kind === 'parent') { parent.add(key(a, b)); if (!flag) birth.set(b, [...(birth.get(b) ?? []), a]); }
+        if (kind === 'sibling') sibling.add(key(a, b));
+        if (kind === 'spouse') spouse.add(key(a, b));
+      }
+      for (const pair of parent) {
+        assert.ok(!sibling.has(pair), `parent and sibling at once: ${pair.split('|').map(id => name.get(id)).join(' / ')}`);
+        assert.ok(!spouse.has(pair), `parent and partner at once: ${pair.split('|').map(id => name.get(id)).join(' / ')}`);
+      }
+      for (const start of birth.keys()) {
+        const seen = new Set<string>(); const stack = [start];
+        while (stack.length) for (const up of birth.get(stack.pop()!) ?? []) { assert.notEqual(up, start, `family loop at ${name.get(start)}`); if (!seen.has(up)) { seen.add(up); stack.push(up); } }
+      }
+    });
+  }
+});
+
+describe('family tree list', () => {
+  it('lists every character once, with a tie for those placed by family', async () => {
+    const { buildFamilyIndex } = await import('../../src/lib/characters/family-index.ts');
+    const data = compactRoster('naruto') as unknown as ChartData;
+    const chart = buildChart(data, data.checkpoints - 1, 'Naruto');
+    const index = buildFamilyIndex(chart);
+    const listed = index.branches.flatMap(branch => branch.groups.flatMap(group => group.people));
+    assert.equal(new Set(listed.map(person => person.id)).size, listed.length, 'someone is listed twice');
+    assert.equal(listed.length, chart.people);
+    const sasuke = listed.find(person => person.id === 'sasuke-uchiha');
+    assert.equal(sasuke?.note, 'child of Fugaku Uchiha');
+    assert.equal(sasuke?.profile, 'sasuke-uchiha');
+    assert.ok(index.largest.length > 0 && index.groups > 10);
+  });
+});

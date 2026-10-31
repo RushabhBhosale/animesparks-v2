@@ -3,9 +3,16 @@ import SiteLayout from '../../layouts/SiteLayout.astro';
 import '../../styles/tools.css';
 import '../../styles/characters.css';
 import FamilyChart from '../../components/characters/FamilyChart.astro';
+import FamilyIndex from '../../components/characters/FamilyIndex.astro';
+import { getBuildData } from '../../lib/content/build-data';
+import { buildChart } from '../../lib/characters/family-chart.ts';
+import type { ChartData } from '../../lib/characters/family-chart.ts';
+import { buildFamilyIndex } from '../../lib/characters/family-index.ts';
+import { seriesArticles } from '../../lib/characters/links.ts';
+import type { SeriesData } from '../../lib/characters/types.ts';
 import { SITE } from '../../lib/content/seo';
 import { familyPath, familySeries } from '../../lib/characters/family.ts';
-import { rosterCredit, rosterStats } from '../../lib/characters/roster.ts';
+import { compactRoster, rosterCredit, rosterStats } from '../../lib/characters/roster.ts';
 import { CHARACTERS_IMAGE, crumbList } from '../../lib/characters/seo.ts';
 
 export const prerender = true;
@@ -16,16 +23,33 @@ const series = familySeries().find(item => item.slug === Astro.props.slug)!;
 const path = familyPath(series.slug);
 const credit = rosterCredit(series.slug);
 const stats = rosterStats(series.slug)!;
+const data = compactRoster(series.slug) as unknown as ChartData;
+const index = buildFamilyIndex(buildChart(data, data.checkpoints - 1, series.short));
+const trees = familySeries().map(item => ({ ...item, count: rosterStats(item.slug)?.characters ?? 0 }));
+const { english } = await getBuildData();
+const articles = seriesArticles({ articleNames: [...new Set([series.title, series.short])] } as SeriesData, english, 6);
+const spoilerAnswer = series.checkpoints.length
+  ? `The tree shows every relative by default, including ones revealed late in the story. Open the Spoilers menu above the tree and choose how far you have got to hide ties revealed after that point.`
+  : `This tree has no spoiler menu yet, so it shows every relative the source lists, including ones revealed late in the story. Read it after the parts of ${series.short} you care about.`;
+const faq = [
+  { question: `How many characters are in the ${series.short} family tree?`, answer: `${stats.characters.toLocaleString('en-US')} characters from the ${credit.name}, grouped under ${index.groups.toLocaleString('en-US')} clans, teams, ranks and places. ${stats.connected.toLocaleString('en-US')} of them have at least one recorded family tie.` },
+  { question: `Which groups in the ${series.short} family tree are the largest?`, answer: `The largest are ${index.largest.map(group => `${group.label} (${group.count})`).join(', ')}.` },
+  { question: `How do I find a character in the ${series.short} family tree?`, answer: 'Type a name in the search box above the tree. The tree moves to that person and opens a card with their relatives. The Jump menu goes straight to a clan, team or place, and the Families only switch hides everyone with no recorded relatives.' },
+  { question: 'Why are some characters not joined to a family?', answer: 'Most characters have no relatives recorded in the source. They hang from a label for what they belong to, such as a clan, team, rank or home, drawn with dotted lines. Those lines show membership, not family.' },
+  { question: `Does the ${series.short} family tree contain spoilers?`, answer: spoilerAnswer },
+  { question: 'Where does the family tree data come from?', answer: `From the ${credit.name} (CC BY-SA). Ties come from the relatives each character page lists, and ties one page claims but the other page does not confirm are left out. AnimeSparks adds the layout and the grouping.` },
+];
 const seo = series.seo ?? {
   title: `${series.short} Family Tree: All Characters and Relatives`,
   description: `The ${series.short} family tree: ${stats.characters} characters in one linked, searchable tree with parents, siblings, partners and the groups they belong to. Pan, zoom and search any character.`,
 };
 ---
 <SiteLayout title={seo.title} socialTitle={seo.title} description={seo.description} canonical={`${SITE}${path}`} image={CHARACTERS_IMAGE}
-  jsonLd={[crumbList([['Family trees', '/family-trees'], [`${series.short} family tree`, path]]), { '@context': 'https://schema.org', '@type': 'WebPage', name: seo.title, description: seo.description, url: `${SITE}${path}`, ...(series.verifiedAt ? { dateModified: series.verifiedAt } : {}), about: { '@type': 'TVSeries', name: series.title } }]} showFooterAd>
+  jsonLd={[crumbList([['Family trees', '/family-trees'], [`${series.short} family tree`, path]]), { '@context': 'https://schema.org', '@type': 'WebPage', name: seo.title, description: seo.description, url: `${SITE}${path}`, ...(series.verifiedAt ? { dateModified: series.verifiedAt } : {}), about: { '@type': 'TVSeries', name: series.title } }, { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(item => ({ '@type': 'Question', name: item.question, acceptedAnswer: { '@type': 'Answer', text: item.answer } })) }]} showFooterAd>
   <main class="fc-page">
     <h1 class="fc-page__title">{series.short} Family Tree</h1>
     <FamilyChart series={series} src={`${path}/roster.json`} />
     <p class="fc-credit">Character data from <a href={credit.url} rel="nofollow noopener">{credit.name}</a>, CC BY-SA.</p>
+    <FamilyIndex series={series} index={index} trees={trees} articles={articles} faq={faq} />
   </main>
 </SiteLayout>
