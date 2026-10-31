@@ -1,0 +1,263 @@
+[
+ {
+  "slug": "naruto",
+  "title": "Naruto",
+  "short": "Naruto",
+  "host": "naruto",
+  "wiki": "Narutopedia",
+  "categories": [],
+  "depth": 0,
+  "importer": "import-roster.mjs"
+ },
+ {
+  "slug": "one-piece",
+  "title": "One Piece",
+  "short": "One Piece",
+  "host": "onepiece",
+  "wiki": "One Piece Wiki",
+  "categories": [],
+  "depth": 0,
+  "importer": "import-one-piece.mjs"
+ },
+ {
+  "slug": "dragon-ball",
+  "title": "Dragon Ball",
+  "short": "Dragon Ball",
+  "host": "dragonball",
+  "wiki": "Dragon Ball Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 1
+ },
+ {
+  "slug": "bleach",
+  "title": "Bleach",
+  "short": "Bleach",
+  "host": "bleach",
+  "wiki": "Bleach Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "attack-on-titan",
+  "title": "Attack on Titan",
+  "short": "Attack on Titan",
+  "host": "attackontitan",
+  "wiki": "Attack on Titan Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "my-hero-academia",
+  "title": "My Hero Academia",
+  "short": "My Hero Academia",
+  "host": "bokunoheroacademia",
+  "wiki": "My Hero Academia Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "demon-slayer",
+  "title": "Demon Slayer",
+  "short": "Demon Slayer",
+  "host": "kimetsu-no-yaiba",
+  "wiki": "Demon Slayer Wiki",
+  "categories": [
+   "Characters",
+   "Male Characters",
+   "Female Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "jujutsu-kaisen",
+  "title": "Jujutsu Kaisen",
+  "short": "Jujutsu Kaisen",
+  "host": "jujutsu-kaisen",
+  "wiki": "Jujutsu Kaisen Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "hunter-x-hunter",
+  "title": "Hunter x Hunter",
+  "short": "Hunter x Hunter",
+  "host": "hunterxhunter",
+  "wiki": "Hunterpedia",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "fairy-tail",
+  "title": "Fairy Tail",
+  "short": "Fairy Tail",
+  "host": "fairytail",
+  "wiki": "Fairy Tail Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "black-clover",
+  "title": "Black Clover",
+  "short": "Black Clover",
+  "host": "blackclover",
+  "wiki": "Black Clover Wiki",
+  "categories": [
+   "Characters",
+   "Male Characters",
+   "Female Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "fullmetal-alchemist",
+  "title": "Fullmetal Alchemist",
+  "short": "Fullmetal Alchemist",
+  "host": "fma",
+  "wiki": "Fullmetal Alchemist Wiki",
+  "categories": [
+   "Characters",
+   "Manga Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "death-note",
+  "title": "Death Note",
+  "short": "Death Note",
+  "host": "deathnote",
+  "wiki": "Death Note Wiki",
+  "categories": [
+   "Manga characters",
+   "Anime characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "tokyo-ghoul",
+  "title": "Tokyo Ghoul",
+  "short": "Tokyo Ghoul",
+  "host": "tokyoghoul",
+  "wiki": "Tokyo Ghoul Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "jojo",
+  "title": "JoJo's Bizarre Adventure",
+  "short": "JoJo's Bizarre Adventure",
+  "host": "jojo",
+  "wiki": "JoJo's Bizarre Encyclopedia",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "one-punch-man",
+  "title": "One Punch Man",
+  "short": "One Punch Man",
+  "host": "onepunchman",
+  "wiki": "One-Punch Man Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "chainsaw-man",
+  "title": "Chainsaw Man",
+  "short": "Chainsaw Man",
+  "host": "chainsaw-man",
+  "wiki": "Chainsaw Man Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "spy-x-family",
+  "title": "Spy x Family",
+  "short": "Spy x Family",
+  "host": "spy-x-family",
+  "wiki": "Spy x Family Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "seven-deadly-sins",
+  "title": "The Seven Deadly Sins",
+  "short": "Seven Deadly Sins",
+  "host": "nanatsu-no-taizai",
+  "wiki": "Seven Deadly Sins Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "sword-art-online",
+  "title": "Sword Art Online",
+  "short": "Sword Art Online",
+  "host": "swordartonline",
+  "wiki": "Sword Art Online Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2,
+  "surnameAt": "first"
+ },
+ {
+  "slug": "re-zero",
+  "title": "Re:Zero",
+  "short": "Re:Zero",
+  "host": "rezero",
+  "wiki": "Re:Zero Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2,
+  "surnameAt": "first"
+ },
+ {
+  "slug": "haikyuu",
+  "title": "Haikyu!!",
+  "short": "Haikyu!!",
+  "host": "haikyuu",
+  "wiki": "Haikyuu!! Wiki",
+  "categories": [
+   "Characters"
+  ],
+  "depth": 2
+ },
+ {
+  "slug": "dr-stone",
+  "title": "Dr. Stone",
+  "short": "Dr. Stone",
+  "host": "dr-stone",
+  "wiki": "Dr. Stone Wiki",
+  "categories": [
+   "Characters",
+   "Male Characters",
+   "Female Characters"
+  ],
+  "depth": 2
+ }
+]

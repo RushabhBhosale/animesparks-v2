@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import { buildRegistry } from '../../src/lib/characters/registry.ts';
 import { PROFILES, SERIES } from '../../src/lib/characters/data/index.ts';
 import { completenessProblems, integrityErrors } from '../../src/lib/characters/validate.ts';
-import { castGraph, egoGraph, familyForest, familyTree } from '../../src/lib/characters/graph.ts';
+import { familyForest, familyTree } from '../../src/lib/characters/graph.ts';
 import { orderingsDiffer, releaseOrdered, storyOrdered } from '../../src/lib/characters/timeline.ts';
 import { checkpointIndex, refLabel } from '../../src/lib/characters/format.ts';
 import { searchText } from '../../src/lib/characters/search.ts';
@@ -100,7 +100,7 @@ describe('validation catches broken data', () => {
 
 describe('spoiler protection', () => {
   // Words that announce a major outcome. They may appear in spoiler-tagged content only.
-  const LOUD = /\b(dies|died|dead|deceased|revived|resurrect\w*|unsealed|defeated|disintegrat\w+|killed (?:by|in)|(?:is|was|gets) killed|prison realm|death(?! ?[- ]?(?:painting|match|game)))\b/i;
+  const LOUD = /\b(dies|died|dead|deceased|revived|resurrect\w*|unsealed|defeated|disintegrat\w+|killed (?:by|in)|(?:is|was|gets) killed|prison realm|death(?! ?[- ]?(?:painting|match|game|notes?)))\b/i;
 
   it('keeps outcome words out of content that is visible by default', () => {
     const offenders: string[] = [];
@@ -143,22 +143,6 @@ describe('spoiler protection', () => {
 
 describe('graphs and timelines', () => {
   const jjk = registry.seriesBySlug.get('jujutsu-kaisen')!;
-
-  it('puts the focus character at the centre of an ego graph and links known profiles', () => {
-    const graph = egoGraph('gojo', jjk.cast, jjk.relationships);
-    const focus = graph.nodes.find(node => node.focus)!;
-    assert.equal(focus.id, 'gojo');
-    assert.equal(focus.x, graph.width / 2);
-    assert.ok(graph.nodes.some(node => node.id === 'yuji' && node.profile === 'yuji-itadori'));
-    assert.ok(graph.edges.every(edge => edge.from.id === 'gojo' || edge.to.id === 'gojo'));
-    for (const node of graph.nodes) assert.ok(node.x > 0 && node.x < graph.width && node.y > 0 && node.y < graph.height);
-  });
-
-  it('lays out the whole cast without leaving the canvas', () => {
-    const graph = castGraph(jjk.cast, jjk.relationships);
-    assert.ok(graph.nodes.length >= 4);
-    for (const node of graph.nodes) assert.ok(node.x > 0 && node.x < graph.width && node.y > 0 && node.y < graph.height);
-  });
 
   it('builds a layered family tree only when there is a family to draw', () => {
     assert.equal(familyTree('gojo', jjk.cast, jjk.relationships), null);

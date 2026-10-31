@@ -10,16 +10,13 @@ import Spoiler from '../../components/characters/Spoiler.astro';
 import FactPanel from '../../components/characters/FactPanel.astro';
 import Prose from '../../components/characters/Prose.astro';
 import AbilityList from '../../components/characters/AbilityList.astro';
-import RelationshipGraph from '../../components/characters/RelationshipGraph.astro';
 import RelationshipList from '../../components/characters/RelationshipList.astro';
-import FamilyTree from '../../components/characters/FamilyTree.astro';
 import TimelineExplorer from '../../components/characters/TimelineExplorer.astro';
 import StatusTracker from '../../components/characters/StatusTracker.astro';
 import CharacterCard from '../../components/characters/CharacterCard.astro';
 import { getBuildData } from '../../lib/content/build-data';
 import { SITE } from '../../lib/content/seo';
 import { refLabel } from '../../lib/characters/format.ts';
-import { egoGraph, familyTree } from '../../lib/characters/graph.ts';
 import { articlesForCharacter, seriesToolLinks } from '../../lib/characters/links.ts';
 import { familySeries, familyPath } from '../../lib/characters/family.ts';
 import { characterPath, getRegistry, hubPath } from '../../lib/characters/registry.ts';
@@ -40,8 +37,6 @@ const [toolLinks] = await Promise.all([seriesToolLinks(series, english)]);
 const articles = articlesForCharacter(profile, series, english);
 const path = characterPath(profile.slug);
 const relationships = series.relationships.filter(item => item.a === profile.id || item.b === profile.id);
-const ego = egoGraph(profile.id, series.cast, relationships);
-const tree = familyTree(profile.id, series.cast, series.relationships.filter(item => !item.spoiler));
 const events = series.timeline.filter(item => item.characters.includes(profile.id));
 const forms = profile.abilities.some(item => item.kind === 'transformation' || item.kind === 'power-up');
 const relatedProfiles = [...new Set([...profile.related, ...series.profiles.map(item => item.slug)])].filter(slug => slug !== profile.slug).map(slug => registry.bySlug.get(slug)!).filter(Boolean).slice(0, 6);
@@ -85,12 +80,7 @@ const crumbs: Array<[string, string?]> = [['Home', '/'], ['Characters', '/charac
 
           <section class="char-section" id="relationships" aria-labelledby="relationships-title">
             <h2 id="relationships-title">{profile.name}’s relationships</h2>
-            <p class="lede">Every named connection that has a profile on AnimeSparks is linked. Open a card to see how the relationship changes over the story.</p>
-            <RelationshipGraph graph={ego} series={series} label={`Relationship diagram for ${profile.name}`} />
-            {tree && (<>
-              <h3 style="margin:var(--sp-8) 0 var(--sp-3);font-size:var(--text-xl)">Family tree</h3>
-              <FamilyTree tree={tree} label={`Family tree around ${profile.name}`} />
-            </>)}
+            <p class="lede">Every named connection is listed here. Open a card to see how the relationship changes over the story.</p>
             {hasFamilyPage && <p class="prose" style="margin-top:var(--sp-4)"><a href={`${familyPath(profile.series)}#c=${profile.slug}`}>Open {profile.name} in the {series.short} family tree</a>.</p>}
             <RelationshipList relationships={relationships} series={series} focus={profile.id} />
           </section>

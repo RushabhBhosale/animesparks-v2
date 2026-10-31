@@ -46,9 +46,9 @@ export const GET: APIRoute = async () => {
     ...(await getRecLandingPages(englishCards)).map(({ landing }) => ({ url: `${SITE}/tools/anime-recommendations/${landing.slug}` })),
     ...tools.franchises.filter(hasMoviePage).map(franchise => ({ url: `${SITE}/tools/anime-watch-order/${franchise.slug}/movies`, modified: xmlDate(franchise.fetchedAt) })),
     { url: `${SITE}/characters`, modified: xmlDate(characterRegistry.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) },
-    ...characterRegistry.hubs.map(series => ({ url: `${SITE}${hubPath(series.slug)}`, modified: xmlDate(series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) })),
+    ...characterRegistry.hubs.map(series => ({ url: `${SITE}${hubPath(series.slug)}`, ...(series.verifiedAt ? { modified: xmlDate(series.verifiedAt) } : {}) })),
     { url: `${SITE}/family-trees` },
-    ...familySeries().flatMap(series => [familyPath(series.slug)].map(path => ({ url: `${SITE}${path}`, modified: xmlDate(series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)) }))),
+    ...familySeries().flatMap(series => [familyPath(series.slug)].map(path => ({ url: `${SITE}${path}`, ...(series.verifiedAt ? { modified: xmlDate(series.verifiedAt) } : {}) }))),
     ...characterRegistry.profiles.map(profile => ({ url: `${SITE}${characterPath(profile.slug)}`, modified: xmlDate(profile.meta.verifiedAt) })),
     ...tags.map(tag => ({ url: `${SITE}/tags/${encodeURIComponent(tag)}` })),
     ...articles.map(article => {

@@ -1,7 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { getRegistry } from '../../src/lib/characters/registry.ts';
-import { compactRoster, getRoster } from '../../src/lib/characters/roster.ts';
+import { PUBLISHED_FAMILY_SERIES, familySeries } from '../../src/lib/characters/family.ts';
+import { compactRoster, getRoster, rosterCredit } from '../../src/lib/characters/roster.ts';
 import { buildChart, chartSvg, type ChartData } from '../../src/lib/characters/family-chart.ts';
 
 const data = compactRoster('naruto') as unknown as ChartData;
@@ -138,4 +139,39 @@ describe('One Piece family chart', () => {
     assert.equal(edge('edward-newgate', 'edward-weevil'), undefined);
     assert.equal(edge('edward-newgate', 'polo-marco'), undefined);
   });
+});
+
+describe('every published series', () => {
+  for (const slug of PUBLISHED_FAMILY_SERIES) {
+    it(`${slug}: one connected tree with every character placed once`, () => {
+      const roster = compactRoster(slug) as unknown as ChartData;
+      assert.ok(roster, 'roster is missing');
+      const chart = buildChart(roster, roster.checkpoints - 1, slug);
+      const people = chart.boxes.filter(box => box.kind === 'person');
+      assert.equal(new Set(people.map(box => box.id)).size, people.length, 'someone appears twice');
+      assert.deepEqual(roster.n.map(row => row[0] as string).filter(id => !people.some(box => box.id === id)), []);
+      assert.ok(people.length >= 60, `only ${people.length} characters`);
+      const byId = new Map(chart.boxes.map(box => [box.id, box]));
+      for (const box of chart.boxes) {
+        let current = box; let steps = 0;
+        while (current.parent && steps++ < 120) current = byId.get(current.parent)!;
+        assert.equal(current.id, 'root', `${box.id} does not reach the root`);
+      }
+      const sorted = [...chart.boxes].sort((a, b) => a.x - b.x);
+      sorted.forEach((a, i) => {
+        for (let j = i + 1; j < sorted.length && sorted[j].x < a.x + a.w; j++) assert.ok(a.y + a.h <= sorted[j].y || sorted[j].y + sorted[j].h <= a.y, `${a.id} overlaps ${sorted[j].id}`);
+      });
+    });
+
+    it(`${slug}: the data has no importer leftovers and credits its wiki`, () => {
+      const roster = getRoster(slug)!;
+      const text = (value: string) => /[|={}<>\[\]]/.test(value);
+      for (const node of roster.nodes) {
+        assert.ok(node.name.trim() && !text(node.name), `bad name: ${node.name}`);
+        for (const value of [...node.affiliation, ...node.team, ...node.rank]) assert.equal(text(value), false, `${node.name}: ${value}`);
+      }
+      assert.ok(rosterCredit(slug)?.url.startsWith('https://'), 'no credit');
+      assert.ok(familySeries().some(item => item.slug === slug));
+    });
+  }
 });

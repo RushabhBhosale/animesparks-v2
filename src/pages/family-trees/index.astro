@@ -10,7 +10,7 @@ import { CHARACTERS_IMAGE, crumbList } from '../../lib/characters/seo.ts';
 
 export const prerender = true;
 const list = familySeries();
-const title = 'Anime Family Trees: Interactive Clan and Relationship Explorer';
+const title = 'Anime Family Trees: Every Character, Linked and Searchable';
 const description = `Anime family trees for ${list.map(item => item.short).join(', ')}: every character in one linked tree you can search, pan and zoom.`;
 ---
 <SiteLayout title={title} socialTitle={title} description={description} canonical={`${SITE}/family-trees`} image={CHARACTERS_IMAGE}

@@ -112,37 +112,6 @@ details.spoiler[open] > summary::before { content: '●'; }
 .system-card ul { margin: 0; padding-left: 1.1em; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.55; }
 
 /* ── Graphs ───────────────────────────────────────────────── */
-.graph-controls { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0 0 var(--sp-4); }
-.graph-controls button { display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 var(--sp-3); border: 1px solid var(--line-2); background: transparent; color: var(--ink-2); font: inherit; font-size: var(--text-xs); font-weight: 700; }
-.graph-controls button[aria-pressed="true"] { color: var(--ink); background: var(--surface2); border-color: var(--ink-2); }
-.graph-controls button[aria-pressed="false"] { opacity: .55; text-decoration: line-through; }
-.graph-controls .swatch { width: 18px; height: 0; border-top: 3px solid currentColor; }
-.graph-wrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); -webkit-overflow-scrolling: touch; }
-.graph-wrap svg { display: block; width: 100%; min-width: 600px; height: auto; }
-.graph-hint { margin: var(--sp-2) 0 0; color: var(--ink-3); font-size: var(--text-xs); }
-.edge path { fill: none; stroke-width: 2; opacity: .8; }
-.edge a { cursor: pointer; }
-.edge:hover path, .edge:focus-within path, .edge.is-linked path { stroke-width: 3.5; opacity: 1; }
-.graph.has-focus .edge:not(.is-linked) { opacity: .15; }
-.graph.has-focus .node:not(.is-linked) { opacity: .45; }
-.edge--family path { stroke: var(--rel-family); }
-.edge--friend path { stroke: var(--rel-friend); }
-.edge--rival path { stroke: var(--rel-rival); stroke-dasharray: 7 4; }
-.edge--mentor path { stroke: var(--rel-mentor); }
-.edge--romance path { stroke: var(--rel-romance); stroke-dasharray: 2 4; stroke-linecap: round; }
-.edge--ally path { stroke: var(--rel-ally); }
-.edge--enemy path { stroke: var(--rel-enemy); stroke-dasharray: 10 4 2 4; }
-.node rect { fill: var(--surface2); stroke: var(--line-2); stroke-width: 1; }
-.node text { fill: var(--ink); font-family: var(--font-ui); font-size: 12.5px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
-.node.node--focus rect { fill: color-mix(in srgb, var(--accent) 22%, var(--surface2)); stroke: var(--accent); stroke-width: 2; }
-.node.node--plain text { fill: var(--ink-2); font-weight: 400; }
-.node a:hover rect, .node a:focus-visible rect { stroke: var(--ink); }
-.node a:focus-visible { outline: none; }
-.node a:focus-visible rect { stroke-width: 2.5; stroke: var(--focus); }
-.tree-line { fill: none; stroke: var(--line-2); stroke-width: 2; }
-.tree-line--spouse { stroke: var(--rel-romance); stroke-width: 3; }
-.tree-line--sibling { stroke: var(--rel-friend); stroke-dasharray: 5 4; }
-.tree-line--other { stroke: var(--rel-family); stroke-dasharray: 2 4; }
 
 .relation-list { display: grid; gap: var(--sp-3); margin-top: var(--sp-6); }
 .relation { border: 1px solid var(--line); background: var(--surface); scroll-margin-top: 90px; }
@@ -246,7 +215,6 @@ a.char-card:hover { border-color: var(--line-2); background: var(--surface2); }
   .directory-filters { grid-template-columns: minmax(0, 1fr); }
 }
 @media print { .spoiler-bar { display: none; } details.spoiler { border: 0; } }
-.edge[data-filtered] { display: none; }
 [data-rf-row][data-rf-hidden] { display: none; }
 .rf-row { border-bottom: 1px solid var(--line); }
 .arc-list { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--sp-3); }

@@ -3,8 +3,8 @@
 // is in the HTML; family-chart.ts adds the camera, search and spoiler levels.
 import { buildChart, chartSvg, type ChartData } from '../../lib/characters/family-chart.ts';
 import { compactRoster } from '../../lib/characters/roster.ts';
-import type { ResolvedSeries } from '../../lib/characters/types.ts';
-interface Props { series: ResolvedSeries; src: string }
+import type { FamilySeries } from '../../lib/characters/family.ts';
+interface Props { series: FamilySeries; src: string }
 const { series, src } = Astro.props;
 const data = compactRoster(series.slug) as unknown as ChartData;
 const label = `${series.title} family tree`;
@@ -18,11 +18,13 @@ const svg = chartSvg(buildChart(data, data.checkpoints - 1, series.short), label
     </div>
     <select class="tool-select" aria-label="Jump to a village or clan" data-jump><option value="">Jump to…</option></select>
     <label class="fc-switch"><input type="checkbox" data-families /> <span>Families only</span></label>
-    <select class="tool-select" aria-label="Spoilers" data-spoilers>
-      <option value="">Spoilers: show all</option>
-      <option value="-1">Hide all spoilers</option>
-      {series.checkpoints.slice(0, -1).map((checkpoint, index) => <option value={index}>Hide after {checkpoint.label}</option>)}
-    </select>
+    {series.checkpoints.length > 0 && (
+      <select class="tool-select" aria-label="Spoilers" data-spoilers>
+        <option value="">Spoilers: show all</option>
+        <option value="-1">Hide all spoilers</option>
+        {series.checkpoints.slice(0, -1).map((checkpoint, index) => <option value={index}>Hide after {checkpoint.label}</option>)}
+      </select>
+    )}
     <div class="fc-tools" role="group" aria-label="Page controls">
       <button type="button" data-fullscreen>Fullscreen</button>
       <button type="button" data-share>Share</button>

@@ -5,7 +5,7 @@ import '../../styles/characters.css';
 import FamilyChart from '../../components/characters/FamilyChart.astro';
 import { SITE } from '../../lib/content/seo';
 import { familyPath, familySeries } from '../../lib/characters/family.ts';
-import { rosterCredit } from '../../lib/characters/roster.ts';
+import { rosterCredit, rosterStats } from '../../lib/characters/roster.ts';
 import { CHARACTERS_IMAGE, crumbList } from '../../lib/characters/seo.ts';
 
 export const prerender = true;
@@ -13,13 +13,16 @@ export function getStaticPaths() {
   return familySeries().map(series => ({ params: { series: series.slug }, props: { slug: series.slug } }));
 }
 const series = familySeries().find(item => item.slug === Astro.props.slug)!;
-const guide = series.familyGuide!;
 const path = familyPath(series.slug);
 const credit = rosterCredit(series.slug);
-const verified = series.profiles.map(item => item.meta.verifiedAt).sort().at(-1)!;
+const stats = rosterStats(series.slug)!;
+const seo = series.seo ?? {
+  title: `${series.short} Family Tree: All Characters and Relatives`,
+  description: `The ${series.short} family tree: ${stats.characters} characters in one linked, searchable tree with parents, siblings, partners and the groups they belong to. Pan, zoom and search any character.`,
+};
 ---
-<SiteLayout title={guide.seo.title} socialTitle={guide.seo.title} description={guide.seo.description} canonical={`${SITE}${path}`} image={CHARACTERS_IMAGE}
-  jsonLd={[crumbList([['Family trees', '/family-trees'], [`${series.short} family tree`, path]]), { '@context': 'https://schema.org', '@type': 'WebPage', name: guide.seo.title, description: guide.seo.description, url: `${SITE}${path}`, dateModified: verified, about: { '@type': 'TVSeries', name: series.title } }]} showFooterAd>
+<SiteLayout title={seo.title} socialTitle={seo.title} description={seo.description} canonical={`${SITE}${path}`} image={CHARACTERS_IMAGE}
+  jsonLd={[crumbList([['Family trees', '/family-trees'], [`${series.short} family tree`, path]]), { '@context': 'https://schema.org', '@type': 'WebPage', name: seo.title, description: seo.description, url: `${SITE}${path}`, ...(series.verifiedAt ? { dateModified: series.verifiedAt } : {}), about: { '@type': 'TVSeries', name: series.title } }]} showFooterAd>
   <main class="fc-page">
     <h1 class="fc-page__title">{series.short} Family Tree</h1>
     <FamilyChart series={series} src={`${path}/roster.json`} />

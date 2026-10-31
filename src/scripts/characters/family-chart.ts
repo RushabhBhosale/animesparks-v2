@@ -9,7 +9,7 @@ if (root) start(root);
 function start(root: HTMLElement) {
   const $ = <T extends HTMLElement>(selector: string) => root.querySelector<T>(selector)!;
   const view = $('[data-view]'); const stage = $('[data-stage]'); const card = $('[data-card]');
-  const input = $<HTMLInputElement>('[data-search]'); const suggest = $('[data-suggest]'); const spoilers = $<HTMLSelectElement>('[data-spoilers]');
+  const input = $<HTMLInputElement>('[data-search]'); const suggest = $('[data-suggest]'); const spoilers = root.querySelector<HTMLSelectElement>('[data-spoilers]');
   const jump = $<HTMLSelectElement>('[data-jump]'); const familiesOnly = $<HTMLInputElement>('[data-families]'); const crumbs = $('[data-crumbs]');
   const mini = $('[data-mini]'); const miniCanvas = mini.querySelector('canvas')!; const miniFrame = $('[data-mini-frame]');
   const full = Number(root.dataset.full);
@@ -326,7 +326,7 @@ function start(root: HTMLElement) {
 
   // ── spoilers ──
   const redraw = async () => {
-    const value = spoilers.value;
+    const value = spoilers?.value ?? '';
     level = value === '' ? full : Number(value);
     try { if (value) localStorage.setItem(storageKey, value); else localStorage.removeItem(storageKey); } catch { /* storage may be blocked */ }
     const chart = buildChart(await load(), level, root.dataset.title!, { familiesOnly: familiesOnly.checked });
@@ -334,7 +334,7 @@ function start(root: HTMLElement) {
     index(); fit();
     if (selected && boxes.has(selected)) select(selected, false); else card.hidden = true;
   };
-  spoilers.addEventListener('change', () => { void redraw(); });
+  spoilers?.addEventListener('change', () => { void redraw(); });
   familiesOnly.addEventListener('change', () => { void redraw(); });
 
   // ── start ──
@@ -347,5 +347,5 @@ function start(root: HTMLElement) {
   const linked = () => new URLSearchParams(location.hash.slice(1)).get('c') ?? '';
   const finish = () => { const id = linked(); if (id !== selected && boxes.has(id)) select(id); };
   window.addEventListener('hashchange', finish);
-  if (stored && [...spoilers.options].some(option => option.value === stored)) { spoilers.value = stored; void redraw().then(finish); } else finish();
+  if (spoilers && stored && [...spoilers.options].some(option => option.value === stored)) { spoilers.value = stored; void redraw().then(finish); } else finish();
 }

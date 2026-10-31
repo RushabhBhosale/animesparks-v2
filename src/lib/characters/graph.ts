@@ -1,65 +1,8 @@
-// Deterministic layouts computed at build time, so the diagrams are real SVG
-// in the HTML and need no layout library in the browser.
+// Family-tree helpers: group the curated family ties into connected families.
 
 import type { CastMember, Relationship } from './types.ts';
 
-export interface GraphNode { id: string; name: string; profile?: string; x: number; y: number; focus: boolean }
-export interface GraphEdge { relationship: Relationship; from: GraphNode; to: GraphNode }
-export interface Graph { width: number; height: number; nodes: GraphNode[]; edges: GraphEdge[] }
-
 const castById = (cast: CastMember[]) => new Map(cast.map(member => [member.id, member]));
-
-/** Ego graph: the focus character in the centre, direct connections around them. */
-export function egoGraph(focusId: string, cast: CastMember[], relationships: Relationship[], limit = 12): Graph {
-  const byId = castById(cast);
-  const edges = relationships.filter(item => item.a === focusId || item.b === focusId);
-  const others = [...new Set(edges.map(item => (item.a === focusId ? item.b : item.a)))].filter(id => byId.has(id));
-  // Linked profiles first, then by number of connections shown.
-  const weight = (id: string) => (byId.get(id)?.profile ? 100 : 0) + edges.filter(item => item.a === id || item.b === id).length;
-  const picked = others.sort((a, b) => weight(b) - weight(a) || a.localeCompare(b)).slice(0, limit);
-  const width = 760;
-  const height = picked.length > 8 ? 600 : 440;
-  const cx = width / 2;
-  const cy = height / 2;
-  const radiusX = width / 2 - 92;
-  const radiusY = height / 2 - 46;
-  const nodes: GraphNode[] = [{ id: focusId, name: byId.get(focusId)?.name || focusId, profile: byId.get(focusId)?.profile, x: cx, y: cy, focus: true }];
-  picked.forEach((id, index) => {
-    const angle = -Math.PI / 2 + (index / picked.length) * Math.PI * 2;
-    nodes.push({ id, name: byId.get(id)!.name, profile: byId.get(id)!.profile, x: round(cx + radiusX * Math.cos(angle)), y: round(cy + radiusY * Math.sin(angle)), focus: false });
-  });
-  return finish(width, height, nodes, edges.filter(item => picked.includes(item.a === focusId ? item.b : item.a)));
-}
-
-/** Whole-cast graph on a ring; used on series hubs. Only characters with at least one connection appear. */
-export function castGraph(cast: CastMember[], relationships: Relationship[]): Graph {
-  const connected = new Set(relationships.flatMap(item => [item.a, item.b]));
-  const members = cast.filter(member => connected.has(member.id));
-  // Profiles sit together at the top so the linked cast is easy to find.
-  members.sort((a, b) => Number(Boolean(b.profile)) - Number(Boolean(a.profile)) || a.name.localeCompare(b.name));
-  // Enough circumference that 128px-wide labels never overlap.
-  const radiusX = Math.max(300, (members.length * 156) / (Math.PI * 2));
-  const radiusY = radiusX * 0.8;
-  const width = Math.round(radiusX * 2 + 200);
-  const height = Math.round(radiusY * 2 + 90);
-  const cx = width / 2;
-  const cy = height / 2;
-  const nodes = members.map((member, index): GraphNode => {
-    const angle = -Math.PI / 2 + (index / members.length) * Math.PI * 2;
-    return { id: member.id, name: member.name, profile: member.profile, x: round(cx + radiusX * Math.cos(angle)), y: round(cy + radiusY * Math.sin(angle)), focus: false };
-  });
-  return finish(width, height, nodes, relationships);
-}
-
-function finish(width: number, height: number, nodes: GraphNode[], relationships: Relationship[]): Graph {
-  const byId = new Map(nodes.map(node => [node.id, node]));
-  const edges = relationships.flatMap(relationship => {
-    const from = byId.get(relationship.a);
-    const to = byId.get(relationship.b);
-    return from && to ? [{ relationship, from, to }] : [];
-  });
-  return { width, height, nodes, edges };
-}
 
 const round = (value: number) => Math.round(value * 10) / 10;
 
