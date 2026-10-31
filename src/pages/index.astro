@@ -4,6 +4,7 @@ import { Image } from 'astro:assets';
 import Card from '../components/Card.astro';
 import AdUnit from '../components/AdUnit.astro';
 import HomeTools from '../components/tools/HomeTools.astro';
+import HomeCharacters from '../components/characters/HomeCharacters.astro';
 import { getBuildData } from '../lib/content/build-data';
 import { r2ImageUrl } from '../lib/content/images';
 import { resolveImageDimensions } from '../lib/content/image-size';
@@ -23,6 +24,8 @@ const heroDimensions = await resolveImageDimensions(featured?.mainImage);
       <!-- Quick Section Navigation -->
       <nav class="section-nav" aria-label="Editorial sections">
         <span class="section-nav__label">Explore</span>
+        <a class="section-nav__feature" href="/family-trees">Family trees</a>
+        <a class="section-nav__feature" href="/characters">Characters</a>
         {data.sections.map(section => (
           <a href={`/categories/${section.slug}`}>{section.title}</a>
         ))}
@@ -90,6 +93,9 @@ const heroDimensions = await resolveImageDimensions(featured?.mainImage);
           )}
         </section>
       )}
+
+      <!-- Characters and family trees -->
+      <HomeCharacters />
 
       <!-- Tools -->
       <HomeTools />

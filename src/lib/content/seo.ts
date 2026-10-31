@@ -2,7 +2,7 @@ import type { ArticlePageData } from './types';
 import { r2ImageUrl } from './images';
 export const SITE = 'https://www.animesparks.blog';
 export const homeTitle = 'AnimeSparks — Deep Anime Analysis, Reviews & Recommendations';
-export const homeDescription = 'Thoughtful anime analysis, sharp reviews, and honest opinions on popular and underrated series. Explore anime beyond surface-level hype.';
+export const homeDescription = 'Thoughtful anime analysis and honest reviews, plus linked family trees for dozens of anime and spoiler-safe character profiles.';
 export const homeImage = `${SITE}/anime-poster.jpg`;
 const tagPresets: Record<string, [string, string]> = {
   'anime news': ['Anime News, Release Dates & Updates', 'Latest anime news, release dates, episode schedules, and confirmed updates — clearly explained without rumors or filler.'],

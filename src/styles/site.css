@@ -372,6 +372,7 @@ body.menu-open { overflow: hidden; }
   transition: color .15s, background .15s;
 }
 .section-nav a:hover { color: var(--ink); background: var(--surface2); }
+.section-nav a.section-nav__feature { color: var(--accent-2); font-weight: 700; }
 .section-nav__all {
   margin-left: auto;
   font-size: var(--text-xs) !important;

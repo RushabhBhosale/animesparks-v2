@@ -1,0 +1,167 @@
+---
+// Homepage showcase for the character encyclopedia and the family trees.
+// Prerendered and text/SVG only: no images, no client script. Counts come from
+// the same data the pages use, so they cannot go stale.
+import { familyPath, familySeries } from '../../lib/characters/family.ts';
+import { characterPath, getRegistry } from '../../lib/characters/registry.ts';
+import { rosterStats } from '../../lib/characters/roster.ts';
+import { initials } from '../../lib/characters/search.ts';
+
+const registry = getRegistry();
+const trees = familySeries().map(item => ({ ...item, count: rosterStats(item.slug)?.characters ?? 0 }));
+const total = trees.reduce((sum, item) => sum + item.count, 0);
+const format = (value: number) => value.toLocaleString('en-US');
+
+// One profile per series first, then a second from the biggest ones.
+const featured = ['monkey-d-luffy', 'naruto-uzumaki', 'gojo-satoru', 'tanjiro-kamado', 'light-yagami', 'gon-freecss', 'roronoa-zoro', 'nezuko-kamado']
+  .map(slug => registry.bySlug.get(slug)).filter((profile): profile is NonNullable<typeof profile> => Boolean(profile));
+const seriesName = (slug: string) => registry.seriesBySlug.get(slug)?.short ?? '';
+
+// Two real families, drawn the way the trees draw them. Only ties the story shows from the start.
+const families = [
+  { label: 'Uchiha clan', series: 'Naruto', parents: ['Fugaku Uchiha', 'Mikoto Uchiha'], children: [['Itachi Uchiha', 'itachi-uchiha'], ['Sasuke Uchiha', 'sasuke-uchiha']], href: `${familyPath('naruto')}#c=sasuke-uchiha` },
+  { label: 'Kamado family', series: 'Demon Slayer', parents: ['Tanjuro Kamado', 'Kie Kamado'], children: [['Tanjiro Kamado', 'tanjiro-kamado'], ['Nezuko Kamado', 'nezuko-kamado']], href: `${familyPath('demon-slayer')}#c=tanjiro-kamado` },
+] as const;
+---
+<section class="editorial-section hc" aria-labelledby="hc-heading">
+  <div class="section-header">
+    <div>
+      <p class="kicker red">Characters &amp; Family Trees</p>
+      <h2 id="hc-heading">Meet the Cast<span class="text-accent">.</span></h2>
+    </div>
+    <a class="section-header__link" href="/family-trees">All family trees ↗</a>
+  </div>
+
+  <div class="hc__top">
+    <div class="hc__trees">
+      <p class="hc__eyebrow">Family trees</p>
+      <h3>Every character, one linked tree.</h3>
+      <p class="hc__deck">Pan, zoom and search whole casts: parents, siblings, partners and clans, with spoiler protection where the story needs it.</p>
+      <div class="hc__art">
+        {families.map((family, index) => (
+          <figure class:list={['hc__family', index > 0 && 'hc__family--extra']}>
+            <svg viewBox="0 0 370 214" role="img" aria-label={`${family.label} from ${family.series}: ${family.parents.join(' and ')} with their children ${family.children.map(child => child[0]).join(' and ')}`}>
+              <g class="hc__lines" fill="none">
+                <path d="M185 30 V88" class="hc__dash" />
+                <path d="M185 88 V124 H95 V158" />
+                <path d="M185 124 H275 V158" />
+                <path d="M170 105 H200" class="hc__partner" />
+              </g>
+              <g class="hc__pill"><rect x="125" y="4" width="120" height="26" rx="13" /><text x="185" y="21">{family.label}</text></g>
+              {[[20, family.parents[0]], [200, family.parents[1]]].map(([x, name]) => (
+                <g class="hc__node" transform={`translate(${x} 88)`}><rect width="150" height="34" rx="9" /><text x="75" y="18">{name}</text></g>
+              ))}
+              {family.children.map(([name, slug], position) => (
+                <a href={characterPath(slug)} aria-label={`${name}: character profile`}>
+                  <g class="hc__node hc__node--profile" transform={`translate(${position === 0 ? 20 : 200} 158)`}><rect width="150" height="34" rx="9" /><text x="75" y="18">{name}</text></g>
+                </a>
+              ))}
+            </svg>
+            <figcaption><a href={family.href}>{family.series}: open this family in the tree →</a></figcaption>
+          </figure>
+        ))}
+      </div>
+      <dl class="hc__stats">
+        <div><dt>{format(trees.length)}</dt><dd>anime with a tree</dd></div>
+        <div><dt>{format(total)}</dt><dd>characters linked</dd></div>
+        <div><dt>{format(registry.profiles.length)}</dt><dd>full profiles</dd></div>
+      </dl>
+      <p class="hc__cta"><a class="tool-button" href="/family-trees">Explore the family trees →</a></p>
+    </div>
+
+    <nav class="hc__series" aria-label="Family trees by anime">
+      <p class="hc__eyebrow">Browse by anime</p>
+      <ul>
+        {trees.map(item => (
+          <li><a href={familyPath(item.slug)}><span>{item.short}</span><b>{format(item.count)}</b></a></li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+
+  <div class="hc__profiles-head">
+    <div>
+      <p class="hc__eyebrow">Character profiles</p>
+      <h3>Spoiler-safe guides to the characters people search for.</h3>
+    </div>
+    <a class="section-header__link" href="/characters">All {registry.profiles.length} profiles ↗</a>
+  </div>
+  <div class="hc__profiles">
+    {featured.map(profile => (
+      <a class="hc__card" href={characterPath(profile.slug)}>
+        <span class="hc__mono" aria-hidden="true">{initials(profile.name)}</span>
+        <span class="hc__card-body">
+          <span class="hc__card-series">{seriesName(profile.series)}</span>
+          <strong>{profile.name}</strong>
+          <span class="hc__card-role">{profile.role}</span>
+        </span>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .hc { --hc-gold: #e8b04a; }
+  .hc__top { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--sp-4); }
+  .hc__trees, .hc__series { border: 1px solid var(--line); background: var(--surface); }
+  .hc__trees { padding: var(--sp-8); display: flex; flex-direction: column; }
+  .hc__eyebrow { margin: 0 0 var(--sp-2); color: var(--accent-2); font-size: var(--text-xs); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+  .hc h3 { margin: 0; font-family: var(--font-body); font-size: clamp(24px, 2.4vw, 32px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+  .hc__deck { max-width: 56ch; margin: var(--sp-3) 0 0; color: var(--ink-2); font-size: var(--text-base); line-height: 1.55; }
+
+  .hc__art { display: flex; gap: var(--sp-6); margin: var(--sp-6) 0 var(--sp-5); padding: var(--sp-5) var(--sp-4) var(--sp-3); border: 1px solid var(--line); background: var(--bg); }
+  .hc__family { flex: 1 1 0; min-width: 0; margin: 0; }
+  .hc__family svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .hc__family figcaption { margin-top: var(--sp-2); text-align: center; font-size: var(--text-xs); }
+  .hc__family figcaption a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+  .hc__family figcaption a:hover { color: var(--ink); text-decoration-color: var(--accent); }
+  .hc__lines path { stroke: var(--hc-gold); stroke-width: 2; stroke-linejoin: round; }
+  .hc__lines .hc__dash { stroke-dasharray: 3 4; opacity: .7; }
+  .hc__lines .hc__partner { stroke: #e0719a; stroke-width: 3; }
+  .hc__node rect { fill: var(--surface2); stroke: var(--line-2); stroke-width: 1.2; }
+  .hc__node text, .hc__pill text { fill: var(--ink); font-family: var(--font-ui); font-size: 13px; text-anchor: middle; dominant-baseline: central; }
+  .hc__node--profile rect { stroke: var(--accent); stroke-width: 2; }
+  .hc__node--profile text { font-weight: 700; }
+  a:hover > .hc__node--profile rect, a:focus-visible > .hc__node--profile rect { fill: color-mix(in srgb, var(--accent) 22%, var(--surface2)); }
+  a:focus-visible { outline: none; }
+  .hc__pill rect { fill: color-mix(in srgb, var(--hc-gold) 18%, var(--surface2)); stroke: var(--hc-gold); stroke-width: 1.4; }
+  .hc__pill text { font-size: 12px; font-weight: 700; }
+
+  .hc__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; border: 1px solid var(--line); }
+  .hc__stats > div { padding: var(--sp-3) var(--sp-4); border-left: 1px solid var(--line); }
+  .hc__stats > div:first-child { border-left: 0; }
+  .hc__stats dt { font-family: var(--font-body); font-size: clamp(22px, 2.4vw, 30px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+  .hc__stats dd { margin: 2px 0 0; color: var(--ink-3); font-size: var(--text-xs); letter-spacing: .04em; }
+  .hc__cta { margin: var(--sp-5) 0 0; }
+
+  .hc__series { padding: var(--sp-6) var(--sp-6) var(--sp-4); }
+  .hc__series ul { margin: 0; padding: 0; list-style: none; column-count: 2; column-gap: var(--sp-5); }
+  .hc__series li { break-inside: avoid; }
+  .hc__series a { display: flex; justify-content: space-between; gap: var(--sp-3); padding: 9px 0; border-bottom: 1px solid var(--line); color: var(--ink); font-size: var(--text-sm); }
+  .hc__series a:hover { color: var(--accent-2); }
+  .hc__series b { color: var(--ink-3); font-weight: 400; font-variant-numeric: tabular-nums; }
+
+  .hc__profiles-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-6); margin: var(--sp-12) 0 var(--sp-5); padding-bottom: var(--sp-4); border-bottom: 1px solid var(--line); }
+  .hc__profiles-head h3 { max-width: 30ch; }
+  .hc__profiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); }
+  .hc__card { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: var(--sp-4); align-items: start; padding: var(--sp-5); border: 1px solid var(--line); background: var(--surface); transition: background .15s, border-color .15s; }
+  .hc__card:hover { background: var(--surface2); border-color: var(--line-2); }
+  .hc__mono { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid var(--line-2); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--ink); font-size: var(--text-base); font-weight: 800; letter-spacing: .04em; }
+  .hc__card-body { display: grid; gap: 4px; min-width: 0; }
+  .hc__card-series { color: var(--ink-3); font-size: var(--text-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .hc__card strong { font-family: var(--font-body); font-size: var(--text-lg); letter-spacing: -.02em; line-height: 1.2; color: var(--ink); }
+  .hc__card-role { color: var(--ink-2); font-size: var(--text-sm); line-height: 1.45; }
+
+  @media (max-width: 1100px) { .hc__profiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 960px) { .hc__top { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 700px) {
+    .hc__trees { padding: var(--sp-5); }
+    .hc__family--extra { display: none; }
+    .hc__stats > div { padding: var(--sp-3); }
+    .hc__series { padding: var(--sp-5) var(--sp-4) var(--sp-3); }
+    .hc__series ul { column-count: 1; }
+    .hc__profiles-head { flex-direction: column; align-items: flex-start; gap: var(--sp-3); margin-top: var(--sp-10); }
+    .hc__profiles { grid-template-columns: minmax(0, 1fr); }
+    .hc__card { padding: var(--sp-4); }
+  }
+</style>
