@@ -60,6 +60,8 @@ export function buildChart(data: ChartData, level: number, title: string, option
   const people = readPeople(data);
   const { rules } = data;
   const notSurname = new Set(rules.notSurname);
+  // "Xeno Goku", "EX Gogeta", "Future Bardock": alternate versions are not members of the family they are named after.
+  const variant = /^(?:Xeno|EX|Future|Cloned?|Evil|Alternate|Time|Heroes?)$/;
   const preferHome = rules.preferHome ? new RegExp(rules.preferHome) : null;
   const male = new Set(data.male);
   const edges = visibleEdges(data, level);
@@ -186,7 +188,8 @@ export function buildChart(data: ChartData, level: number, title: string, option
   const clanBranch = (name: string) => { if (!clanBranches.has(name)) clanBranches.set(name, { name, id: `c:${name}`, kids: [], loose: [] }); return clanBranches.get(name)!; };
   const homeless: Array<[string, Unit | Person]> = [];
   // A family name shared by people with no clan on record is still a real thing they have in common.
-  const surnameOf = (person: Person) => { const words = person.name.replace(/\(.*?\)/g, '').trim().split(/\s+/); const name = rules.surnameAt === 'first' ? words[0] : words[1]; return (rules.surnameAt === 'first' ? words.length >= 2 : words.length === 2) && !notSurname.has(name) && !person.clans.length ? name : ''; };
+  const surnameOf = (person: Person) => { const words = person.name.replace(/\(.*?\)/g, '').trim().split(/\s+/); if (variant.test(words[0] ?? '')) return '';
+    const name = rules.surnameAt === 'first' ? words[0] : words[1]; return (rules.surnameAt === 'first' ? words.length >= 2 : words.length === 2) && /^\p{Lu}[\p{L}'’.-]{2,}$/u.test(name ?? '') && !notSurname.has(name) && !person.clans.length ? name : ''; };
   const surnames = new Map<string, number>();
   for (const person of people.values()) { const name = surnameOf(person); if (name) surnames.set(name, (surnames.get(name) ?? 0) + 1); }
   for (const unit of roots) {

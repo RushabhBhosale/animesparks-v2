@@ -244,19 +244,16 @@ a.char-card:hover { border-color: var(--line-2); background: var(--surface2); }
 .fc-more > section { margin-top: var(--sp-12); }
 .fc-more h2 { margin: 0 0 var(--sp-4); font-family: var(--font-body); font-size: clamp(24px, 2.6vw, 32px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
 .fc-more__lede { max-width: 70ch; margin: 0 0 var(--sp-5); color: var(--ink-2); font-size: var(--text-base); line-height: 1.6; }
-.fc-more__jump { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 var(--sp-6); }
-.fc-more__jump a, .fc-more__chips a { display: inline-flex; gap: 8px; padding: 5px 11px; border: 1px solid var(--line-2); color: var(--ink); font-size: var(--text-sm); }
-.fc-more__jump a:hover, .fc-more__chips a:hover { border-color: var(--accent); }
-.fc-more__jump span, .fc-more__chips span { color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.fc-more__branch { margin-top: var(--sp-8); padding-top: var(--sp-5); border-top: 1px solid var(--line); scroll-margin-top: 80px; }
-.fc-more__branch h3 { margin: 0 0 var(--sp-3); font-family: var(--font-body); font-size: var(--text-2xl); letter-spacing: -.02em; }
-.fc-more__branch h3 span { margin-left: var(--sp-2); color: var(--ink-3); font-family: var(--font-ui); font-size: var(--text-sm); font-weight: 400; letter-spacing: 0; }
-.fc-more__group { margin-top: var(--sp-4); }
-.fc-more__group h4 { margin: 0 0 var(--sp-2); color: var(--ink-2); font-size: var(--text-sm); font-weight: 700; letter-spacing: .04em; }
-.fc-more__group ul { margin: 0; padding: 0; list-style: none; columns: 3 240px; column-gap: var(--sp-6); }
-.fc-more__group li { break-inside: avoid; padding: 3px 0; font-size: var(--text-sm); line-height: 1.4; }
-.fc-more__group li a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--accent); }
-.fc-more__group small { display: block; color: var(--ink-3); font-size: 12px; }
+.fc-more__chips a { display: inline-flex; gap: 8px; padding: 5px 11px; border: 1px solid var(--line-2); color: var(--ink); font-size: var(--text-sm); }
+.fc-more__chips a:hover { border-color: var(--accent); }
+.fc-more__chips span { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.fc-more__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); }
+.fc-more__cards article { padding: var(--sp-5); border: 1px solid var(--line); background: var(--surface); }
+.fc-more__cards h3 { margin: 0 0 var(--sp-1); font-family: var(--font-body); font-size: var(--text-xl); letter-spacing: -.02em; line-height: 1.2; }
+.fc-more__cards p, .fc-more__cards li { margin: var(--sp-2) 0 0; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.6; }
+.fc-more__cards ul { margin: var(--sp-2) 0 0; padding-left: 1.1em; }
+.fc-more__cards a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--accent); }
+.fc-more__cards .fc-more__meta { margin-top: 0; color: var(--ink-3); font-size: var(--text-xs); letter-spacing: .04em; }
 .fc-more__links { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--sp-2); color: var(--ink-2); font-size: var(--text-sm); }
 .fc-more__links a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
 .fc-more__chips { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -337,6 +334,7 @@ a.char-card:hover { border-color: var(--line-2); background: var(--surface2); }
 .fc-chips button { padding: 2px 9px; border: 1px solid var(--line-2); background: transparent; color: var(--ink); font: inherit; font-size: var(--text-xs); cursor: pointer; }
 .fc-chips button:hover { border-color: var(--accent); }
 .fc-card .tool-button { margin-top: var(--sp-3); }
+@media (max-width: 760px) { .fc-more__cards { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 640px) {
   .fc-page__title { padding: var(--sp-3) var(--sp-3) var(--sp-2); font-size: 26px; }
   .fc-bar { display: grid; grid-template-columns: 1fr 1fr; padding: 0 var(--sp-3) var(--sp-2); }

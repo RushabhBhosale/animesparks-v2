@@ -50,6 +50,6 @@ const seo = series.seo ?? {
     <h1 class="fc-page__title">{series.short} Family Tree</h1>
     <FamilyChart series={series} src={`${path}/roster.json`} />
     <p class="fc-credit">Character data from <a href={credit.url} rel="nofollow noopener">{credit.name}</a>, CC BY-SA.</p>
-    <FamilyIndex series={series} index={index} trees={trees} articles={articles} faq={faq} />
+    <FamilyIndex series={series} index={index} characters={stats.characters} connected={stats.connected} trees={trees} articles={articles} faq={faq} />
   </main>
 </SiteLayout>

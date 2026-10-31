@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { getRegistry } from '../../src/lib/characters/registry.ts';
 import { PUBLISHED_FAMILY_SERIES, familySeries } from '../../src/lib/characters/family.ts';
-import { compactRoster, getRoster, rosterCredit } from '../../src/lib/characters/roster.ts';
+import { compactRoster, getRoster, rosterCredit, rosterStats } from '../../src/lib/characters/roster.ts';
 import { buildChart, chartSvg, type ChartData } from '../../src/lib/characters/family-chart.ts';
 
 const data = compactRoster('naruto') as unknown as ChartData;
@@ -202,18 +202,47 @@ describe('family data quality', () => {
   }
 });
 
-describe('family tree list', () => {
-  it('lists every character once, with a tie for those placed by family', async () => {
+describe('family tree text', () => {
+  it('describes the biggest families with their real parents and children', async () => {
     const { buildFamilyIndex } = await import('../../src/lib/characters/family-index.ts');
     const data = compactRoster('naruto') as unknown as ChartData;
-    const chart = buildChart(data, data.checkpoints - 1, 'Naruto');
-    const index = buildFamilyIndex(chart);
-    const listed = index.branches.flatMap(branch => branch.groups.flatMap(group => group.people));
-    assert.equal(new Set(listed.map(person => person.id)).size, listed.length, 'someone is listed twice');
-    assert.equal(listed.length, chart.people);
-    const sasuke = listed.find(person => person.id === 'sasuke-uchiha');
-    assert.equal(sasuke?.note, 'child of Fugaku Uchiha');
-    assert.equal(sasuke?.profile, 'sasuke-uchiha');
-    assert.ok(index.largest.length > 0 && index.groups > 10);
+    const index = buildFamilyIndex(buildChart(data, data.checkpoints - 1, 'Naruto'));
+    assert.ok(index.families.length >= 5, 'too few families described');
+    const uchiha = index.families.find(family => family.label === 'Uchiha');
+    assert.ok(uchiha, 'the Uchiha are missing');
+    const unit = uchiha!.units.find(item => item.parents.some(parent => parent.id === 'fugaku-uchiha'));
+    assert.ok(unit?.children.some(child => child.id === 'sasuke-uchiha'), 'Fugaku’s children are missing');
+    assert.ok(uchiha!.notable.some(member => member.profile), 'a notable member should link to a profile');
+    assert.ok(index.places.length > 0 && index.largest.length > 0);
   });
+
+  it('never calls a creation a child or a home a family', async () => {
+    const { buildFamilyIndex } = await import('../../src/lib/characters/family-index.ts');
+    const data = compactRoster('naruto') as unknown as ChartData;
+    const index = buildFamilyIndex(buildChart(data, data.checkpoints - 1, 'Naruto'));
+    const children = index.families.flatMap(family => family.units.filter(unit => unit.parents.some(parent => parent.id === 'orochimaru')).flatMap(unit => unit.children.map(child => child.id)));
+    assert.ok(!children.includes('mitsuki'), 'Mitsuki is Orochimaru’s creation, not his child');
+    assert.ok(!index.families.some(family => family.label === 'Konohagakure'), 'a village is not a family');
+    const generic = buildFamilyIndex(buildChart(compactRoster('dragon-ball') as unknown as ChartData, -1, 'Dragon Ball'));
+    assert.ok(!generic.families.some(family => /^\d+$/.test(family.label)), 'a number is not a family name');
+  });
+
+  it('keeps the family text short instead of repeating every name', async () => {
+    const { buildFamilyIndex } = await import('../../src/lib/characters/family-index.ts');
+    const data = compactRoster('one-piece') as unknown as ChartData;
+    const index = buildFamilyIndex(buildChart(data, data.checkpoints - 1, 'One Piece'));
+    const named = index.families.reduce((total, family) => total + family.notable.length + family.units.reduce((sum, unit) => sum + unit.parents.length + unit.children.length, 0), 0);
+    assert.ok(named < 250, `${named} names repeated below the tree`);
+  });
+});
+
+describe('one source for every character count', () => {
+  for (const slug of PUBLISHED_FAMILY_SERIES) {
+    it(`${slug}: the roster, the tree and the page statistics agree`, () => {
+      const data = compactRoster(slug) as unknown as ChartData;
+      const chart = buildChart(data, data.checkpoints - 1, slug);
+      assert.equal(chart.people, data.n.length);
+      assert.equal(rosterStats(slug)!.characters, data.n.length);
+    });
+  }
 });

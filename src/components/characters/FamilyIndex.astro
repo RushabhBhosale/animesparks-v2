@@ -1,48 +1,78 @@
 ---
-// Below-the-tree content for a family tree page: the whole tree as a list,
-// a short FAQ, profiles, related reading and the other trees. Prerendered, so
-// it is real HTML for search engines and for readers without the diagram.
+// Below-the-tree text for a family tree page: the major families and how
+// their members are related, what the series says about its bloodlines, a
+// short FAQ, profiles, related reading and the other trees. Prerendered, so it
+// is real HTML for search engines. The diagram already holds every name; this
+// does not repeat them.
 import Card from '../Card.astro';
-import type { FamilyIndex } from '../../lib/characters/family-index.ts';
+import type { FamilyIndex, IndexPerson } from '../../lib/characters/family-index.ts';
 import { familyPath } from '../../lib/characters/family.ts';
 import type { FamilySeries } from '../../lib/characters/family.ts';
 import { characterPath, getRegistry, hubPath } from '../../lib/characters/registry.ts';
 import { rosterCredit } from '../../lib/characters/roster.ts';
 import type { ArticleCard } from '../../lib/content/types';
 
-interface Props { series: FamilySeries; index: FamilyIndex; trees: Array<FamilySeries & { count: number }>; articles: ArticleCard[]; faq: Array<{ question: string; answer: string }> }
-const { series, index, trees, articles, faq } = Astro.props;
+interface Props { series: FamilySeries; index: FamilyIndex; characters: number; connected: number; trees: Array<FamilySeries & { count: number }>; articles: ArticleCard[]; faq: Array<{ question: string; answer: string }> }
+const { series, index, characters, connected, trees, articles, faq } = Astro.props;
 const registry = getRegistry();
+const curated = registry.seriesBySlug.get(series.slug);
 const profiles = registry.profiles.filter(profile => profile.series === series.slug);
 const hub = registry.hubs.find(item => item.slug === series.slug);
 const credit = rosterCredit(series.slug);
 const others = trees.filter(item => item.slug !== series.slug);
 const format = (value: number) => value.toLocaleString('en-US');
-const anchor = (id: string) => `group-${id.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}`;
+const intro = (curated?.familyGuide?.intro ?? []).slice(0, 1);
+// Only what is safe to read before the story is finished.
+const bloodlines = (curated?.clans ?? []).map(clan => ({ ...clan, traits: clan.traits.filter(trait => !trait.spoiler) }));
+const join = (people: IndexPerson[]) => people.length > 1 ? `${people.slice(0, -1).map(item => item.name).join(', ')} and ${people.at(-1)!.name}` : people[0]?.name ?? '';
+const top = index.families.slice(0, 3).map(family => family.label);
 ---
 <div class="shell fc-more">
-  <section aria-labelledby="fc-list-title">
-    <h2 id="fc-list-title">{series.short} family tree as a list</h2>
-    <p class="fc-more__lede">{format(index.people)} characters in {format(index.groups)} groups. Each name sits under the clan, team, rank or home it belongs to; the line beside a name says who they are related to, where the source records it.</p>
-    <nav class="fc-more__jump" aria-label={`${series.short} groups`}>
-      {index.branches.map(branch => <a href={`#${anchor(branch.id)}`}>{branch.label} <span>{format(branch.count)}</span></a>)}
-    </nav>
-    {index.branches.map(branch => (
-      <section class="fc-more__branch" id={anchor(branch.id)} aria-labelledby={`${anchor(branch.id)}-title`}>
-        <h3 id={`${anchor(branch.id)}-title`}>{branch.label} <span>{format(branch.count)} characters</span></h3>
-        {branch.groups.map(group => (
-          <div class="fc-more__group">
-            {branch.groups.length > 1 || group.label !== branch.label ? <h4>{group.label === branch.label ? 'Everyone else' : group.label}</h4> : null}
+  <section aria-labelledby="fc-about-title">
+    <h2 id="fc-about-title">{series.short} families and bloodlines</h2>
+    {intro.map(text => <p class="fc-more__lede">{text}</p>)}
+    <p class="fc-more__lede">
+      The {series.short} family tree places {format(characters)} characters. {format(connected)} of them are joined to others by a recorded tie, such as parent and child, siblings or partners{top.length ? `, and the biggest families are ${top.join(', ')}` : ''}.
+      Everyone else is filed under the clan, team, rank or home they belong to{index.places.length ? `: the largest homes are ${index.places.slice(0, 4).map(place => `${place.label} (${format(place.count)})`).join(', ')}` : ''}.
+    </p>
+  </section>
+
+  {bloodlines.length > 0 && (
+    <section aria-labelledby="fc-bloodlines-title">
+      <h2 id="fc-bloodlines-title">Clans and bloodlines explained</h2>
+      <div class="fc-more__cards">
+        {bloodlines.map(clan => (
+          <article>
+            <h3>{clan.name}</h3>
+            <p>{clan.summary}</p>
+            {clan.traits.length > 0 && <ul>{clan.traits.map(trait => <li>{trait.text}</li>)}</ul>}
+          </article>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {index.families.length > 0 && (
+    <section aria-labelledby="fc-families-title">
+      <h2 id="fc-families-title">Major {series.short} families and how they are related</h2>
+      <div class="fc-more__cards">
+        {index.families.map(family => (
+          <article>
+            <h3>{family.label}</h3>
+            <p class="fc-more__meta">{format(family.members)} characters, {format(family.withTies)} with recorded family ties</p>
             <ul>
-              {group.people.map(person => (
-                <li>{person.profile ? <a href={characterPath(person.profile)}>{person.name}</a> : person.name}{person.note ? <small>{person.note}</small> : null}</li>
+              {family.units.map(unit => (
+                <li>
+                  {join(unit.parents)}{unit.parents.length > 1 ? ' are the ' : ' is the '}{unit.children.length ? <>parent{unit.parents.length > 1 ? 's' : ''} of {join(unit.children)}{unit.adopted.length ? <> and the adoptive parent{unit.parents.length > 1 ? 's' : ''} of {join(unit.adopted)}</> : null}</> : <>adoptive parent{unit.parents.length > 1 ? 's' : ''} of {join(unit.adopted)}</>}.
+                </li>
               ))}
             </ul>
-          </div>
+            <p>Notable members: {family.notable.map((member, position) => <>{position > 0 && ', '}{member.profile ? <a href={characterPath(member.profile)}>{member.name}</a> : member.name}</>)}.</p>
+          </article>
         ))}
-      </section>
-    ))}
-  </section>
+      </div>
+    </section>
+  )}
 
   <section aria-labelledby="fc-faq-title">
     <h2 id="fc-faq-title">{series.short} family tree: questions</h2>
