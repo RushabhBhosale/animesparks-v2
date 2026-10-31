@@ -43,7 +43,7 @@ export const demonSlayer: SeriesData = {
   cast: [
     { id: 'tanjiro', name: 'Tanjiro Kamado', profile: 'tanjiro-kamado' },
     { id: 'rengoku', name: 'Kyojuro Rengoku', profile: 'kyojuro-rengoku' },
-    { id: 'nezuko', name: 'Nezuko Kamado' },
+    { id: 'nezuko', name: 'Nezuko Kamado', profile: 'nezuko-kamado' },
     { id: 'akaza', name: 'Akaza' },
     { id: 'muzan', name: 'Muzan Kibutsuji' },
     { id: 'enmu', name: 'Enmu' },
@@ -121,13 +121,16 @@ export const demonSlayer: SeriesData = {
   ],
   timeline: [
     { id: 'family-attack', title: 'The Kamado family is attacked', summary: 'Tanjiro returns home to find his family dead and Nezuko turned into a demon.', kind: 'milestone', characters: ['tanjiro', 'nezuko'], when: 'Taisho era, winter', storyOrder: 10, anime: { ep: 1 }, manga: { ch: 1 }, spoiler: 'season-1' },
+    { id: 'nezuko-exploding-blood', title: 'Nezuko shows Exploding Blood', summary: 'On Mount Natagumo, Nezuko expels her blood and turns it into flames that burn demons.', kind: 'milestone', characters: ['nezuko', 'tanjiro'], when: 'Mount Natagumo', storyOrder: 15, manga: { ch: 40 }, spoiler: 'season-1' },
     { id: 'rengoku-debut', title: 'Rengoku appears', summary: 'The Flame Hashira first appears in the story.', kind: 'milestone', characters: ['rengoku'], when: 'Before the Mugen Train', storyOrder: 20, anime: { ep: 21 }, manga: { ch: 44 } },
     { id: 'mugen-train', title: 'The Mugen Train arc', summary: 'Tanjiro and his friends board a train where passengers are going missing, together with the Flame Hashira.', kind: 'arc', characters: ['tanjiro', 'rengoku', 'enmu'], when: 'Taisho era', storyOrder: 30, anime: { ep: 27 }, manga: { ch: 54 }, arc: 'mugen-train', spoiler: 'season-1' },
     { id: 'rengoku-death', title: 'Rengoku dies fighting Akaza', summary: 'After defeating Enmu, Rengoku faces Upper Rank Three, Akaza, and dies in the fight.', kind: 'death', characters: ['rengoku', 'akaza', 'tanjiro'], when: 'The Mugen Train arc', storyOrder: 40, anime: { ep: 33 }, manga: { ch: 66 }, arc: 'mugen-train', spoiler: 'mugen-train' },
     { id: 'hinokami-kagura-district', title: 'Tanjiro uses Hinokami Kagura in the Entertainment District', summary: 'Tanjiro combines Water Breathing and Hinokami Kagura in the fight to save Hinatsuru from Gyutaro.', kind: 'battle', characters: ['tanjiro'], when: 'The Entertainment District arc', storyOrder: 50, manga: { ch: 90 }, arc: 'entertainment-district', spoiler: 'district-village' },
     { id: 'demon-slayer-mark', title: 'Tanjiro shows the Demon Slayer Mark', summary: 'During the Swordsmith Village arc, Tanjiro shows the Mark briefly and becomes one of the first Demon Slayers to kill an Upper Rank.', kind: 'transformation', characters: ['tanjiro'], when: 'The Swordsmith Village arc', storyOrder: 60, manga: { ch: 101 }, arc: 'swordsmith-village', spoiler: 'district-village' },
     { id: 'akaza-rematch', title: 'Tanjiro faces Akaza in the Infinity Castle', summary: 'Tanjiro recognises the demon who killed Rengoku and charges at him.', kind: 'battle', characters: ['tanjiro', 'akaza', 'rengoku'], when: 'The Infinity Castle arc', storyOrder: 70, manga: { ch: 148 }, spoiler: 'infinity-castle' },
+    { id: 'nezuko-sunlight', title: 'Nezuko becomes immune to sunlight', summary: 'During her fight with Hantengu in the Swordsmith Village, Nezuko develops immunity to sunlight.', kind: 'transformation', characters: ['nezuko'], when: 'The Swordsmith Village arc', storyOrder: 65, anime: { ep: 55 }, manga: { ch: 127 }, spoiler: 'district-village' },
     { id: 'tanjiro-demon', title: 'Muzan turns Tanjiro into a demon', summary: 'As a last attempt to live on, Muzan transforms Tanjiro.', kind: 'transformation', characters: ['tanjiro', 'muzan'], when: 'The final battle', storyOrder: 80, manga: { ch: 201 }, spoiler: 'finale' },
+    { id: 'nezuko-human', title: 'Nezuko is human again', summary: 'By chapter 204 Nezuko is human again; her hair keeps its flame-orange tips.', kind: 'reveal', characters: ['nezuko'], when: 'After the final battle', storyOrder: 95, manga: { ch: 204 }, spoiler: 'finale' },
     { id: 'tanjiro-human', title: 'Tanjiro returns to human form', summary: 'Tanjiro is human again, though changed.', kind: 'reveal', characters: ['tanjiro'], when: 'After the final battle', storyOrder: 90, manga: { ch: 203 }, spoiler: 'finale' },
   ],
   clans: [
