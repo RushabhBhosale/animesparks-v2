@@ -59,6 +59,14 @@ const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003
   {spanishUrl && <link rel="alternate" hreflang="es" href={spanishUrl} />}
   {hasAlternates && <link rel="alternate" hreflang="x-default" href={englishUrl || canonical} />}
   <meta name="robots" content={testHost ? 'noindex, nofollow' : robotsNoindex ? 'noindex, follow' : 'index, follow'} />
+  {/* Google Analytics (GA4) runs on the production host only, so test deployments do not count as traffic. */}
+  {!testHost && <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-KDR02DTGWC"></script>}
+  {!testHost && <script is:inline>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-KDR02DTGWC');
+  </script>}
   {/* AdSense loads once the page has finished loading and the browser is idle, so the ad library and its auction requests do not compete with the hero image and text for bandwidth. Slot initialisation below queues on window.adsbygoogle and runs when the library arrives. */}
   {!testHost && !adsDisabled && <script is:inline data-adsense-loader>
     (function () {
