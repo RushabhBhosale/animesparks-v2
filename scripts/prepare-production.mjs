@@ -36,7 +36,10 @@ if (manifest.schema !== 1 || !/^[a-f0-9]{64}$/.test(manifest.fingerprint || ''))
 }
 
 config.main = 'guarded-worker.mjs';
-config.assets = { ...config.assets, run_worker_first: true };
+// Static files served without invoking the Worker: these requests do not count
+// toward the Workers daily request limit. Favicons are fetched on every visit
+// (and hotlinked), so routing them through the Worker used most of the quota.
+config.assets = { ...config.assets, run_worker_first: ['/*', '!/_astro/*', '!/favicon-48x48.png', '!/favicon.ico'] };
 config.routes = [
   { pattern: 'www.animesparks.blog/*', zone_name: 'animesparks.blog' },
   { pattern: 'animesparks.blog/*', zone_name: 'animesparks.blog' },

@@ -14,7 +14,10 @@ if (!/X-Robots-Tag:\s*noindex,\s*nofollow/i.test(stagingHeaders) || !/<meta name
   throw new Error('Refusing staging deployment: output is missing its noindex,nofollow safeguard.');
 }
 serverConfig.main = 'guarded-worker.mjs';
-serverConfig.assets = { ...serverConfig.assets, run_worker_first: true };
+// Static files served without invoking the Worker: these requests do not count
+// toward the Workers daily request limit. Favicons are fetched on every visit
+// (and hotlinked), so routing them through the Worker used most of the quota.
+serverConfig.assets = { ...serverConfig.assets, run_worker_first: ['/*', '!/_astro/*', '!/favicon-48x48.png', '!/favicon.ico'] };
 writeFileSync(serverConfigPath, JSON.stringify(serverConfig));
 copyFileSync('scripts/guarded-worker.mjs', join(output, 'server', 'guarded-worker.mjs'));
 const tagRouteMap = JSON.parse(readFileSync(join(output, 'client', 'tag-route-map.json'), 'utf8'));

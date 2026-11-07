@@ -91,10 +91,6 @@ export default {
       return new Response('Not found', { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow' } });
     }
     let response;
-    // Browsers and crawlers probe this on every visit; the icon lives at a fixed path.
-    if (url.pathname === '/favicon.ico') {
-      response = new Response(null, { status: 301, headers: { Location: '/favicon-48x48.png', 'Cache-Control': 'public, max-age=86400' } });
-    }
     const listingPath = url.pathname === '/blogs' || url.pathname === '/blogs/es' || url.pathname === '/trending' ||
       url.pathname.startsWith('/categories/') || url.pathname.startsWith('/tags/');
     const variantQuery = ['q', 'sort', 'range', 'page'].some(key => url.searchParams.has(key));
