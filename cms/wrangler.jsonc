@@ -16,7 +16,7 @@
   },
   // Light engine pass (metadata repair, scheduling, due publishes). Image jobs run on a Node runner.
   "triggers": { "crons": ["*/5 * * * *"] },
-  // CMS_WORKER_IMAGES: the Worker fetches and stores images itself (unoptimised originals) so "Process images" acts immediately.
+  // CMS_WORKER_IMAGES: "Process images" in the dashboard runs immediately on the Worker (the browser does the catalogue lookup).
   "vars": { "CMS_DB_NAME": "animesparks", "MONGODB_DB_NAME": "animesparks", "CMS_WORKER_IMAGES": "true" },
   "r2_buckets": [{ "binding": "IMAGES_BUCKET", "bucket_name": "animesparks-staging" }]
   // Secrets (wrangler secret put): MONGODB_URI, ADMIN_USER, ADMIN_PASS_HASH, ADMIN_JWT_SECRET

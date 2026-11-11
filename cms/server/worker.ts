@@ -33,9 +33,9 @@ function runtime(env: Env) {
     await (connected ||= client.connect());
     return {
       client, db: client.db(vars.CMS_DB_NAME || vars.MONGODB_DB_NAME || 'animesparks'), env: vars, storage: () => storage, ai: aiFromEnv(vars),
-      // There is no image optimizer at the edge. With CMS_WORKER_IMAGES=true the Worker stores the source image as-is
-      // (the site build produces the responsive WebP variants); otherwise image jobs wait for a Node runner.
-      capabilities: new Set(vars.CMS_WORKER_IMAGES === 'true' && storage ? ['images'] : []), fetch: (input, init) => fetch(input, init),
+      // The edge has no image optimizer and AniList refuses requests from workers. With CMS_WORKER_IMAGES=true it can still
+      // store and attach images when the dashboard supplies the catalogue lookup; background image jobs go to a Node runner.
+      capabilities: new Set(vars.CMS_WORKER_IMAGES === 'true' && storage ? ['image-store'] : []), fetch: (input, init) => fetch(input, init),
     };
   };
   return { vars, base, close: () => (client && connected ? client.close().catch(() => {}) : Promise.resolve()) };

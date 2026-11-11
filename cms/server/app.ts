@@ -21,6 +21,14 @@ export interface AppDeps {
   secureCookies: boolean;
 }
 type Vars = { Variables: { ctx: Ctx } };
+// Catalogue results supplied by the dashboard. Shape-checked here; image hosts are restricted where candidates are built.
+const text = z.string().max(600).nullish();
+const art = { id: z.number(), title: z.object({ english: text, romaji: text }), bannerImage: text, coverImage: z.object({ extraLarge: text }).nullish() };
+const catalogInput = z.record(z.string().max(200), z.array(z.object({
+  ...art, synonyms: z.array(z.string().max(300)).max(60).nullish(), trailer: z.object({ id: text, site: text }).nullish(),
+  streamingEpisodes: z.array(z.object({ title: text, thumbnail: text, url: text, site: text })).max(400).nullish(),
+  relations: z.object({ edges: z.array(z.object({ relationType: z.string().max(40), node: z.object({ ...art, type: z.string().max(20) }) })).max(80) }).nullish(),
+})).max(8)).refine(value => Object.keys(value).length <= 10, 'Too many catalogue searches.');
 const COOKIE = '__cms_s';
 const adminActor = (user: string): Actor => ({ type: 'user', id: `user:${user}`, scopes: new Set<Scope>(SCOPES), projectIds: '*' });
 const cookieOf = (c: Context) => (c.req.header('cookie') || '').split(';').map(p => p.trim().split('=')).find(([name]) => name === COOKIE)?.slice(1).join('=');
@@ -124,7 +132,8 @@ export function createApp(deps: AppDeps) {
   app.post('/api/projects/:pid/articles/:id/revisions/:version/restore', async c => c.json(await articles.restoreRevision(x(c), pid(c), aid(c), Number(c.req.param('version')))));
   app.post('/api/projects/:pid/articles/:id/validate', async c => c.json(await engine.validateArticle(x(c), pid(c), aid(c))));
   app.post('/api/projects/:pid/articles/:id/repair', async c => c.json(await engine.repairArticle(x(c), pid(c), aid(c), await c.req.json().catch(() => ({})))));
-  app.post('/api/projects/:pid/articles/:id/images', async c => c.json(await engine.processArticleImages(x(c), pid(c), aid(c))));
+  app.get('/api/projects/:pid/articles/:id/image-plan', async c => c.json(await engine.imagePlan(x(c), pid(c), aid(c))));
+  app.post('/api/projects/:pid/articles/:id/images', async c => c.json(await engine.processArticleImages(x(c), pid(c), aid(c), z.object({ catalog: catalogInput.optional() }).parse(await c.req.json().catch(() => ({}))))));
   app.post('/api/projects/:pid/articles/:id/process', async c => c.json(await engine.requestProcessing(x(c), pid(c), aid(c)), 202));
   app.post('/api/projects/:pid/articles/:id/publish', async c => c.json(await publish.requestPublish(x(c), pid(c), aid(c))));
   app.post('/api/projects/:pid/articles/:id/schedule', async c => c.json(await publish.requestPublish(x(c), pid(c), aid(c), { at: z.object({ scheduledAt: z.string() }).parse(await c.req.json()).scheduledAt })));

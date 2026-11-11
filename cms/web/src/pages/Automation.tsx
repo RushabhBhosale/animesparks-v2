@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Play, RefreshCw } from 'lucide-react';
-import { api, ago, fmt } from '../api';
+import { api, ago, fmt, imagesMessage, processImages } from '../api';
 import { Badge, Button, Empty, ErrorNote, PageHeader, Section, Spinner, StatusBadge, Toggle, useAction } from '../ui';
 import { ActivityList } from './History';
 import { Stat } from './Overview';
@@ -23,7 +23,7 @@ export function Automation({ project }: { project: any }) {
     <>
       <PageHeader title="Automation" subtitle="The engine validates new drafts, repairs metadata, sources images and publishes by policy — independently of any assistant session."
         actions={<><Button onClick={refresh}><RefreshCw className="size-3.5" />Refresh</Button><Button busy={busy === 'run'} onClick={() => act('run', '/engine/run', r => `Engine pass: ${r.ran} job${r.ran === 1 ? '' : 's'} run, ${r.succeeded} succeeded, ${r.failed} failed${r.scanned ? `, ${r.scanned.queued} newly queued` : ''}`)}><Play className="size-3.5" />Run engine now</Button></>} />
-      <Section title="Engine" description={`Storage: ${rt.storage || 'not configured'} · Image processing: ${rt.images ? 'available' : 'not available on this runtime'} · AI text: ${rt.aiText ? 'on' : 'off'} · AI images: ${rt.aiImage ? 'on' : 'off'}`}>
+      <Section title="Engine" description={`Storage: ${rt.storage || 'not configured'} · Images: ${rt.images ? 'processed here' : rt.imagesOnClick ? 'on click here, background jobs on the Node runner' : 'on the Node runner only'} · AI text: ${rt.aiText ? 'on' : 'off'} · AI images: ${rt.aiImage ? 'on' : 'off'}`}>
         <Toggle checked={project.automation.enabled} label="Process new and changed drafts automatically"
           description={project.automation.enabled ? `On since ${fmt(project.automation.enabledAt, project.timezone)}. Drafts created or edited after that are processed; older drafts are only inspected and listed below.` : 'Paused. Drafts are stored but nothing is repaired, scheduled or published until this is on.'}
           onChange={enabled => run('toggle', () => api(`/projects/${pid}`, { method: 'PATCH', body: { automation: { enabled } } }), () => { refresh(); return enabled ? 'Automation enabled' : 'Automation paused'; })} />
@@ -48,7 +48,7 @@ export function Automation({ project }: { project: any }) {
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     <Button size="sm" busy={busy === `m${row.id}`} onClick={() => act(`m${row.id}`, `/articles/${encodeURIComponent(row.id)}/repair`, r => r.repaired.length ? `Repaired ${r.repaired.map((x: any) => x.field).join(', ')}${r.unresolved.length ? `. Unresolved: ${r.unresolved.join('; ')}` : ''}` : r.unresolved.length ? `Nothing repaired. ${r.unresolved.join('; ')}` : 'Metadata was already complete')}>Repair metadata</Button>
-                    <Button size="sm" busy={busy === `i${row.id}`} onClick={() => act(`i${row.id}`, `/articles/${encodeURIComponent(row.id)}/images`, r => r.queued ? 'Queued. The background image runner adds the images, usually within 10–15 minutes; the status stays “Awaiting media” until then.' : `Hero: ${r.hero}. Inline added: ${r.inlineAdded}${r.inlineMissing ? `, still missing ${r.inlineMissing}` : ''}${r.notes?.length ? ` (${r.notes.join('; ')})` : ''}`)}>Process images</Button>
+                    <Button size="sm" busy={busy === `i${row.id}`} onClick={() => run(`i${row.id}`, () => processImages(`/projects/${pid}/articles/${encodeURIComponent(row.id)}`), r => { refresh(); return imagesMessage(r); })}>Process images</Button>
                     <Button size="sm" busy={busy === `p${row.id}`} onClick={() => act(`p${row.id}`, `/articles/${encodeURIComponent(row.id)}/process`, () => 'Queued for full processing')}>Retry processing</Button>
                     <Link to={`/${pid}/articles/${encodeURIComponent(row.id)}`}><Button size="sm" variant="ghost">Open</Button></Link>
                   </div>

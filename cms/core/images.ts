@@ -45,18 +45,35 @@ function entities(heading: string) {
 
 // ── Providers ────────────────────────────────────────────────────────────────
 interface AniMedia { id: number; title: { english?: string; romaji?: string }; bannerImage?: string; coverImage?: { extraLarge?: string }; trailer?: { id?: string; site?: string } | null; streamingEpisodes?: Array<{ title?: string; thumbnail?: string; url?: string; site?: string }>; relations?: { edges: Array<{ relationType: string; node: AniMedia & { type: string } }> } }
-const aniCache = new Map<string, Promise<AniMedia | null>>();
-function anilist(ctx: Ctx, search: string): Promise<AniMedia | null> {
+export const CATALOG_ENDPOINT = 'https://graphql.anilist.co';
+export const CATALOG_QUERY = `query($s:String){Page(perPage:6){media(search:$s,type:ANIME,sort:SEARCH_MATCH){id title{english romaji} synonyms bannerImage coverImage{extraLarge} trailer{id site} streamingEpisodes{title thumbnail url site} relations{edges{relationType node{id type title{english romaji} bannerImage coverImage{extraLarge}}}}}}}`;
+/** Catalogue results fetched elsewhere (the editor's browser), keyed by search text. AniList refuses requests from edge workers. */
+export type Catalog = Map<string, AniMedia[]>;
+export const catalogFrom = (input: Record<string, unknown[]>): Catalog => new Map(Object.entries(input).map(([search, media]) => [norm(search), media as AniMedia[]]));
+/**
+ * Picks the catalogue entry that is really about `search`. For a section heading (`within`) the heading must
+ * contain the title itself, so generic words in a heading ("Story and staff") never pull in an unrelated series.
+ */
+function pickMedia(media: Array<AniMedia & { synonyms?: string[] | null }>, search: string, within?: string) {
+  const heading = within ? ` ${norm(within)} ` : '';
+  return media.find(m => [m.title?.english, m.title?.romaji, ...(m.synonyms || [])].some(t => !!t && (within ? norm(t).length >= 4 && heading.includes(` ${norm(t)} `) : sameSubject(t, search)))) || null;
+}
+/** Only image hosts of the catalogue's own artwork, trailers and episode stills are ever downloaded. */
+const trustedImage = (url?: string | null): url is string => {
+  try { const u = new URL(url || ''); return u.protocol === 'https:' && /(^|\.)(anilist\.co|ytimg\.com|crunchyroll\.com)$/.test(u.hostname); } catch { return false; }
+};
+const aniCache = new Map<string, Promise<AniMedia[]>>();
+async function anilist(ctx: Ctx, search: string, catalog?: Catalog, within?: string): Promise<AniMedia | null> {
   const key = norm(search);
+  if (catalog) return pickMedia(catalog.get(key) || [], search, within);
+  if (!ctx.capabilities.has('images')) throw new CmsError(412, 'catalog_unavailable', 'This runtime cannot look up the image catalogue.');
   if (!aniCache.has(key)) aniCache.set(key, (async () => {
-    const query = `query($s:String){Page(perPage:6){media(search:$s,type:ANIME,sort:SEARCH_MATCH){id title{english romaji} synonyms bannerImage coverImage{extraLarge} trailer{id site} streamingEpisodes{title thumbnail url site} relations{edges{relationType node{id type title{english romaji} bannerImage coverImage{extraLarge}}}}}}}`;
-    const response = await ctx.fetch('https://graphql.anilist.co', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ query, variables: { s: search } }), signal: AbortSignal.timeout(15_000) });
-    if (response.status === 429 || response.status >= 500) throw new CmsError(502, 'provider_unavailable', `AniList is unavailable (HTTP ${response.status}).`);
-    if (!response.ok) return null;
-    const media = ((await response.json()) as { data?: { Page?: { media?: Array<AniMedia & { synonyms?: string[] }> } } }).data?.Page?.media || [];
-    return media.find(m => [m.title.english, m.title.romaji, ...(m.synonyms || [])].some(t => t && sameSubject(t, search))) || null;
+    const response = await ctx.fetch(CATALOG_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'User-Agent': 'cms-media-fetcher/1.0' }, body: JSON.stringify({ query: CATALOG_QUERY, variables: { s: search } }), signal: AbortSignal.timeout(15_000) });
+    // A rejected request is an outage, not evidence that no image exists: fail so the job is retried and the reason is visible.
+    if (!response.ok) throw new CmsError(502, 'provider_unavailable', `AniList rejected the image lookup (HTTP ${response.status}${response.status === 429 ? ', rate limited' : ''}): ${(await response.text().catch(() => '')).slice(0, 160)}`);
+    return ((await response.json()) as { data?: { Page?: { media?: AniMedia[] } } }).data?.Page?.media || [];
   })().catch(error => { aniCache.delete(key); throw error; }));
-  return aniCache.get(key)!;
+  return pickMedia(await aniCache.get(key)!, search, within);
 }
 const aniTitle = (m: AniMedia) => m.title.english || m.title.romaji || '';
 const aniCandidate = (m: AniMedia, url: string, kind: string, franchise: string): Candidate => ({
@@ -86,19 +103,20 @@ function episodeStills(m: AniMedia, franchise: string, limit: number): Candidate
  * hero: 16:9 trailer thumbnail before the wide banner strip. inline: episode stills, then trailer frames, then key art.
  * section: the best single images of a title named in a heading (list articles).
  */
-async function anilistCandidates(ctx: Ctx, franchise: string, kind: 'hero' | 'inline' | 'section'): Promise<Candidate[]> {
-  const media = await anilist(ctx, franchise);
+async function anilistCandidates(ctx: Ctx, franchise: string, kind: 'hero' | 'inline' | 'section', catalog?: Catalog, within?: string): Promise<Candidate[]> {
+  const media = await anilist(ctx, franchise, catalog, within);
   if (!media) return [];
   const related = (media.relations?.edges || []).filter(e => e.node.type === 'ANIME' && ['SEQUEL', 'PREQUEL', 'SIDE_STORY', 'PARENT', 'ALTERNATIVE', 'SPIN_OFF'].includes(e.relationType)).map(e => e.node);
   const banner = media.bannerImage ? [aniCandidate(media, media.bannerImage, 'key visual', franchise)] : [];
   const cover = media.coverImage?.extraLarge ? [aniCandidate(media, media.coverImage.extraLarge, 'cover art', franchise)] : [];
   const relatedBanners = related.filter(n => n.bannerImage).map(n => aniCandidate(n, n.bannerImage!, 'key visual', franchise));
-  if (kind === 'hero') return [...trailerFrames(media, franchise, ['maxresdefault']), ...banner, ...relatedBanners.slice(0, 3), ...cover];
-  if (kind === 'section') return [...trailerFrames(media, franchise, ['maxresdefault']), ...banner, ...episodeStills(media, franchise, 1)];
-  return [
+  const all = (list: Candidate[]) => list.filter(c => trustedImage(c.url));
+  if (kind === 'hero') return all([...trailerFrames(media, franchise, ['maxresdefault']), ...banner, ...relatedBanners.slice(0, 3), ...cover]);
+  if (kind === 'section') return all([...trailerFrames(media, franchise, ['maxresdefault']), ...banner, ...episodeStills(media, franchise, 1)]);
+  return all([
     ...episodeStills(media, franchise, 6), ...trailerFrames(media, franchise, ['maxres1', 'maxres2', 'maxres3', 'maxresdefault']), ...relatedBanners, ...banner, ...cover,
     ...related.filter(n => n.coverImage?.extraLarge).map(n => aniCandidate(n, n.coverImage!.extraLarge!, 'cover art', franchise)),
-  ];
+  ]);
 }
 async function fandomCandidates(ctx: Ctx, project: Project, franchise: string, subjects: string[]): Promise<Candidate[]> {
   const wiki = Object.entries(project.media.fandomWikis).find(([name]) => sameSubject(name, franchise))?.[1];
@@ -152,7 +170,7 @@ export interface ImageResult { hero: 'present' | 'attached' | 'missing'; inlineA
  * attaches them to the real hero field and into the body. The article is written once, at the end,
  * and only with assets that were verified in storage.
  */
-export async function processImages(ctx: Ctx, project: Project, article: Article): Promise<ImageResult> {
+export async function processImages(ctx: Ctx, project: Project, article: Article, opts: { catalog?: Catalog } = {}): Promise<ImageResult> {
   const id = articleId(article), meta = await ensureMeta(ctx, project, article), m = project.media;
   if (!m.enabled) throw new CmsError(412, 'media_disabled', 'The image pipeline is disabled for this project.');
   if (article.publicationState === 'published') throw new CmsError(409, 'conflict', 'Images of published articles are not changed automatically.');
@@ -209,8 +227,8 @@ export async function processImages(ctx: Ctx, project: Project, article: Article
       if (provider === 'library') for (const f of franchises) out.push(...await libraryCandidates(ctx, project, article, f, kind));
       if (provider === 'anilist') {
         // A section about a specific title (list articles) gets that title's art before the article-wide franchise.
-        for (const subject of kind === 'inline' ? subjects.slice(0, 3) : []) if (!franchises.some(f => sameSubject(f, subject))) out.push(...(await anilistCandidates(ctx, subject, 'section')).slice(0, 2));
-        for (const f of franchises) out.push(...await anilistCandidates(ctx, f, kind));
+        for (const subject of kind === 'inline' ? subjects.slice(0, 3) : []) if (!franchises.some(f => sameSubject(f, subject))) out.push(...(await anilistCandidates(ctx, subject, 'section', opts.catalog, heading)).slice(0, 2));
+        for (const f of franchises) out.push(...await anilistCandidates(ctx, f, kind, opts.catalog));
       }
       if (provider === 'fandom') for (const f of franchises) out.push(...await fandomCandidates(ctx, project, f, kind === 'hero' ? [f] : subjects));
       if (provider === 'ai' && m.aiGeneration.enabled && ctx.ai?.image) out.push({ generate: `${m.aiGeneration.stylePrompt}\nTopic: ${article.title}${heading ? `\nSection: ${heading}` : ''}`, provider: 'ai', subject: heading || article.title, franchise: franchises[0], alt: `Illustration for ${heading || article.title}`, license: 'AI-generated original image' });
@@ -284,4 +302,13 @@ export async function insertInlineImages(ctx: Ctx, project: Project, article: Ar
     await log(ctx, { projectId: project._id, articleId: articleId(article), title: article.title, type: 'inline.inserted', level: 'success', message: `${inserts.length} inline image${inserts.length > 1 ? 's' : ''} inserted` });
   }
   return { inserted: inserts.length, skipped, inlineImages: inlineImages(body).length };
+}
+
+/** Which catalogue searches an article's image run needs, so a client that can reach the catalogue can do them. */
+export function imageSearches(project: Project, article: Article): string[] {
+  const body = article.body || [], franchises = franchisesOf(article);
+  const { target } = inlineTargets(project, article);
+  const have = inlineImages(body).length;
+  const subjects = (have < target ? placements(body, target - have) : []).flatMap(slot => slot.heading ? [cleanHeading(slot.heading), ...entities(slot.heading)].slice(0, 3) : []).filter(x => !franchises.some(f => sameSubject(f, x)));
+  return [...new Set([...franchises, ...subjects])].slice(0, 8);
 }

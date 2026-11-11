@@ -3,7 +3,7 @@ import { CmsError, engineActor } from './types';
 import { articleId, ensureMeta, findArticle, metaId, queueProcessing, setStatus } from './articles';
 import { cms, collections, getProject, projectFor } from './projects';
 import { claim, complete, defer, enqueue, fail, log } from './jobs';
-import { processImages } from './images';
+import { CATALOG_ENDPOINT, CATALOG_QUERY, catalogFrom, imageSearches, processImages } from './images';
 import { verifyMedia } from './media';
 import { advance, performPublish, verifyLive } from './publish';
 import { blocking, evaluate } from './quality';
@@ -168,21 +168,40 @@ export async function repairArticle(ctx: Ctx, projectId: string, id: string, opt
   return { id, repaired: result.repaired, unresolved: result.unresolved, remainingIssues: result.issues, status: next || result.meta.status };
 }
 /** Runs the image pipeline now when this runtime can, otherwise queues it for a runner that can. */
-export async function processArticleImages(ctx: Ctx, projectId: string, id: string) {
+/**
+ * Runs the image pipeline now when this runtime can, otherwise queues it for a runner that can.
+ * A runtime that can store images but cannot reach the catalogue (an edge worker) runs it when the caller supplies the catalogue results.
+ */
+export async function processArticleImages(ctx: Ctx, projectId: string, id: string, opts: { catalog?: Record<string, unknown[]> } = {}) {
   const project = await projectFor(ctx, projectId, 'media');
   const article = await findArticle(ctx, project, id);
   const meta = await ensureMeta(ctx, project, article);
   if (meta.mediaReview) await cms(ctx).meta.updateOne({ _id: meta._id }, { $unset: { mediaReview: '' } });
-  if (!ctx.capabilities.has('images')) {
+  const catalog = !ctx.capabilities.has('images') && ctx.capabilities.has('image-store') && opts.catalog ? catalogFrom(opts.catalog) : undefined;
+  if (!ctx.capabilities.has('images') && !catalog) {
     // One waiting image job per article is enough; repeated clicks reuse it.
     const waiting = await cms(ctx).jobs.findOne({ projectId, articleId: id, type: 'process_images', status: { $in: ['queued', 'running'] } });
     const { job, created } = waiting ? { job: waiting, created: false } : await enqueue(ctx, { projectId, articleId: id, type: 'process_images', idempotencyKey: `images:${projectId}:${id}:manual:${Date.now()}`, requires: ['images'] });
     return { queued: true, jobId: job._id, created, note: 'This runtime cannot process images; the job runs on the next image-capable engine pass.' };
   }
-  const result = await withArticleLock(ctx, project, id, `manual:${ctx.actor.id}`, () => processImages(ctx, project, article));
+  const result = await withArticleLock(ctx, project, id, `manual:${ctx.actor.id}`, () => processImages(ctx, project, article, { catalog }));
   if (result === 'locked') throw new CmsError(409, 'locked', 'Article is being processed by the engine right now; try again in a moment.');
-  const validation = await validateArticle(ctx, projectId, id);
-  return { queued: false, ...result, ready: validation.ready, remainingIssues: validation.errors };
+  // The article is complete now: let the normal workflow decide what happens next (review, schedule or publish).
+  const fresh = await findArticle(ctx, project, id), freshMeta = (await cms(ctx).meta.findOne({ _id: meta._id }))!;
+  const issues = await evaluate(ctx, project, fresh, freshMeta, { verifyMedia: !!ctx.storage(project) });
+  await saveEvaluation(ctx, freshMeta, issues, await contentHash(fresh), false);
+  const blocked = statusFor(issues);
+  if (blocked) { if (freshMeta.status !== blocked && !['publishing', 'scheduled'].includes(freshMeta.status)) await setStatus(ctx, freshMeta, blocked); }
+  else if (fresh.publicationState !== 'published') await advance(ctx, project, fresh, freshMeta);
+  const status = (await cms(ctx).meta.findOne({ _id: meta._id }, { projection: { status: 1 } }))!.status;
+  return { queued: false, ...result, status, ready: !blocked, remainingIssues: blocking(issues) };
+}
+/** Tells a client whether it must supply catalogue results itself, and which searches to run. */
+export async function imagePlan(ctx: Ctx, projectId: string, id: string) {
+  const project = await projectFor(ctx, projectId, 'media');
+  const article = await findArticle(ctx, project, id);
+  const clientLookup = !ctx.capabilities.has('images') && ctx.capabilities.has('image-store') && project.media.enabled && project.media.providers.includes('anilist');
+  return { clientLookup, endpoint: CATALOG_ENDPOINT, query: CATALOG_QUERY, searches: clientLookup ? imageSearches(project, article) : [] };
 }
 export async function requestProcessing(ctx: Ctx, projectId: string, id: string) {
   const project = await projectFor(ctx, projectId, 'write');
@@ -212,7 +231,7 @@ export async function overview(ctx: Ctx, projectId: string) {
   const by = Object.fromEntries(statusRows.map(r => [r._id, r.n])) as Partial<Record<Status, number>>;
   return {
     project: { id: project._id, name: project.name, approvalMode: project.publishing.approvalMode, automation: project.automation.enabled, timezone: project.timezone },
-    runtime: { storage: ctx.storage(project)?.kind || null, images: ctx.capabilities.has('images'), aiText: !!ctx.ai?.text, aiImage: !!ctx.ai?.image },
+    runtime: { storage: ctx.storage(project)?.kind || null, images: ctx.capabilities.has('images'), imagesOnClick: ctx.capabilities.has('image-store'), aiText: !!ctx.ai?.text, aiImage: !!ctx.ai?.image },
     counts: {
       total, published, drafts, scheduled: by.scheduled || 0, awaitingReview: by.awaiting_review || 0, ready: by.ready || 0,
       missingImages: Math.max(noHero, mediaIssues), missingMetadata: metaIssues, awaitingRepair: (by.needs_repair || 0) + (by.awaiting_media || 0),

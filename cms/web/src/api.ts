@@ -27,3 +27,26 @@ export const ago = (iso?: string) => {
   for (let i = 1; i < unit.length; i++) if (abs < unit[i][0]) return `${s < 0 ? 'in ' : ''}${Math.round(abs / unit[i - 1][0])}${unit[i][1]}${s < 0 ? '' : ' ago'}`;
   return fmt(iso);
 };
+
+/**
+ * "Process images" for one article. Where the server cannot reach the image catalogue itself (the edge
+ * deployment), this browser does the lookups and hands the results over, so the images are attached right away.
+ */
+export async function processImages(base: string) {
+  const plan = await api(`${base}/image-plan`);
+  let catalog: Record<string, unknown[]> | undefined;
+  if (plan.clientLookup) {
+    try {
+      catalog = {};
+      for (const search of plan.searches as string[]) {
+        const response = await fetch(plan.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ query: plan.query, variables: { s: search } }) });
+        if (!response.ok) throw new Error(`catalogue lookup returned HTTP ${response.status}`);
+        catalog[search] = (await response.json()).data?.Page?.media || [];
+      }
+    } catch { catalog = undefined; } // fall back to the background runner
+  }
+  return api(`${base}/images`, { body: catalog ? { catalog } : {} });
+}
+export const imagesMessage = (r: any) => r.queued
+  ? 'Could not look up images from this browser, so the job was queued for the background runner (usually 10–15 minutes).'
+  : `Hero: ${r.hero}. Inline images added: ${r.inlineAdded}${r.inlineMissing ? `, still missing ${r.inlineMissing}` : ''}. Status: ${String(r.status || '').replace(/_/g, ' ')}.${r.notes?.length ? ` ${r.notes.join('; ')}` : ''}`;

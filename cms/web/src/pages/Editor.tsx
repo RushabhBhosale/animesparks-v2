@@ -6,7 +6,7 @@ import { EditorContent, useEditor, type Editor as TipTap } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ArrowLeft, Bold, Code, ExternalLink, Heading2, Heading3, Heading4, ImagePlus, Italic, Link2, Link2Off, List, ListOrdered, Quote, Redo2, Search, Undo2 } from 'lucide-react';
 import { portableTextToTiptap, tiptapToPortableText } from '../../../../src/lib/admin/portable-text-adapter';
-import { api, ApiError, ago, fmt, qs } from '../api';
+import { api, ApiError, ago, fmt, imagesMessage, processImages, qs } from '../api';
 import { Badge, Button, Card, cx, ErrorNote, Field, Input, Modal, Select, Spinner, StatusBadge, Textarea, useAction, useToast } from '../ui';
 import { ActivityList } from './History';
 import { MediaBrowser, UploadForm } from './Media';
@@ -243,7 +243,7 @@ export function Editor({ project }: { project: any }) {
             <div className="grid grid-cols-2 gap-2">
               <Button size="sm" busy={busy === 'validate'} onClick={() => act('validate', '/validate', r => r.ready ? `Ready to publish${r.warnings.length ? ` (${r.warnings.length} warning${r.warnings.length > 1 ? 's' : ''})` : ''}` : `${r.errors.length} blocking issue${r.errors.length > 1 ? 's' : ''}`)}>Validate</Button>
               <Button size="sm" busy={busy === 'repair'} disabled={published} onClick={() => act('repair', '/repair', r => r.repaired.length ? `Repaired ${r.repaired.map((x: any) => x.field).join(', ')}` : r.unresolved.length ? `Nothing repaired. ${r.unresolved.join('; ')}` : 'Metadata was already complete')}>Repair metadata</Button>
-              <Button size="sm" busy={busy === 'images'} disabled={published} onClick={() => act('images', '/images', r => r.queued ? 'Queued. The background image runner adds the images, usually within 10–15 minutes; the status stays “Awaiting media” until then.' : `Hero: ${r.hero}. Inline added: ${r.inlineAdded}${r.inlineMissing ? `, still missing ${r.inlineMissing}` : ''}${r.notes?.length ? ` (${r.notes.join('; ')})` : ''}`)}>Process images</Button>
+              <Button size="sm" busy={busy === 'images'} disabled={published} onClick={async () => { if (state.current.dirty) await save(); await run('images', () => processImages(base), r => { refresh(); return imagesMessage(r); }); }}>Process images</Button>
               <Button size="sm" busy={busy === 'process'} disabled={published} onClick={() => act('process', '/process', () => 'Queued for full processing')}>Run full processing</Button>
             </div>
             {!published ? (
