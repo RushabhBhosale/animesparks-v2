@@ -176,10 +176,10 @@ ${hero ? `<figure><img src="${escapeHtml(article.mainImage?.asset?.publicUrl || 
 
   // ── MCP (Streamable HTTP). The same services, the same project-scoped tokens. ──
   app.all('/mcp/:token?', async c => {
-    const base = await deps.base();
     const raw = /^Bearer (\S+)$/.exec(c.req.header('authorization') || '')?.[1] || c.req.param('token');
-    const actor = await actorFromToken(base.db, raw);
-    if (!actor) return c.json({ jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized: supply a project API token.' } }, 401);
+    const base = raw ? await deps.base() : null;
+    const actor = base ? await actorFromToken(base.db, raw) : null;
+    if (!base || !actor) return c.json({ jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized: supply a project API token.' } }, 401);
     await rateLimit(base.db, `mcp:${actor.id}`, 240);
     return handleMcp({ ...base, actor }, c.req.raw);
   });

@@ -4,7 +4,7 @@ import { MongoClient } from 'mongodb';
 import { aiFromEnv } from '../core/ai';
 import { tick } from '../core/engine';
 import type { Ctx, Storage } from '../core/types';
-import { engineActor } from '../core/types';
+import { CmsError, engineActor } from '../core/types';
 import { createApp } from './app';
 
 interface Bucket {
@@ -17,9 +17,8 @@ interface Execution { waitUntil(promise: Promise<unknown>): void }
 
 function runtime(env: Env) {
   const vars = Object.fromEntries(Object.entries(env).filter(([, v]) => typeof v === 'string')) as Record<string, string>;
-  if (!vars.MONGODB_URI) throw new Error('MONGODB_URI secret is not set on this Worker.');
   // Workers cannot keep sockets across requests: one short-lived client per invocation, closed afterwards.
-  const client = new MongoClient(vars.MONGODB_URI, { maxPoolSize: 2, serverSelectionTimeoutMS: 10_000, connectTimeoutMS: 8_000 });
+  let client: MongoClient | null = null;
   const bucket = env.IMAGES_BUCKET;
   const storage: Storage | null = bucket ? {
     kind: 'r2-binding',
@@ -29,6 +28,8 @@ function runtime(env: Env) {
   } : null;
   let connected: Promise<unknown> | null = null;
   const base = async (): Promise<Omit<Ctx, 'actor'>> => {
+    if (!vars.MONGODB_URI) throw new CmsError(503, 'not_configured', 'This Worker has no MONGODB_URI secret yet. Run `npm run worker:secrets` in cms/.');
+    client ||= new MongoClient(vars.MONGODB_URI, { maxPoolSize: 2, serverSelectionTimeoutMS: 10_000, connectTimeoutMS: 8_000 });
     await (connected ||= client.connect());
     return {
       client, db: client.db(vars.CMS_DB_NAME || vars.MONGODB_DB_NAME || 'animesparks'), env: vars, storage: () => storage, ai: aiFromEnv(vars),
@@ -36,7 +37,7 @@ function runtime(env: Env) {
       capabilities: new Set(vars.CMS_WORKER_IMAGES === 'true' && storage ? ['images'] : []), fetch: (input, init) => fetch(input, init),
     };
   };
-  return { vars, base, close: () => (connected ? client.close().catch(() => {}) : Promise.resolve()) };
+  return { vars, base, close: () => (client && connected ? client.close().catch(() => {}) : Promise.resolve()) };
 }
 
 export default {
