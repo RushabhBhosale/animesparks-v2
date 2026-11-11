@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@source "./";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-ink: #15171c;
+  --color-accent: #d6336c;
+  --color-accent-dark: #b02a5b;
+}
+html, body, #root { height: 100%; }
+body { @apply bg-zinc-50 text-ink antialiased; font-family: var(--font-sans); font-size: 14px; }
+::selection { background: color-mix(in srgb, var(--color-accent) 22%, white); }
+.prose-editor { @apply min-h-[420px] px-6 py-5 text-[16px] leading-7 outline-none; }
+.prose-editor p { @apply my-3; }
+.prose-editor h2 { @apply mt-7 mb-2 text-2xl font-bold leading-tight; }
+.prose-editor h3 { @apply mt-6 mb-2 text-xl font-semibold; }
+.prose-editor h4 { @apply mt-5 mb-1 text-lg font-semibold; }
+.prose-editor ul { @apply my-3 list-disc pl-6; }
+.prose-editor ol { @apply my-3 list-decimal pl-6; }
+.prose-editor blockquote { @apply my-4 border-l-4 border-accent/60 pl-4 text-zinc-600; }
+.prose-editor a { @apply text-accent underline underline-offset-2; }
+.prose-editor code { @apply rounded bg-zinc-100 px-1 py-0.5 text-[14px]; }
+.prose-editor figure { @apply my-5 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50; }
+.prose-editor figure img { @apply block max-h-[380px] w-full object-contain; }
+.prose-editor figure figcaption { @apply border-t border-zinc-200 px-3 py-1.5 text-xs text-zinc-500; }
+.prose-editor figure.ProseMirror-selectednode { @apply ring-2 ring-accent; }
+.prose-editor .pt-raw { @apply my-3 rounded border border-dashed border-zinc-300 bg-zinc-50 px-3 py-2 font-mono text-xs text-zinc-500; }
+.prose-editor p.is-editor-empty:first-child::before { content: attr(data-placeholder); @apply pointer-events-none float-left h-0 text-zinc-400; }

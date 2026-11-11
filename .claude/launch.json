@@ -4,8 +4,38 @@
     {
       "name": "animesparks-preview",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["astro", "preview", "--port", "4321"],
+      "runtimeArgs": [
+        "astro",
+        "preview",
+        "--port",
+        "4321"
+      ],
       "port": 4321
+    },
+    {
+      "name": "cms",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "cms",
+        "run",
+        "start"
+      ],
+      "port": 4400
+    },
+    {
+      "name": "cms-worker",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "wrangler",
+        "dev",
+        "--config",
+        "cms/wrangler.jsonc",
+        "--port",
+        "4410",
+        "--test-scheduled"
+      ],
+      "port": 4410
     }
   ]
 }

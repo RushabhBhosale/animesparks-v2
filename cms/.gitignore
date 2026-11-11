@@ -1,0 +1,4 @@
+.data/
+web/dist/
+.wrangler/
+!.env.example

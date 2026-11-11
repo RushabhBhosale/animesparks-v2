@@ -1,0 +1,42 @@
+name: CMS publishing engine
+
+# Runs the image-capable part of the CMS engine (download, optimise, upload to R2) on Node.
+# The Cloudflare Worker handles everything else. Inert until the repository variable
+# CMS_ENGINE_ENABLED is set to "true".
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: cms-engine
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  engine:
+    if: vars.CMS_ENGINE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: cms
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cms/package-lock.json
+      - run: npm ci
+      - name: Process queued jobs
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          CMS_DB_NAME: animesparks
+          CMS_STORAGE: r2
+          R2_BUCKET: animesparks-staging
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npm run engine -- --max=40

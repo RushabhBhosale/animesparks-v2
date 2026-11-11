@@ -1,0 +1,23 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "animesparks-cms",
+  "main": "server/worker.ts",
+  "compatibility_date": "2026-10-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  // MongoDB's URL parser asks for the userland "punycode/" package; workerd ships node:punycode.
+  "alias": { "punycode/": "node:punycode" },
+  // The dashboard is static: only /api and /mcp invoke the Worker.
+  "assets": {
+    "directory": "./web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/mcp", "/mcp/*"]
+  },
+  // Light engine pass (metadata repair, scheduling, due publishes). Image jobs run on a Node runner.
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "vars": { "CMS_DB_NAME": "animesparks", "MONGODB_DB_NAME": "animesparks" },
+  "r2_buckets": [{ "binding": "IMAGES_BUCKET", "bucket_name": "animesparks-staging" }]
+  // Secrets (wrangler secret put): MONGODB_URI, ADMIN_USER, ADMIN_PASS_HASH, ADMIN_JWT_SECRET
+  // Optional: ANTHROPIC_API_KEY + AI_TEXT_PROVIDER, AI_IMAGE_*, GITHUB_ACTIONS_TOKEN
+}
