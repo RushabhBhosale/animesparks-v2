@@ -3,7 +3,7 @@ import { CmsError } from './types';
 import { applyUpdate, articleId, ensureMeta } from './articles';
 import { cms, collections } from './projects';
 import { log } from './jobs';
-import { fetchImage, ingestImage, trackUsage } from './media';
+import { fetchImage, ingestImage, probeSize, sniff, trackUsage } from './media';
 import { headingsOf, inlineImages, inlineTargets } from './quality';
 import { escapeRegex, now, shortKey } from './util';
 
@@ -11,6 +11,8 @@ interface Candidate {
   /** Already in the library (reuse) or a remote file to download. */
   asset?: MediaAsset; url?: string; generate?: string;
   provider: string; subject: string; franchise?: string; alt: string; page?: string; license: string; attribution?: string;
+  /** Minimum bytes per pixel; filters blank or near-black video frames. */
+  minDensity?: number;
 }
 const norm = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 /** Loose title equality used to reject provider results that are not actually about the subject. */
@@ -42,12 +44,12 @@ function entities(heading: string) {
 }
 
 // ── Providers ────────────────────────────────────────────────────────────────
-interface AniMedia { id: number; title: { english?: string; romaji?: string }; bannerImage?: string; coverImage?: { extraLarge?: string }; relations?: { edges: Array<{ relationType: string; node: AniMedia & { type: string } }> } }
+interface AniMedia { id: number; title: { english?: string; romaji?: string }; bannerImage?: string; coverImage?: { extraLarge?: string }; trailer?: { id?: string; site?: string } | null; streamingEpisodes?: Array<{ title?: string; thumbnail?: string; url?: string; site?: string }>; relations?: { edges: Array<{ relationType: string; node: AniMedia & { type: string } }> } }
 const aniCache = new Map<string, Promise<AniMedia | null>>();
 function anilist(ctx: Ctx, search: string): Promise<AniMedia | null> {
   const key = norm(search);
   if (!aniCache.has(key)) aniCache.set(key, (async () => {
-    const query = `query($s:String){Page(perPage:6){media(search:$s,type:ANIME,sort:SEARCH_MATCH){id title{english romaji} synonyms bannerImage coverImage{extraLarge} relations{edges{relationType node{id type title{english romaji} bannerImage coverImage{extraLarge}}}}}}}`;
+    const query = `query($s:String){Page(perPage:6){media(search:$s,type:ANIME,sort:SEARCH_MATCH){id title{english romaji} synonyms bannerImage coverImage{extraLarge} trailer{id site} streamingEpisodes{title thumbnail url site} relations{edges{relationType node{id type title{english romaji} bannerImage coverImage{extraLarge}}}}}}}`;
     const response = await ctx.fetch('https://graphql.anilist.co', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ query, variables: { s: search } }), signal: AbortSignal.timeout(15_000) });
     if (response.status === 429 || response.status >= 500) throw new CmsError(502, 'provider_unavailable', `AniList is unavailable (HTTP ${response.status}).`);
     if (!response.ok) return null;
@@ -61,21 +63,42 @@ const aniCandidate = (m: AniMedia, url: string, kind: string, franchise: string)
   url, provider: 'anilist', subject: aniTitle(m), franchise, alt: `${aniTitle(m)} ${kind}`, page: `https://anilist.co/anime/${m.id}`,
   license: 'Official promotional artwork; editorial use', attribution: `${aniTitle(m)} — via AniList`,
 });
-async function anilistCandidates(ctx: Ctx, franchise: string, kind: 'hero' | 'inline'): Promise<Candidate[]> {
+/** 16:9 frames of the official trailer: the designed thumbnail first, then YouTube's three mid-video frames. */
+function trailerFrames(m: AniMedia, franchise: string, frames: string[]): Candidate[] {
+  const id = m.trailer?.site === 'youtube' && /^[\w-]{6,20}$/.test(m.trailer.id || '') ? m.trailer.id : null;
+  if (!id) return [];
+  return frames.map(frame => ({
+    url: `https://i.ytimg.com/vi/${id}/${frame}.jpg`, provider: 'anilist', subject: aniTitle(m), franchise, alt: `${aniTitle(m)} official trailer still`, page: `https://www.youtube.com/watch?v=${id}`,
+    license: 'Still from the official trailer; editorial use', attribution: `${aniTitle(m)} — official trailer`, minDensity: 0.03,
+  }));
+}
+/** Official episode thumbnails, earliest episodes first so later plot points are not shown. */
+function episodeStills(m: AniMedia, franchise: string, limit: number): Candidate[] {
+  return (m.streamingEpisodes || []).map(e => ({ e, n: Number(/episode\s+(\d+)/i.exec(e.title || '')?.[1] ?? NaN) })).filter(x => x.e.thumbnail && Number.isFinite(x.n)).sort((a, b) => a.n - b.n).slice(0, limit).map(({ e, n }) => {
+    const name = (e.title || '').split(' - ').slice(1).join(' - ').trim();
+    return {
+      url: e.thumbnail!, provider: 'anilist', subject: aniTitle(m), franchise, alt: `${aniTitle(m)} episode ${n}${name && !/^untitled$/i.test(name) ? ` — ${name}` : ''}`, page: e.url,
+      license: 'Official episode still; editorial use', attribution: `${aniTitle(m)} — ${e.site || 'official stream'}`, minDensity: 0.03,
+    };
+  });
+}
+/**
+ * hero: 16:9 trailer thumbnail before the wide banner strip. inline: episode stills, then trailer frames, then key art.
+ * section: the best single images of a title named in a heading (list articles).
+ */
+async function anilistCandidates(ctx: Ctx, franchise: string, kind: 'hero' | 'inline' | 'section'): Promise<Candidate[]> {
   const media = await anilist(ctx, franchise);
   if (!media) return [];
   const related = (media.relations?.edges || []).filter(e => e.node.type === 'ANIME' && ['SEQUEL', 'PREQUEL', 'SIDE_STORY', 'PARENT', 'ALTERNATIVE', 'SPIN_OFF'].includes(e.relationType)).map(e => e.node);
-  const out: Candidate[] = [];
-  if (media.bannerImage) out.push(aniCandidate(media, media.bannerImage, 'key visual', franchise));
-  if (kind === 'inline') {
-    for (const node of related) if (node.bannerImage) out.push(aniCandidate(node, node.bannerImage, 'key visual', franchise));
-    if (media.coverImage?.extraLarge) out.push(aniCandidate(media, media.coverImage.extraLarge, 'cover art', franchise));
-    for (const node of related) if (node.coverImage?.extraLarge) out.push(aniCandidate(node, node.coverImage.extraLarge, 'cover art', franchise));
-  } else {
-    for (const node of related.slice(0, 3)) if (node.bannerImage) out.push(aniCandidate(node, node.bannerImage, 'key visual', franchise));
-    if (media.coverImage?.extraLarge) out.push(aniCandidate(media, media.coverImage.extraLarge, 'cover art', franchise));
-  }
-  return out;
+  const banner = media.bannerImage ? [aniCandidate(media, media.bannerImage, 'key visual', franchise)] : [];
+  const cover = media.coverImage?.extraLarge ? [aniCandidate(media, media.coverImage.extraLarge, 'cover art', franchise)] : [];
+  const relatedBanners = related.filter(n => n.bannerImage).map(n => aniCandidate(n, n.bannerImage!, 'key visual', franchise));
+  if (kind === 'hero') return [...trailerFrames(media, franchise, ['maxresdefault']), ...banner, ...relatedBanners.slice(0, 3), ...cover];
+  if (kind === 'section') return [...trailerFrames(media, franchise, ['maxresdefault']), ...banner, ...episodeStills(media, franchise, 1)];
+  return [
+    ...episodeStills(media, franchise, 6), ...trailerFrames(media, franchise, ['maxres1', 'maxres2', 'maxres3', 'maxresdefault']), ...relatedBanners, ...banner, ...cover,
+    ...related.filter(n => n.coverImage?.extraLarge).map(n => aniCandidate(n, n.coverImage!.extraLarge!, 'cover art', franchise)),
+  ];
 }
 async function fandomCandidates(ctx: Ctx, project: Project, franchise: string, subjects: string[]): Promise<Candidate[]> {
   const wiki = Object.entries(project.media.fandomWikis).find(([name]) => sameSubject(name, franchise))?.[1];
@@ -141,19 +164,30 @@ export async function processImages(ctx: Ctx, project: Project, article: Article
   const result: ImageResult = { hero: needHero ? 'missing' : 'present', inlineAdded: 0, inlineMissing: 0, uploaded: 0, reused: 0, notes };
   if (!needHero && !slots.length) return result;
 
-  const franchises = franchisesOf(article), providers = m.providers;
+  const franchises = franchisesOf(article), providers = m.providers, storage = ctx.storage(project);
+  if (!storage) throw new CmsError(412, 'storage_unavailable', 'Media storage is not configured for this runtime.');
   const used = new Set<string>([article.mainImage?.asset?.r2Key, ...inlineImages(body).map(b => b.asset?.r2Key)].filter((k): k is string => !!k));
   const usedUrls = new Set<string>();
   const failures: string[] = [];
   /** Tries candidates in order until one is stored and verified. */
   const take = async (candidates: Candidate[], kind: 'hero' | 'inline', context: string): Promise<{ asset: MediaAsset; candidate: Candidate } | null> => {
     for (const candidate of candidates) {
-      if (candidate.asset) { if (used.has(candidate.asset.r2Key)) continue; used.add(candidate.asset.r2Key); result.reused++; return { asset: candidate.asset, candidate }; }
+      if (candidate.asset) {
+        if (used.has(candidate.asset.r2Key)) continue;
+        // A library record is only reused if its file is really still in storage.
+        if (!await storage!.head(candidate.asset.r2Key).catch(() => null)) { failures.push(`library: ${candidate.asset.r2Key} is missing from storage`); continue; }
+        used.add(candidate.asset.r2Key); result.reused++;
+        return { asset: candidate.asset, candidate };
+      }
       const ref = candidate.url || candidate.generate!;
       if (usedUrls.has(ref)) continue;
       usedUrls.add(ref);
       try {
         const bytes = candidate.url ? await fetchImage(ctx, candidate.url) : await ctx.ai!.image!(candidate.generate!, kind === 'hero' ? { width: 1536, height: 1024 } : { width: 1024, height: 1024 });
+        if (candidate.minDensity) {
+          const mime = sniff(bytes), size = mime ? probeSize(bytes, mime) : null;
+          if (size && bytes.byteLength / (size.width * size.height) < candidate.minDensity) { failures.push(`${candidate.provider}: skipped a blank video frame`); continue; }
+        }
         const { asset, reused } = await ingestImage(ctx, project, { bytes, kind, context, alt: candidate.alt, title: candidate.subject, franchise: candidate.franchise, subjects: [candidate.subject],
           source: { provider: candidate.provider, url: candidate.url, page: candidate.page, license: candidate.license, attribution: candidate.attribution } });
         if (used.has(asset.r2Key)) continue;
@@ -175,7 +209,7 @@ export async function processImages(ctx: Ctx, project: Project, article: Article
       if (provider === 'library') for (const f of franchises) out.push(...await libraryCandidates(ctx, project, article, f, kind));
       if (provider === 'anilist') {
         // A section about a specific title (list articles) gets that title's art before the article-wide franchise.
-        for (const subject of kind === 'inline' ? subjects.slice(0, 3) : []) if (!franchises.some(f => sameSubject(f, subject))) out.push(...(await anilistCandidates(ctx, subject, 'inline')).slice(0, 2));
+        for (const subject of kind === 'inline' ? subjects.slice(0, 3) : []) if (!franchises.some(f => sameSubject(f, subject))) out.push(...(await anilistCandidates(ctx, subject, 'section')).slice(0, 2));
         for (const f of franchises) out.push(...await anilistCandidates(ctx, f, kind));
       }
       if (provider === 'fandom') for (const f of franchises) out.push(...await fandomCandidates(ctx, project, f, kind === 'hero' ? [f] : subjects));
