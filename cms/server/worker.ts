@@ -33,7 +33,8 @@ function runtime(env: Env) {
     await (connected ||= client.connect());
     return {
       client, db: client.db(vars.CMS_DB_NAME || vars.MONGODB_DB_NAME || 'animesparks'), env: vars, storage: () => storage, ai: aiFromEnv(vars),
-      // No image optimizer at the edge: image jobs are left for a Node runner unless originals are explicitly allowed.
+      // There is no image optimizer at the edge. With CMS_WORKER_IMAGES=true the Worker stores the source image as-is
+      // (the site build produces the responsive WebP variants); otherwise image jobs wait for a Node runner.
       capabilities: new Set(vars.CMS_WORKER_IMAGES === 'true' && storage ? ['images'] : []), fetch: (input, init) => fetch(input, init),
     };
   };
@@ -50,7 +51,7 @@ export default {
   async scheduled(_event: unknown, env: Env, execution: Execution) {
     const rt = runtime(env);
     execution.waitUntil((async () => {
-      try { console.log('[engine]', JSON.stringify(await tick({ ...(await rt.base()), actor: engineActor }, { workerId: `worker:${crypto.randomUUID().slice(0, 8)}`, maxJobs: 3 }))); }
+      try { const base = await rt.base(); console.log('[engine]', JSON.stringify(await tick({ ...base, actor: engineActor }, { workerId: `worker:${crypto.randomUUID().slice(0, 8)}`, maxJobs: base.capabilities.has('images') ? 1 : 3 }))); }
       catch (error) { console.error('[engine] pass failed:', (error as Error).message); }
       finally { await rt.close(); }
     })());

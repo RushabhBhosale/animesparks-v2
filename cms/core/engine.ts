@@ -174,7 +174,9 @@ export async function processArticleImages(ctx: Ctx, projectId: string, id: stri
   const meta = await ensureMeta(ctx, project, article);
   if (meta.mediaReview) await cms(ctx).meta.updateOne({ _id: meta._id }, { $unset: { mediaReview: '' } });
   if (!ctx.capabilities.has('images')) {
-    const { job, created } = await enqueue(ctx, { projectId, articleId: id, type: 'process_images', idempotencyKey: `images:${projectId}:${id}:manual:${Date.now()}`, requires: ['images'] });
+    // One waiting image job per article is enough; repeated clicks reuse it.
+    const waiting = await cms(ctx).jobs.findOne({ projectId, articleId: id, type: 'process_images', status: { $in: ['queued', 'running'] } });
+    const { job, created } = waiting ? { job: waiting, created: false } : await enqueue(ctx, { projectId, articleId: id, type: 'process_images', idempotencyKey: `images:${projectId}:${id}:manual:${Date.now()}`, requires: ['images'] });
     return { queued: true, jobId: job._id, created, note: 'This runtime cannot process images; the job runs on the next image-capable engine pass.' };
   }
   const result = await withArticleLock(ctx, project, id, `manual:${ctx.actor.id}`, () => processImages(ctx, project, article));

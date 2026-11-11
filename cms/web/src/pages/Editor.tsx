@@ -92,6 +92,13 @@ function Toolbar({ editor, project, franchise }: { editor: TipTap; project: any;
   );
 }
 
+const STATUS_HELP: Record<string, string> = {
+  needs_repair: 'Something required is missing (see the list above). Use “Repair metadata”, or fix the items marked as needing a person.',
+  awaiting_media: 'Required images are missing. Click “Process images” to find and attach them, or choose them yourself.',
+  awaiting_review: 'Complete and waiting for you: publish or schedule it.',
+  ready: 'Complete and ready to publish.',
+  failed: 'A background job failed and will not retry on its own. Check the message below, then use “Run full processing”.',
+};
 const Panel = ({ title, children, right }: { title: string; children: React.ReactNode; right?: React.ReactNode }) => <Card className="p-4"><div className="mb-3 flex items-center justify-between"><h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{title}</h3>{right}</div><div className="space-y-3">{children}</div></Card>;
 const Count = ({ value, max, min }: { value: string; max: number; min?: number }) => <span className={cx(value.length > max || (min && value.length > 0 && value.length < min) ? 'text-amber-600' : '')}>{value.length}/{max}</span>;
 const formOf = (a: any) => ({
@@ -229,13 +236,14 @@ export function Editor({ project }: { project: any }) {
         <div className="space-y-4">
           <Panel title="Workflow" right={<span className="text-xs text-zinc-500">v{version}</span>}>
             {issues.length ? <ul className="space-y-1.5">{issues.map((i, n) => <li key={n} className="flex gap-2 text-sm"><span className={cx('mt-1.5 size-2 shrink-0 rounded-full', i.severity === 'error' ? 'bg-red-500' : 'bg-amber-400')} /><span>{i.message}</span></li>)}</ul> : <p className={cx('text-sm', meta.processedHash || meta.evaluatedHash ? 'text-emerald-700' : 'text-zinc-500')}>{meta.processedHash || meta.evaluatedHash ? 'No open issues.' : 'Not checked yet.'}</p>}
+            {STATUS_HELP[meta.status] && <p className="rounded-md bg-zinc-50 px-2.5 py-2 text-xs text-zinc-600">{meta.mediaReview ? `Needs images added by hand: ${meta.mediaReview.reason}.` : STATUS_HELP[meta.status]}</p>}
             {meta.lastError && <p className="text-sm text-red-700">{meta.lastError}</p>}
             {meta.intent && <Badge className="bg-violet-100 text-violet-800">{meta.intent.type === 'publish' ? 'Publish requested — will publish when complete' : `Schedule requested for ${fmt(meta.intent.at, project.timezone)}`}</Badge>}
             {published && <p className="text-xs text-zinc-500">Published {fmt(a.publishedAt, project.timezone)} · {meta.live?.verifiedAt ? `live URL confirmed ${ago(meta.live.verifiedAt)}` : meta.live?.checkedAt ? `live check pending (last HTTP ${meta.live.lastStatus || 'none'})` : 'live URL not checked'}</p>}
             <div className="grid grid-cols-2 gap-2">
               <Button size="sm" busy={busy === 'validate'} onClick={() => act('validate', '/validate', r => r.ready ? `Ready to publish${r.warnings.length ? ` (${r.warnings.length} warning${r.warnings.length > 1 ? 's' : ''})` : ''}` : `${r.errors.length} blocking issue${r.errors.length > 1 ? 's' : ''}`)}>Validate</Button>
               <Button size="sm" busy={busy === 'repair'} disabled={published} onClick={() => act('repair', '/repair', r => r.repaired.length ? `Repaired ${r.repaired.map((x: any) => x.field).join(', ')}` : r.unresolved.length ? `Nothing repaired. ${r.unresolved.join('; ')}` : 'Metadata was already complete')}>Repair metadata</Button>
-              <Button size="sm" busy={busy === 'images'} disabled={published} onClick={() => act('images', '/images', r => r.queued ? 'Image job queued' : `Hero: ${r.hero}. Inline added: ${r.inlineAdded}${r.inlineMissing ? `, still missing ${r.inlineMissing}` : ''}${r.notes?.length ? ` (${r.notes.join('; ')})` : ''}`)}>Process images</Button>
+              <Button size="sm" busy={busy === 'images'} disabled={published} onClick={() => act('images', '/images', r => r.queued ? 'Queued. The background image runner adds the images, usually within 10–15 minutes; the status stays “Awaiting media” until then.' : `Hero: ${r.hero}. Inline added: ${r.inlineAdded}${r.inlineMissing ? `, still missing ${r.inlineMissing}` : ''}${r.notes?.length ? ` (${r.notes.join('; ')})` : ''}`)}>Process images</Button>
               <Button size="sm" busy={busy === 'process'} disabled={published} onClick={() => act('process', '/process', () => 'Queued for full processing')}>Run full processing</Button>
             </div>
             {!published ? (
