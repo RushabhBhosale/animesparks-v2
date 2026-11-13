@@ -10,7 +10,7 @@ const VIEWS: Record<string, { title: string; subtitle: string; status?: string }
   all: { title: 'Content', subtitle: 'Every article in this project.' },
   draft: { title: 'Drafts', subtitle: 'Everything that is not published yet, with its workflow state.', status: 'draft' },
   scheduled: { title: 'Scheduled', subtitle: 'Articles that passed every check and are waiting for their publish time.', status: 'scheduled' },
-  published: { title: 'Published', subtitle: 'Live articles. Automatic repair never rewrites these.', status: 'published' },
+  published: { title: 'Published', subtitle: 'Live articles. Open a post to add missing images or run full processing.', status: 'published' },
 };
 export function Articles({ project, view }: { project: any; view: keyof typeof VIEWS }) {
   const [q, setQ] = useState(''), [term, setTerm] = useState(''), [page, setPage] = useState(1), [status, setStatus] = useState(''), [missing, setMissing] = useState('');

@@ -40,6 +40,12 @@ export function probeSize(b: Uint8Array, mime: string): { width: number; height:
   return null;
 }
 
+export class ImageDownloadError extends CmsError {
+  constructor(public readonly upstreamStatus: number, host: string) {
+    super(upstreamStatus >= 500 || upstreamStatus === 429 ? 502 : 400, 'download_failed', `Image download failed: HTTP ${upstreamStatus} from ${host}.`);
+  }
+}
+
 /** Downloads a remote image without letting a URL reach internal hosts (checked on every redirect hop). */
 export async function fetchImage(ctx: Ctx, source: string): Promise<Uint8Array> {
   let url = new URL(source);
@@ -49,7 +55,7 @@ export async function fetchImage(ctx: Ctx, source: string): Promise<Uint8Array> 
       throw invalid('Only public HTTPS image URLs can be imported.');
     const response = await ctx.fetch(url, { redirect: 'manual', headers: { Accept: 'image/*', 'User-Agent': 'cms-media-fetcher/1.0' }, signal: AbortSignal.timeout(20_000) });
     if (response.status >= 300 && response.status < 400 && response.headers.get('location')) { url = new URL(response.headers.get('location')!, url); continue; }
-    if (!response.ok) throw new CmsError(response.status >= 500 || response.status === 429 ? 502 : 400, 'download_failed', `Image download failed: HTTP ${response.status} from ${host}.`);
+    if (!response.ok) throw new ImageDownloadError(response.status, host);
     if (Number(response.headers.get('content-length') || 0) > MAX_BYTES) throw invalid('Image is larger than 15 MB.');
     return new Uint8Array(await response.arrayBuffer());
   }

@@ -3,9 +3,9 @@ import { CmsError } from './types';
 import { applyUpdate, articleId, ensureMeta } from './articles';
 import { cms, collections } from './projects';
 import { log } from './jobs';
-import { fetchImage, ingestImage, probeSize, sniff, trackUsage } from './media';
+import { fetchImage, ImageDownloadError, ingestImage, probeSize, sniff, trackUsage } from './media';
 import { headingsOf, inlineImages, inlineTargets } from './quality';
-import { escapeRegex, now, shortKey } from './util';
+import { escapeRegex, now, shortKey, youtubeVideoId } from './util';
 
 interface Candidate {
   /** Already in the library (reuse) or a remote file to download. */
@@ -81,14 +81,13 @@ const aniCandidate = (m: AniMedia, url: string, kind: string, franchise: string)
   license: 'Official promotional artwork; editorial use', attribution: `${aniTitle(m)} — via AniList`,
 });
 /** 16:9 frames of the official trailer: the designed thumbnail first, then YouTube's three mid-video frames. */
-function trailerFrames(m: AniMedia, franchise: string, frames: string[]): Candidate[] {
-  const id = m.trailer?.site === 'youtube' && /^[\w-]{6,20}$/.test(m.trailer.id || '') ? m.trailer.id : null;
-  if (!id) return [];
+function trailerFrames(id: string, subject: string, franchise: string | undefined, provider: 'anilist' | 'trailer', frames: string[]): Candidate[] {
   return frames.map(frame => ({
-    url: `https://i.ytimg.com/vi/${id}/${frame}.jpg`, provider: 'anilist', subject: aniTitle(m), franchise, alt: `${aniTitle(m)} official trailer still`, page: `https://www.youtube.com/watch?v=${id}`,
-    license: 'Still from the official trailer; editorial use', attribution: `${aniTitle(m)} — official trailer`, minDensity: 0.03,
+    url: `https://i.ytimg.com/vi/${id}/${frame}.jpg`, provider, subject, franchise, alt: `${subject} official trailer still`, page: `https://www.youtube.com/watch?v=${id}`,
+    license: 'Still from the official trailer; editorial use', attribution: `${subject} — official trailer`, minDensity: 0.03,
   }));
 }
+const TRAILER_STILLS = ['maxres1', 'maxres2', 'maxres3'];
 /** Official episode thumbnails, earliest episodes first so later plot points are not shown. */
 function episodeStills(m: AniMedia, franchise: string, limit: number): Candidate[] {
   return (m.streamingEpisodes || []).map(e => ({ e, n: Number(/episode\s+(\d+)/i.exec(e.title || '')?.[1] ?? NaN) })).filter(x => x.e.thumbnail && Number.isFinite(x.n)).sort((a, b) => a.n - b.n).slice(0, limit).map(({ e, n }) => {
@@ -106,15 +105,17 @@ function episodeStills(m: AniMedia, franchise: string, limit: number): Candidate
 async function anilistCandidates(ctx: Ctx, franchise: string, kind: 'hero' | 'inline' | 'section', catalog?: Catalog, within?: string): Promise<Candidate[]> {
   const media = await anilist(ctx, franchise, catalog, within);
   if (!media) return [];
+  const id = media.trailer?.site === 'youtube' ? media.trailer.id : undefined;
+  const trailer = (frames: string[]) => id && /^[\w-]{11}$/.test(id) ? trailerFrames(id, aniTitle(media), franchise, 'anilist', frames) : [];
   const related = (media.relations?.edges || []).filter(e => e.node.type === 'ANIME' && ['SEQUEL', 'PREQUEL', 'SIDE_STORY', 'PARENT', 'ALTERNATIVE', 'SPIN_OFF'].includes(e.relationType)).map(e => e.node);
   const banner = media.bannerImage ? [aniCandidate(media, media.bannerImage, 'key visual', franchise)] : [];
   const cover = media.coverImage?.extraLarge ? [aniCandidate(media, media.coverImage.extraLarge, 'cover art', franchise)] : [];
   const relatedBanners = related.filter(n => n.bannerImage).map(n => aniCandidate(n, n.bannerImage!, 'key visual', franchise));
   const all = (list: Candidate[]) => list.filter(c => trustedImage(c.url));
-  if (kind === 'hero') return all([...trailerFrames(media, franchise, ['maxresdefault']), ...banner, ...relatedBanners.slice(0, 3), ...cover]);
-  if (kind === 'section') return all([...trailerFrames(media, franchise, ['maxresdefault']), ...banner, ...episodeStills(media, franchise, 1)]);
+  if (kind === 'hero') return all([...trailer(['maxresdefault']), ...banner, ...relatedBanners.slice(0, 3), ...cover]);
+  if (kind === 'section') return all([...trailer(['maxresdefault']), ...banner, ...episodeStills(media, franchise, 1)]);
   return all([
-    ...episodeStills(media, franchise, 6), ...trailerFrames(media, franchise, ['maxres1', 'maxres2', 'maxres3', 'maxresdefault']), ...relatedBanners, ...banner, ...cover,
+    ...episodeStills(media, franchise, 6), ...trailer([...TRAILER_STILLS, 'maxresdefault']), ...relatedBanners, ...banner, ...cover,
     ...related.filter(n => n.coverImage?.extraLarge).map(n => aniCandidate(n, n.coverImage!.extraLarge!, 'cover art', franchise)),
   ]);
 }
@@ -135,9 +136,13 @@ async function libraryCandidates(ctx: Ctx, project: Project, article: Article, f
   const c = collections(ctx, project), rx = { $regex: `^${escapeRegex(franchise)}$`, $options: 'i' };
   const tagged = await c.assets.find({ franchise: rx, approved: { $ne: false }, broken: { $ne: true } }).limit(60).toArray();
   // Images already published on other articles about this franchise are approved media too.
-  const siblings = await c.articles.find({ animeName: rx, publicationState: 'published', sanityId: { $ne: article.sanityId } }, { projection: { mainImage: 1, 'body._type': 1, 'body.asset': 1, 'body.alt': 1 } }).limit(30).toArray();
+  const projection = kind === 'hero' ? { mainImage: 1 } : { 'body._type': 1, 'body.asset': 1, 'body.alt': 1 };
+  const siblings = await c.articles.find({ animeName: rx, publicationState: 'published', sanityId: { $ne: article.sanityId } }, { projection }).limit(30).toArray();
   const siblingKeys = new Map<string, string>();
-  for (const s of siblings) for (const block of (kind === 'inline' ? inlineImages(s.body) : [])) if (block.asset?.r2Key) siblingKeys.set(block.asset.r2Key, block.alt || '');
+  for (const sibling of siblings) {
+    const images = kind === 'hero' ? [sibling.mainImage] : inlineImages(sibling.body);
+    for (const image of images) if (image?.asset?.r2Key) siblingKeys.set(image.asset.r2Key, image.alt || '');
+  }
   const fromSiblings = siblingKeys.size ? await c.assets.find({ r2Key: { $in: [...siblingKeys.keys()] }, approved: { $ne: false }, broken: { $ne: true } }).toArray() : [];
   const seen = new Set<string>();
   return [...tagged, ...fromSiblings].filter(a => !seen.has(a.r2Key) && seen.add(a.r2Key))
@@ -164,7 +169,7 @@ function placements(body: PortableBlock[], count: number): Array<{ after: number
   });
 }
 
-export interface ImageResult { hero: 'present' | 'attached' | 'missing'; inlineAdded: number; inlineMissing: number; uploaded: number; reused: number; notes: string[] }
+export interface ImageResult { hero: 'present' | 'attached' | 'missing'; inlineAdded: number; inlineMissing: number; uploaded: number; reused: number; notes: string[]; retryOnRunner?: string }
 /**
  * Makes images a backend responsibility: finds topic-matched, permitted images, stores them and
  * attaches them to the real hero field and into the body. The article is written once, at the end,
@@ -173,7 +178,6 @@ export interface ImageResult { hero: 'present' | 'attached' | 'missing'; inlineA
 export async function processImages(ctx: Ctx, project: Project, article: Article, opts: { catalog?: Catalog } = {}): Promise<ImageResult> {
   const id = articleId(article), meta = await ensureMeta(ctx, project, article), m = project.media;
   if (!m.enabled) throw new CmsError(412, 'media_disabled', 'The image pipeline is disabled for this project.');
-  if (article.publicationState === 'published') throw new CmsError(409, 'conflict', 'Images of published articles are not changed automatically.');
   const body = [...(article.body || [])], notes: string[] = [];
   const needHero = !article.mainImage?.asset?.r2Key;
   const { target, required } = inlineTargets(project, article);
@@ -184,12 +188,15 @@ export async function processImages(ctx: Ctx, project: Project, article: Article
 
   const franchises = franchisesOf(article), providers = m.providers, storage = ctx.storage(project);
   if (!storage) throw new CmsError(412, 'storage_unavailable', 'Media storage is not configured for this runtime.');
+  const officialTrailer = youtubeVideoId(article.officialTrailerUrl);
+  const canLookupCatalogue = !!opts.catalog || ctx.capabilities.has('images');
   const used = new Set<string>([article.mainImage?.asset?.r2Key, ...inlineImages(body).map(b => b.asset?.r2Key)].filter((k): k is string => !!k));
   const usedUrls = new Set<string>();
   const failures: string[] = [];
+  const deniedDownloads: string[] = [];
   /** Tries candidates in order until one is stored and verified. */
-  const take = async (candidates: Candidate[], kind: 'hero' | 'inline', context: string): Promise<{ asset: MediaAsset; candidate: Candidate } | null> => {
-    for (const candidate of candidates) {
+  const take = async (candidates: AsyncIterable<Candidate>, kind: 'hero' | 'inline', context: string): Promise<{ asset: MediaAsset; candidate: Candidate } | null> => {
+    for await (const candidate of candidates) {
       if (candidate.asset) {
         if (used.has(candidate.asset.r2Key)) continue;
         // A library record is only reused if its file is really still in storage.
@@ -215,25 +222,30 @@ export async function processImages(ctx: Ctx, project: Project, article: Article
       } catch (error) {
         // Storage and provider outages must fail the job so it is retried; a single bad image just moves on.
         if (error instanceof CmsError && (error.status >= 500 || error.status === 412)) throw error;
+        if ((candidate.provider === 'anilist' || candidate.provider === 'trailer') && error instanceof ImageDownloadError && error.upstreamStatus === 403) {
+          deniedDownloads.push(error.message);
+        }
         failures.push(`${candidate.provider}: ${(error as Error).message}`);
       }
     }
     return null;
   };
-  const gather = async (kind: 'hero' | 'inline', heading: string): Promise<Candidate[]> => {
-    const out: Candidate[] = [];
+  const gather = async function* (kind: 'hero' | 'inline', heading: string): AsyncGenerator<Candidate> {
+    if (officialTrailer) {
+      const frames = kind === 'hero' ? ['maxresdefault', ...TRAILER_STILLS] : [...TRAILER_STILLS, 'maxresdefault'];
+      yield* trailerFrames(officialTrailer, franchises[0] || article.title, franchises[0], 'trailer', frames);
+    }
     const subjects = heading ? [cleanHeading(heading), ...entities(heading)] : [];
     for (const provider of providers) {
-      if (provider === 'library') for (const f of franchises) out.push(...await libraryCandidates(ctx, project, article, f, kind));
-      if (provider === 'anilist') {
+      if (provider === 'library') for (const f of franchises) yield* await libraryCandidates(ctx, project, article, f, kind);
+      if (provider === 'anilist' && canLookupCatalogue) {
         // A section about a specific title (list articles) gets that title's art before the article-wide franchise.
-        for (const subject of kind === 'inline' ? subjects.slice(0, 3) : []) if (!franchises.some(f => sameSubject(f, subject))) out.push(...(await anilistCandidates(ctx, subject, 'section', opts.catalog, heading)).slice(0, 2));
-        for (const f of franchises) out.push(...await anilistCandidates(ctx, f, kind, opts.catalog));
+        for (const subject of kind === 'inline' ? subjects.slice(0, 3) : []) if (!franchises.some(f => sameSubject(f, subject))) yield* (await anilistCandidates(ctx, subject, 'section', opts.catalog, heading)).slice(0, 2);
+        for (const f of franchises) yield* await anilistCandidates(ctx, f, kind, opts.catalog);
       }
-      if (provider === 'fandom') for (const f of franchises) out.push(...await fandomCandidates(ctx, project, f, kind === 'hero' ? [f] : subjects));
-      if (provider === 'ai' && m.aiGeneration.enabled && ctx.ai?.image) out.push({ generate: `${m.aiGeneration.stylePrompt}\nTopic: ${article.title}${heading ? `\nSection: ${heading}` : ''}`, provider: 'ai', subject: heading || article.title, franchise: franchises[0], alt: `Illustration for ${heading || article.title}`, license: 'AI-generated original image' });
+      if (provider === 'fandom') for (const f of franchises) yield* await fandomCandidates(ctx, project, f, kind === 'hero' ? [f] : subjects);
+      if (provider === 'ai' && m.aiGeneration.enabled && ctx.ai?.image) yield { generate: `${m.aiGeneration.stylePrompt}\nTopic: ${article.title}${heading ? `\nSection: ${heading}` : ''}`, provider: 'ai', subject: heading || article.title, franchise: franchises[0], alt: `Illustration for ${heading || article.title}`, license: 'AI-generated original image' };
     }
-    return out;
   };
 
   const set: Partial<Article> = {};
@@ -242,7 +254,7 @@ export async function processImages(ctx: Ctx, project: Project, article: Article
   if (needHero) {
     if (source?.mainImage?.asset?.r2Key) { set.mainImage = { ...source.mainImage, alt: source.mainImage.alt || article.title }; used.add(source.mainImage.asset.r2Key); result.reused++; result.hero = 'attached'; notes.push('hero reused from the source-language article'); }
     else {
-      const found = await take(await gather('hero', ''), 'hero', `${article.slug}-hero`);
+      const found = await take(gather('hero', ''), 'hero', `${article.slug}-hero`);
       if (found) { set.mainImage = { _type: 'image', alt: found.candidate.alt, asset: { r2Key: found.asset.r2Key, publicUrl: found.asset.publicUrl } }; result.hero = 'attached'; notes.push(`hero from ${found.candidate.provider}: ${found.candidate.subject}`); }
     }
   }
@@ -251,7 +263,7 @@ export async function processImages(ctx: Ctx, project: Project, article: Article
   for (const slot of slots) {
     const fromSource = sourceImages.shift();
     if (fromSource) { used.add(fromSource.asset!.r2Key!); inserts.push({ after: slot.after, block: { ...fromSource, _key: `img${shortKey()}` } }); result.reused++; continue; }
-    const found = await take(await gather('inline', slot.heading), 'inline', `${article.slug}-${slot.heading || 'inline'}`);
+    const found = await take(gather('inline', slot.heading), 'inline', `${article.slug}-${slot.heading || 'inline'}`);
     if (found) inserts.push({ after: slot.after, block: imageBlock(found.asset, slot.heading && !sameSubject(slot.heading, found.candidate.subject) ? `${found.candidate.alt} — ${slot.heading}` : found.candidate.alt, found.candidate.provider === 'library' ? '' : found.candidate.subject) });
   }
   for (const insert of inserts.sort((a, b) => b.after - a.after)) body.splice(insert.after + 1, 0, insert.block);
@@ -260,14 +272,20 @@ export async function processImages(ctx: Ctx, project: Project, article: Article
   result.inlineMissing = Math.max(0, required - have - inserts.length);
 
   if (Object.keys(set).length) {
-    await applyUpdate(ctx, project, article, { set }, { reason: 'image pipeline', skipQueue: true });
+    await applyUpdate(ctx, project, article, { set }, { reason: 'image pipeline', expectedVersion: meta.version, skipQueue: true });
     await trackUsage(ctx, project, id, [set.mainImage?.asset?.r2Key, ...inserts.map(i => i.block.asset?.r2Key)].filter((k): k is string => !!k));
     if (result.hero === 'attached') await log(ctx, { projectId: project._id, articleId: id, title: article.title, type: 'hero.attached', level: 'success', message: `Hero image attached (${set.mainImage!.asset!.r2Key})` });
     if (inserts.length) await log(ctx, { projectId: project._id, articleId: id, title: article.title, type: 'inline.inserted', level: 'success', message: `${inserts.length} inline image${inserts.length > 1 ? 's' : ''} inserted` });
   }
-  const stillMissing = result.hero === 'missing' && project.quality.requireHero || result.inlineMissing > 0;
-  if (stillMissing) {
-    const reason = !franchises.length ? 'the article has no identifiable anime/franchise (set "Anime / franchise")' : `no permitted image found for ${franchises.join(', ')}${failures.length ? ` (${[...new Set(failures)].slice(0, 3).join('; ')})` : ''}`;
+  const stillMissing = (result.hero === 'missing' && project.quality.requireHero) || result.inlineMissing > 0;
+  if (stillMissing && !ctx.capabilities.has('images')) {
+    result.retryOnRunner = deniedDownloads[0];
+    if (!result.retryOnRunner && !canLookupCatalogue && providers.includes('anilist')) {
+      result.retryOnRunner = 'AniList catalogue lookup still needed.';
+    }
+  }
+  if (stillMissing && !result.retryOnRunner) {
+    const reason = !franchises.length ? 'the article has no identifiable anime/franchise (set "Anime / franchise")' : `could not attach a permitted image for ${franchises.join(', ')}${failures.length ? ` (${[...new Set(failures)].slice(0, 3).join('; ')})` : ''}`;
     await cms(ctx).meta.updateOne({ _id: meta._id }, { $set: { mediaReview: { reason, at: now() } } });
     await log(ctx, { projectId: project._id, articleId: id, title: article.title, type: 'media.review', level: 'warning', message: `Sent to media review: ${reason}` });
     notes.push(`media review: ${reason}`);

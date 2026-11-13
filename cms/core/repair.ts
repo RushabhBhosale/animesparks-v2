@@ -59,8 +59,8 @@ export async function repairMetadata(ctx: Ctx, project: Project, article: Articl
   const c = collections(ctx, project), set: Partial<Article> = {}, notes: Record<string, string> = {}, unresolved: string[] = [];
   const r = project.repair;
 
-  if (r.slug && !validSlug(article.slug) && article.title) { set.slug = slugify(article.title); notes.slug = 'derived from title'; }
   if (r.slug && article.publicationState !== 'published') {
+    if (!validSlug(article.slug) && article.title) { set.slug = slugify(article.title); notes.slug = 'derived from title'; }
     const slug = set.slug || article.slug;
     if (slug && await c.articles.findOne({ slug, ...(article.language ? { language: article.language } : {}), sanityId: { $ne: article.sanityId } }, { projection: { _id: 1 } })) {
       set.slug = `${slug}-${crypto.randomUUID().slice(0, 6)}`; notes.slug = 'made unique (slug was already in use)';

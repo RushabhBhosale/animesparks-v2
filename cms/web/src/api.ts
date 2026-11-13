@@ -48,5 +48,5 @@ export async function processImages(base: string) {
   return api(`${base}/images`, { body: catalog ? { catalog } : {} });
 }
 export const imagesMessage = (r: any) => r.queued
-  ? 'Could not look up images from this browser, so the job was queued for the background runner (usually 10–15 minutes).'
+  ? r.note || 'Image processing was queued for the background runner.'
   : `Hero: ${r.hero}. Inline images added: ${r.inlineAdded}${r.inlineMissing ? `, still missing ${r.inlineMissing}` : ''}. Status: ${String(r.status || '').replace(/_/g, ' ')}.${r.notes?.length ? ` ${r.notes.join('; ')}` : ''}`;

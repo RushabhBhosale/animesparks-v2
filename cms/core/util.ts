@@ -10,6 +10,22 @@ export const validSlug = (value: unknown): value is string => typeof value === '
 export const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
+export function youtubeVideoId(value?: string): string | undefined {
+  if (!value) return;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.port || url.username || url.password) return;
+    const path = url.pathname.split('/').filter(Boolean);
+    let id: string | null | undefined;
+    if (url.hostname === 'youtu.be' && path.length === 1) id = path[0];
+    if (['youtube.com', 'www.youtube.com', 'm.youtube.com'].includes(url.hostname)) {
+      if (url.pathname === '/watch') id = url.searchParams.get('v');
+      else if (path.length === 2 && ['embed', 'shorts', 'live'].includes(path[0])) id = path[1];
+    }
+    if (id && /^[\w-]{11}$/.test(id)) return id;
+  } catch { /* not a URL */ }
+}
+
 const hex = (buf: ArrayBuffer) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 export async function digest(algo: 'SHA-1' | 'SHA-256', data: string | Uint8Array) {
   const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
@@ -29,7 +45,10 @@ const stable = (value: unknown): string => {
 };
 const HASHED = ['title', 'slug', 'excerpt', 'body', 'mainImage', 'authorSanityId', 'categorySanityIds', 'tags', 'metaTitle', 'metaDescription', 'language', 'animeName', 'articleType', 'translationOfSanityId'];
 /** Fingerprint of the editorial content. Unchanged content is never re-processed. */
-export const contentHash = (article: Partial<Article>) => digest('SHA-256', stable(Object.fromEntries(HASHED.map(k => [k, article[k]]))));
+export const contentHash = (article: Partial<Article>) => digest('SHA-256', stable({
+  ...Object.fromEntries(HASHED.map(k => [k, article[k]])),
+  ...(article.officialTrailerUrl ? { officialTrailerUrl: article.officialTrailerUrl } : {}),
+}));
 
 export const blockText = (block: PortableBlock) => (block.children || []).map(c => c.text || '').join('');
 export const bodyText = (body: PortableBlock[] = []) => body.filter(b => b._type === 'block').map(blockText).join('\n');

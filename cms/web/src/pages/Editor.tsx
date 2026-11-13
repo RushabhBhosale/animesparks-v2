@@ -93,8 +93,8 @@ function Toolbar({ editor, project, franchise }: { editor: TipTap; project: any;
 }
 
 const STATUS_HELP: Record<string, string> = {
-  needs_repair: 'Something required is missing (see the list above). Use “Repair metadata”, or fix the items marked as needing a person.',
-  awaiting_media: 'Required images are missing. Click “Process images” to find and attach them, or choose them yourself.',
+  needs_repair: 'Some checks need attention. You can repair metadata here or publish and finish optional fields later.',
+  awaiting_media: 'Images are missing. Run “Process images” now, or publish and add them later.',
   awaiting_review: 'Complete and waiting for you: publish or schedule it.',
   ready: 'Complete and ready to publish.',
   failed: 'A background job failed and will not retry on its own. Check the message below, then use “Run full processing”.',
@@ -104,6 +104,7 @@ const Count = ({ value, max, min }: { value: string; max: number; min?: number }
 const formOf = (a: any) => ({
   title: a.title || '', slug: a.slug || '', excerpt: a.excerpt || '', seoTitle: a.metaTitle || '', seoDescription: a.metaDescription || '', authorId: a.authorSanityId || '', categoryIds: (a.categorySanityIds || []) as string[],
   tags: (a.tags || []).join(', '), hero: a.mainImage?.asset?.r2Key ? { assetKey: a.mainImage.asset.r2Key, alt: a.mainImage.alt || '', url: a.mainImage.asset.publicUrl } : null as null | { assetKey: string; alt: string; url?: string },
+  officialTrailerUrl: String(a.officialTrailerUrl || ''),
   canonicalUrl: a.meta?.seo?.canonicalUrl || '', ogTitle: a.meta?.seo?.ogTitle || '', ogDescription: a.meta?.seo?.ogDescription || '', ogImage: a.meta?.seo?.ogImage || '', fields: {} as Record<string, any>,
 });
 
@@ -150,7 +151,8 @@ export function Editor({ project }: { project: any }) {
   // Only what this editor changed since it loaded is sent, so repairs made meanwhile by the engine are never overwritten.
   const save = useCallback(async (opts: { overVersion?: number } = {}) => {
     const s = state.current, a = article.data;
-    if (!s.form || !s.base || !a || !editor || s.saving || !s.dirty) return;
+    if (!s.dirty) return true;
+    if (!s.form || !s.base || !a || !editor || s.saving) return false;
     const f = s.form, original = s.base, body: Record<string, any> = {};
     if (f.title !== original.title) body.title = f.title;
     if (f.slug !== original.slug) body.slug = f.slug;
@@ -161,12 +163,13 @@ export function Editor({ project }: { project: any }) {
     if (JSON.stringify(f.categoryIds) !== JSON.stringify(original.categoryIds)) body.categoryIds = f.categoryIds;
     if (f.tags !== original.tags) body.tags = f.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
     if (JSON.stringify(f.hero && { k: f.hero.assetKey, a: f.hero.alt }) !== JSON.stringify(original.hero && { k: original.hero.assetKey, a: original.hero.alt })) body.heroImage = f.hero ? { assetKey: f.hero.assetKey, alt: f.hero.alt } : null;
+    if (f.officialTrailerUrl !== original.officialTrailerUrl) body.officialTrailerUrl = f.officialTrailerUrl.trim();
     if (f.canonicalUrl && f.canonicalUrl !== original.canonicalUrl) body.canonicalUrl = f.canonicalUrl;
     if (f.ogTitle !== original.ogTitle || f.ogDescription !== original.ogDescription || f.ogImage !== original.ogImage) body.openGraph = { title: f.ogTitle || undefined, description: f.ogDescription || undefined, image: f.ogImage || undefined };
     const fields = Object.fromEntries(Object.entries(f.fields).filter(([k, v]) => (original.fields[k] ?? '') !== v && !(k === 'language' && a[k])));
     if (Object.keys(fields).length) body.fields = fields;
     if (s.bodyDirty) body.body = tiptapToPortableText(editor.getJSON() as never);
-    if (!Object.keys(body).length) { setDirty(false); return; }
+    if (!Object.keys(body).length) { setDirty(false); return true; }
     setSaving(true);
     try {
       const next = await api(base, { method: 'PATCH', body: { ...body, expectedVersion: opts.overVersion ?? s.version } });
@@ -177,9 +180,11 @@ export function Editor({ project }: { project: any }) {
       if (opts.overVersion) load(next);
       localStorage.removeItem(draftKey);
       client.invalidateQueries({ queryKey: ['revisions', pid, id] });
+      return true;
     } catch (error) {
       if (error instanceof ApiError && error.code === 'version_conflict') setConflict(true);
       else toast('error', `Not saved: ${(error as Error).message}${Array.isArray((error as ApiError).details) ? ` ${(error as ApiError).details.map((d: any) => d.message || d).join(' ')}` : ''}`);
+      return false;
     } finally { setSaving(false); }
   }, [article.data, editor, base, client, pid, id, draftKey, toast, load]);
 
@@ -198,8 +203,16 @@ export function Editor({ project }: { project: any }) {
   }, [save]);
 
   const refresh = () => client.invalidateQueries({ predicate: q => ['article', 'activity', 'revisions', 'overview', 'repair-queue', 'articles'].includes(q.queryKey[0] as string) });
-  const act = async (key: string, path: string, message: (r: any) => string | void, body: unknown = {}, method = 'POST') => { if (state.current.dirty) await save(); return run(key, () => api(`${base}${path}`, { method, body: method === 'DELETE' ? undefined : body }), r => { refresh(); return message(r); }); };
-  const publishMessage = (r: any) => r.outcome === 'published' ? `Published. ${r.liveCheck === 'queued' ? 'The public URL will be confirmed once the site rebuilds.' : ''}` : r.outcome === 'scheduled' ? `Scheduled for ${fmt(r.scheduledAt, project.timezone)} (${project.timezone})` : r.outcome === 'already_published' ? 'Already published' : `${r.message} ${r.issues.map((i: any) => i.message).join(' ')}`;
+  const act = async (key: string, path: string, message: (r: any) => string | void, body: unknown = {}, method = 'POST') => { if (!await save()) return; return run(key, () => api(`${base}${path}`, { method, body: method === 'DELETE' ? undefined : body }), r => { refresh(); return message(r); }); };
+  const publishMessage = (r: any) => {
+    if (r.outcome === 'published') {
+      const warnings = r.issues?.length ?? 0;
+      return `Published.${warnings ? ` ${warnings} ${warnings === 1 ? 'warning remains' : 'warnings remain'} in Workflow.` : ''}${r.liveCheck === 'queued' ? ' The public URL will be confirmed once the site rebuilds.' : ''}`;
+    }
+    if (r.outcome === 'scheduled') return `Scheduled for ${fmt(r.scheduledAt, project.timezone)} (${project.timezone})`;
+    if (r.outcome === 'already_published') return 'Already published';
+    return `${r.message} ${r.issues.map((i: any) => i.message).join(' ')}`;
+  };
   const wordCount = useMemo(() => editor?.getText().trim().split(/\s+/).filter(Boolean).length || 0, [editor, version, dirty]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (article.isLoading || !form || !editor) return article.error ? <div className="p-8"><ErrorNote error={article.error} /></div> : <Spinner />;
@@ -215,7 +228,7 @@ export function Editor({ project }: { project: any }) {
         <div className="ml-auto flex flex-wrap gap-2">
           <a href={`/api${base}/preview`} target="_blank" rel="noreferrer"><Button>Preview</Button></a>
           <Button onClick={() => save()} disabled={!dirty || conflict} busy={saving} title="Save (⌘S)">Save</Button>
-          {!published && <Button variant="primary" busy={busy === 'publish'} onClick={() => window.confirm('Publish this article to the live site?') && act('publish', '/publish', publishMessage)}>Publish</Button>}
+          {!published && <Button variant="primary" busy={busy === 'publish'} disabled={saving || conflict || !!busy} onClick={() => window.confirm('Publish this article to the live site? Missing images and optional fields can be added later.') && act('publish', '/publish', publishMessage)}>Publish</Button>}
         </div>
       </div>
       {conflict && <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">This article was changed elsewhere (for example by the engine) while you were editing. Autosave is paused.<Button size="sm" variant="primary" busy={saving} onClick={() => save({ overVersion: article.data.meta.version })}>Keep my edits (merge with the latest)</Button><Button size="sm" onClick={() => { localStorage.removeItem(draftKey); load(article.data); }}>Discard mine and load the latest</Button></div>}
@@ -236,15 +249,15 @@ export function Editor({ project }: { project: any }) {
         <div className="space-y-4">
           <Panel title="Workflow" right={<span className="text-xs text-zinc-500">v{version}</span>}>
             {issues.length ? <ul className="space-y-1.5">{issues.map((i, n) => <li key={n} className="flex gap-2 text-sm"><span className={cx('mt-1.5 size-2 shrink-0 rounded-full', i.severity === 'error' ? 'bg-red-500' : 'bg-amber-400')} /><span>{i.message}</span></li>)}</ul> : <p className={cx('text-sm', meta.processedHash || meta.evaluatedHash ? 'text-emerald-700' : 'text-zinc-500')}>{meta.processedHash || meta.evaluatedHash ? 'No open issues.' : 'Not checked yet.'}</p>}
-            {STATUS_HELP[meta.status] && <p className="rounded-md bg-zinc-50 px-2.5 py-2 text-xs text-zinc-600">{meta.mediaReview ? `Needs images added by hand: ${meta.mediaReview.reason}.` : STATUS_HELP[meta.status]}</p>}
+            {(meta.mediaReview || STATUS_HELP[meta.status]) && <p className="rounded-md bg-zinc-50 px-2.5 py-2 text-xs text-zinc-600">{meta.mediaReview ? `Needs images added by hand: ${meta.mediaReview.reason}.` : STATUS_HELP[meta.status]}</p>}
             {meta.lastError && <p className="text-sm text-red-700">{meta.lastError}</p>}
             {meta.intent && <Badge className="bg-violet-100 text-violet-800">{meta.intent.type === 'publish' ? 'Publish requested — will publish when complete' : `Schedule requested for ${fmt(meta.intent.at, project.timezone)}`}</Badge>}
             {published && <p className="text-xs text-zinc-500">Published {fmt(a.publishedAt, project.timezone)} · {meta.live?.verifiedAt ? `live URL confirmed ${ago(meta.live.verifiedAt)}` : meta.live?.checkedAt ? `live check pending (last HTTP ${meta.live.lastStatus || 'none'})` : 'live URL not checked'}</p>}
             <div className="grid grid-cols-2 gap-2">
-              <Button size="sm" busy={busy === 'validate'} onClick={() => act('validate', '/validate', r => r.ready ? `Ready to publish${r.warnings.length ? ` (${r.warnings.length} warning${r.warnings.length > 1 ? 's' : ''})` : ''}` : `${r.errors.length} blocking issue${r.errors.length > 1 ? 's' : ''}`)}>Validate</Button>
+              <Button size="sm" busy={busy === 'validate'} onClick={() => act('validate', '/validate', r => r.ready ? `${published ? 'Validation complete' : 'Ready to publish'}${r.warnings.length ? ` (${r.warnings.length} warning${r.warnings.length > 1 ? 's' : ''})` : ''}` : `${r.errors.length} issue${r.errors.length > 1 ? 's' : ''} found in Workflow`)}>Validate</Button>
               <Button size="sm" busy={busy === 'repair'} disabled={published} onClick={() => act('repair', '/repair', r => r.repaired.length ? `Repaired ${r.repaired.map((x: any) => x.field).join(', ')}` : r.unresolved.length ? `Nothing repaired. ${r.unresolved.join('; ')}` : 'Metadata was already complete')}>Repair metadata</Button>
-              <Button size="sm" busy={busy === 'images'} disabled={published} onClick={async () => { if (state.current.dirty) await save(); await run('images', () => processImages(base), r => { refresh(); return imagesMessage(r); }); }}>Process images</Button>
-              <Button size="sm" busy={busy === 'process'} disabled={published} onClick={() => act('process', '/process', () => 'Queued for full processing')}>Run full processing</Button>
+              <Button size="sm" busy={busy === 'images'} disabled={saving || conflict || !!busy} onClick={async () => { if (!await save()) return; await run('images', () => processImages(base), r => { refresh(); return imagesMessage(r); }); }}>Process images</Button>
+              <Button size="sm" busy={busy === 'process'} disabled={saving || conflict || !!busy} onClick={() => act('process', '/process', () => 'Queued for full processing')}>Run full processing</Button>
             </div>
             {!published ? (
               <div className="border-t border-zinc-100 pt-3"><Field label="Schedule" hint="your local time"><div className="flex gap-2"><Input type="datetime-local" value={scheduleAt} onChange={e => setScheduleAt(e.target.value)} /><Button busy={busy === 'schedule'} disabled={!scheduleAt} onClick={() => act('schedule', '/schedule', publishMessage, { scheduledAt: new Date(scheduleAt).toISOString() })}>Schedule</Button></div></Field>
@@ -254,6 +267,7 @@ export function Editor({ project }: { project: any }) {
           <Panel title="Hero image">
             {form.hero ? <><img src={form.hero.url || `${project.media.publicBaseUrl}/${form.hero.assetKey}`} alt="" className="aspect-video w-full rounded-md border border-zinc-200 bg-zinc-50 object-cover" /><Field label="Alt text"><Input value={form.hero.alt} onChange={e => set({ hero: { ...form.hero!, alt: e.target.value } })} maxLength={300} /></Field></> : <div className="flex aspect-video items-center justify-center rounded-md border border-dashed border-zinc-300 text-sm text-zinc-500">No hero image</div>}
             <div className="flex gap-2"><Button size="sm" onClick={() => setHeroPicker(true)}>{form.hero ? 'Change' : 'Choose image'}</Button>{form.hero && <Button size="sm" variant="ghost" onClick={() => set({ hero: null })}>Remove</Button>}</div>
+            <Field label="Official YouTube trailer" hint="Process images can use this video for hero and inline images."><Input type="url" value={form.officialTrailerUrl} onChange={e => set({ officialTrailerUrl: e.target.value })} maxLength={300} placeholder="https://youtu.be/…" /></Field>
           </Panel>
           <Panel title="Details">
             <Field label="Slug" hint={published ? 'locked: public URL' : undefined}><Input value={form.slug} disabled={published} onChange={e => set({ slug: e.target.value })} /></Field>

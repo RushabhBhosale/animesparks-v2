@@ -13,7 +13,7 @@ import { CmsError } from '../core/types';
 const project = z.string().describe('Project ID from list_projects, e.g. "animesparks".');
 const article = z.string().describe('Stable article ID (the `id` field). Never a title.');
 const input = articles.articleInput.shape;
-const editable = { title: input.title.optional(), slug: input.slug, excerpt: input.excerpt, body: input.body, bodyMarkdown: input.bodyMarkdown, tags: input.tags, faq: input.faq, sources: input.sources, fields: input.fields, relatedIds: input.relatedIds };
+const editable = { title: input.title.optional(), slug: input.slug, excerpt: input.excerpt, body: input.body, bodyMarkdown: input.bodyMarkdown, tags: input.tags, faq: input.faq, sources: input.sources, officialTrailerUrl: input.officialTrailerUrl.describe('Official YouTube trailer or teaser for sourcing hero and inline images.'), fields: input.fields, relatedIds: input.relatedIds };
 
 /**
  * MCP tools are thin adapters over the same services the dashboard and REST API use.
@@ -90,11 +90,11 @@ export function buildMcpServer(ctx: Ctx) {
   tool('insert_inline_images', 'write', 'Insert media-library assets into the article body as image blocks, after a named heading or block index.',
     { project, id: article, images: z.array(z.object({ assetKey: z.string(), alt: z.string().max(300).optional(), caption: z.string().max(300).optional(), afterHeading: z.string().optional(), afterBlock: z.number().int().optional() })).min(1).max(10) },
     async a => { const p = await projectFor(ctx, a.project, 'write'); return insertInlineImages(ctx, p, await articles.findArticle(ctx, p, a.id), a.images); });
-  tool('process_article_images', 'media', 'Run the automatic image pipeline for an article: find topic-matched permitted images, store them, attach the hero and insert inline images.', { project, id: article }, a => engine.processArticleImages(ctx, a.project, a.id), { openWorld: true });
+  tool('process_article_images', 'media', 'Fill missing hero and inline images on a draft or published article using topic-matched permitted images.', { project, id: article }, a => engine.processArticleImages(ctx, a.project, a.id), { openWorld: true });
   tool('list_articles_missing_images', 'read', 'List articles without a hero image or with too few inline images.', { project, includePublished: z.boolean().optional() }, a => engine.missingImages(ctx, a.project, a.includePublished));
 
   // ── Publishing ────────────────────────────────────────────────────────────
-  tool('publish_article', 'publish', 'Publish an article now. If it is incomplete, repair is queued and it is published automatically once every check passes; the response says which happened.', { project, id: article }, a => publish.requestPublish(ctx, a.project, a.id), { destructive: true, idempotent: true, openWorld: true });
+  tool('publish_article', 'publish', 'Publish an article now. Missing images and optional metadata are returned as warnings. The article still needs a title, body and valid public route.', { project, id: article }, a => publish.requestPublish(ctx, a.project, a.id, { allowIncomplete: true }), { destructive: true, idempotent: true, openWorld: true });
   tool('schedule_article', 'publish', 'Schedule an article for a future time (ISO 8601, any offset).', { project, id: article, scheduledAt: z.string() }, a => publish.requestPublish(ctx, a.project, a.id, { at: a.scheduledAt }), { destructive: true, idempotent: true, openWorld: true });
   tool('get_publishing_status', 'read', 'Workflow status, timestamps (created/updated/scheduled/published), live-URL check, open issues and recent jobs for an article.', { project, id: article }, a => publish.publishingStatus(ctx, a.project, a.id));
   tool('list_failed_jobs', 'read', 'List background jobs that failed permanently or exhausted their retries.', { project }, a => listJobs(ctx, a.project, { status: ['failed', 'dead'] }).then(jobs => jobs.map(j => ({ jobId: j._id, type: j.type, articleId: j.articleId, status: j.status, attempts: j.attempts, error: j.error, failedAt: j.finishedAt }))));

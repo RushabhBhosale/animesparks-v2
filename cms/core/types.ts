@@ -3,7 +3,7 @@ import type { ArticleDocument, PortableBlock, CategoryDocument, AuthorDocument, 
 
 export type { PortableBlock, CategoryDocument, AuthorDocument, ContentImage };
 /** Article documents keep the shape the Astro site already reads. `sanityId` is the stable article ID. */
-export type Article = ArticleDocument & { createdAt?: string; [key: string]: unknown };
+export type Article = ArticleDocument & { createdAt?: string; officialTrailerUrl?: string; [key: string]: unknown };
 
 export const STATUSES = ['draft', 'needs_repair', 'awaiting_media', 'awaiting_review', 'ready', 'scheduled', 'publishing', 'published', 'failed'] as const;
 export type Status = typeof STATUSES[number];

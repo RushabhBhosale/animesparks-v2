@@ -5,7 +5,7 @@ import { CmsError, conflict, invalid, notFound, STATUSES } from './types';
 import { cms, collections, projectFor } from './projects';
 import { enqueue, log } from './jobs';
 import { markdownToPortable, sanitizeBody } from './portable';
-import { contentHash, escapeRegex, now, slugify, uid, validSlug } from './util';
+import { contentHash, escapeRegex, now, slugify, uid, validSlug, youtubeVideoId } from './util';
 
 const str = (max: number) => z.string().trim().max(max);
 export const articleInput = z.object({
@@ -20,6 +20,7 @@ export const articleInput = z.object({
   seoTitle: str(180).optional(),
   seoDescription: str(320).optional(),
   heroImage: z.object({ assetKey: z.string(), alt: str(300).optional() }).nullable().optional(),
+  officialTrailerUrl: str(300).refine(value => !value || !!youtubeVideoId(value), 'Enter an HTTPS link to an official YouTube trailer.').optional(),
   canonicalUrl: z.url().optional(),
   openGraph: z.object({ title: str(180).optional(), description: str(320).optional(), image: z.url().optional() }).optional(),
   relatedIds: z.array(z.string()).max(20).optional(),
@@ -72,6 +73,13 @@ export async function ensureMeta(ctx: Ctx, project: Project, article: Article): 
   };
   try { await cms(ctx).meta.insertOne(meta); } catch (error) { if ((error as { code?: number }).code !== 11000) throw error; return (await cms(ctx).meta.findOne({ _id }))!; }
   return meta;
+}
+export async function withArticleLock<T>(ctx: Ctx, project: Project, id: string, owner: string, fn: () => Promise<T>): Promise<T | 'locked'> {
+  const { _id } = await ensureMeta(ctx, project, await findArticle(ctx, project, id));
+  const at = now();
+  const locked = await cms(ctx).meta.updateOne({ _id, $or: [{ lock: { $exists: false } }, { 'lock.until': { $lt: at } }, { 'lock.owner': owner }] }, { $set: { lock: { owner, until: new Date(Date.now() + 5 * 60_000).toISOString() } } });
+  if (!locked.matchedCount) return 'locked';
+  try { return await fn(); } finally { await cms(ctx).meta.updateOne({ _id, 'lock.owner': owner }, { $unset: { lock: '' } }); }
 }
 export async function setStatus(ctx: Ctx, meta: ArticleMeta, to: Status, extra: Partial<ArticleMeta> = {}, unset: Array<keyof ArticleMeta> = []) {
   if (meta.status !== to && !TRANSITIONS[meta.status].includes(to)) throw conflict(`Cannot move an article from "${meta.status}" to "${to}".`);
@@ -133,6 +141,7 @@ async function toDocument(ctx: Ctx, project: Project, input: Partial<ArticleInpu
   if (input.seoDescription !== undefined) set.metaDescription = input.seoDescription;
   if (input.faq !== undefined) set.faq = input.faq.map((row, i) => ({ _key: `f${i + 1}`, _type: 'faqItem', ...row }));
   if (input.sources !== undefined) set.sources = input.sources.map((row, i) => ({ _key: `s${i + 1}`, _type: 'articleSource', ...row }));
+  if (input.officialTrailerUrl !== undefined) set.officialTrailerUrl = input.officialTrailerUrl || undefined;
   if (input.body !== undefined || input.bodyMarkdown !== undefined) {
     const { body, errors } = sanitizeBody(input.body ?? markdownToPortable(input.bodyMarkdown || ''), project.quality.allowedBlockTypes);
     if (errors.length) throw invalid('Article body is not valid.', errors);
@@ -275,7 +284,7 @@ export async function getRevisions(ctx: Ctx, projectId: string, id: string, with
   const filter = { projectId, articleId: id, ...(withSnapshot !== undefined ? { version: withSnapshot } : {}) };
   return cms(ctx).revisions.find(filter, { projection: { _id: 0, ...(withSnapshot === undefined ? { snapshot: 0 } : {}) } }).sort({ version: -1 }).limit(50).toArray();
 }
-const RESTORABLE = ['title', 'excerpt', 'body', 'mainImage', 'authorSanityId', 'categorySanityIds', 'tags', 'metaTitle', 'metaDescription', 'faq', 'sources'];
+const RESTORABLE = ['title', 'excerpt', 'body', 'mainImage', 'authorSanityId', 'categorySanityIds', 'tags', 'metaTitle', 'metaDescription', 'faq', 'sources', 'officialTrailerUrl'];
 export async function restoreRevision(ctx: Ctx, projectId: string, id: string, version: number) {
   const project = await projectFor(ctx, projectId, 'write');
   const revision = await cms(ctx).revisions.findOne({ projectId, articleId: id, version });

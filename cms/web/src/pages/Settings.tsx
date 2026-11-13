@@ -90,7 +90,7 @@ export function SettingsPage({ project }: { project: any }) {
             return <div key={cat.id} className="grid gap-2 md:grid-cols-[160px_1fr_1fr] md:items-center"><div className="text-sm font-medium">{cat.name}</div><Input aria-label={`${cat.name} keywords`} placeholder="keywords, comma-separated" defaultValue={rule.keywords.join(', ')} onBlur={e => up({ keywords: list(e.target.value) })} /><Input aria-label={`${cat.name} article types`} placeholder="article types, comma-separated" defaultValue={(rule.articleTypes || []).join(', ')} onBlur={e => up({ articleTypes: list(e.target.value) })} /></div>;
           })}</div>}
         </Group>
-        <Group project={project} title="Automatic repair" description="Repairs only fill in missing or invalid values. Valid fields, article bodies and published articles are left alone." pick={p => ({ repair: p.repair })}>
+        <Group project={project} title="Automatic repair" description="Repairs fill in missing or invalid metadata. Use Run full processing to repair a published article." pick={p => ({ repair: p.repair })}>
           {(v, set) => { const r = v.repair, up = (patch: any) => set({ repair: { ...r, ...patch } }); return <div className="grid gap-x-8 md:grid-cols-2">
             <Toggle checked={r.enabled} onChange={enabled => up({ enabled })} label="Repair metadata automatically" />
             <Toggle checked={r.author} onChange={author => up({ author })} label="Assign the default author" />

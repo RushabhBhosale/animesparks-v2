@@ -135,7 +135,7 @@ export function createApp(deps: AppDeps) {
   app.get('/api/projects/:pid/articles/:id/image-plan', async c => c.json(await engine.imagePlan(x(c), pid(c), aid(c))));
   app.post('/api/projects/:pid/articles/:id/images', async c => c.json(await engine.processArticleImages(x(c), pid(c), aid(c), z.object({ catalog: catalogInput.optional() }).parse(await c.req.json().catch(() => ({}))))));
   app.post('/api/projects/:pid/articles/:id/process', async c => c.json(await engine.requestProcessing(x(c), pid(c), aid(c)), 202));
-  app.post('/api/projects/:pid/articles/:id/publish', async c => c.json(await publish.requestPublish(x(c), pid(c), aid(c))));
+  app.post('/api/projects/:pid/articles/:id/publish', async c => c.json(await publish.requestPublish(x(c), pid(c), aid(c), { allowIncomplete: true })));
   app.post('/api/projects/:pid/articles/:id/schedule', async c => c.json(await publish.requestPublish(x(c), pid(c), aid(c), { at: z.object({ scheduledAt: z.string() }).parse(await c.req.json()).scheduledAt })));
   app.delete('/api/projects/:pid/articles/:id/schedule', async c => c.json(await publish.cancelSchedule(x(c), pid(c), aid(c))));
   app.post('/api/projects/:pid/articles/:id/unpublish', async c => c.json(await publish.unpublish(x(c), pid(c), aid(c))));

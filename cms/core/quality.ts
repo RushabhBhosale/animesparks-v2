@@ -3,6 +3,11 @@ import { collections } from './projects';
 import { blockText, bodyText, validSlug, wordCount } from './util';
 
 export const inlineImages = (body: PortableBlock[] = []) => body.filter(b => b._type === 'image');
+// An editor can waive completeness checks, but the post still needs content and a routable URL.
+const requiredToPublish = new Set(['title_missing', 'slug_invalid', 'slug_duplicate', 'body_empty', 'unsupported_block']);
+export const publicationAdvisories = (issues: Issue[]): Issue[] => issues.map(issue =>
+  issue.severity === 'error' && !requiredToPublish.has(issue.code) && !(issue.field === 'language' && issue.code === 'field_missing')
+    ? { ...issue, severity: 'warning' } : issue);
 /** How many inline images an article should carry: required minimum and the pipeline's target. */
 export function inlineTargets(project: Project, article: Article) {
   const body = article.body || [], q = project.quality;
@@ -90,7 +95,7 @@ export async function evaluate(ctx: Ctx, project: Project, article: Article, met
   }
   if (meta?.scheduledAt && !Number.isFinite(Date.parse(meta.scheduledAt))) add('schedule_invalid', 'schedule', 'Scheduled time is not a valid date.', { field: 'scheduledAt' });
   if (meta?.mediaReview && issues.some(i => i.group === 'media' && i.severity === 'error')) for (const issue of issues) if (issue.group === 'media' && issue.code !== 'image_alt_missing') { issue.repairable = false; issue.message += ` Needs manual media: ${meta.mediaReview.reason}`; }
-  return issues;
+  return draft ? issues : publicationAdvisories(issues);
 }
 
 export const blocking = (issues: Issue[]) => issues.filter(i => i.severity === 'error');

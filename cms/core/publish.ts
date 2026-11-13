@@ -1,9 +1,9 @@
 import type { Article, ArticleMeta, Ctx, Project } from './types';
 import { CmsError, conflict, invalid } from './types';
-import { articleId, ensureMeta, findArticle, present, queueProcessing, self, setStatus } from './articles';
+import { articleId, ensureMeta, findArticle, present, queueProcessing, self, setStatus, withArticleLock } from './articles';
 import { cms, collections, projectFor } from './projects';
 import { enqueue, log } from './jobs';
-import { blocking, evaluate } from './quality';
+import { blocking, evaluate, publicationAdvisories } from './quality';
 import { articleUrl, contentHash, nextSlot, now } from './util';
 
 async function deployHook(ctx: Ctx, project: Project, article: Article, url: string) {
@@ -25,10 +25,11 @@ async function deployHook(ctx: Ctx, project: Project, article: Article, url: str
  * The single place an article becomes public. It re-checks completeness, moves through an explicit
  * `publishing` state, and records `published` only after the stored document is read back as published.
  */
-export async function performPublish(ctx: Ctx, project: Project, article: Article, meta: ArticleMeta) {
+export async function performPublish(ctx: Ctx, project: Project, article: Article, meta: ArticleMeta, opts: { allowIncomplete?: boolean } = {}) {
   const id = articleId(article), url = articleUrl(project, article);
   if (article.publicationState === 'published') return { published: true, alreadyPublished: true, url, publishedAt: article.publishedAt };
-  const issues = await evaluate(ctx, project, article, meta, { verifyMedia: !!ctx.storage(project) });
+  const evaluated = await evaluate(ctx, project, article, meta, { verifyMedia: !!ctx.storage(project) });
+  const issues = opts.allowIncomplete ? publicationAdvisories(evaluated) : evaluated;
   const blockers = blocking(issues);
   if (blockers.length) {
     await cms(ctx).meta.updateOne({ _id: meta._id }, { $set: { issues } });
@@ -51,11 +52,13 @@ export async function performPublish(ctx: Ctx, project: Project, article: Articl
     await log(ctx, { projectId: project._id, articleId: id, title: article.title, type: 'publish.failed', level: 'error', message: `Publishing failed: ${message}` });
     throw (error as { code?: number }).code === 11000 ? conflict(message) : error;
   }
-  await setStatus(ctx, meta, 'published', { firstPublishedAt: publishedAt, live: { url } }, ['intent', 'scheduledAt', 'lastError', 'mediaReview']);
+  await setStatus(ctx, meta, 'published', { firstPublishedAt: publishedAt, live: { url } }, [
+    'intent', 'scheduledAt', 'lastError', ...(!issues.some(i => i.code === 'hero_missing' || i.code === 'inline_images_missing') ? ['mediaReview' as const] : []),
+  ]);
   await log(ctx, { projectId: project._id, articleId: id, title: article.title, type: 'publish.succeeded', level: 'success', message: `Published — ${url}`, data: { url, publishedAt } });
   const deploy = await deployHook(ctx, project, article, url);
   if (project.publishing.verifyLive) await enqueue(ctx, { projectId: project._id, articleId: id, type: 'verify_live', idempotencyKey: `live:${project._id}:${id}:${publishedAt}`, runAt: new Date(Date.now() + 120_000).toISOString(), maxAttempts: 8 });
-  return { published: true, alreadyPublished: false, url, publishedAt, deploy, liveCheck: project.publishing.verifyLive ? 'queued' : 'disabled' };
+  return { published: true, alreadyPublished: false, url, publishedAt, deploy, liveCheck: project.publishing.verifyLive ? 'queued' : 'disabled', issues };
 }
 
 /** Confirms the public URL actually serves the article. Throws (so the job retries with backoff) until it does. */
@@ -93,10 +96,20 @@ export async function advance(ctx: Ctx, project: Project, article: Article, meta
   return { published: false, status: 'awaiting_review' as const };
 }
 
-/** Publish now, or at `at`. Incomplete articles are queued for repair and published once they pass — never published incomplete. */
-export async function requestPublish(ctx: Ctx, projectId: string, id: string, opts: { at?: string } = {}) {
+/** Explicit Publish can waive completeness checks; scheduling and publish-when-ready still require them. */
+export async function requestPublish(ctx: Ctx, projectId: string, id: string, opts: { at?: string; allowIncomplete?: boolean } = {}) {
   const project = await projectFor(ctx, projectId, 'publish');
   if (opts.at !== undefined && !(Number.isFinite(Date.parse(opts.at)) && Date.parse(opts.at) > Date.now() - 60_000)) throw invalid('scheduledAt must be a valid ISO date-time in the future.');
+  if (opts.allowIncomplete && !opts.at) {
+    const result = await withArticleLock(ctx, project, id, `publish:${crypto.randomUUID()}`, async () => {
+      const article = await findArticle(ctx, project, id), meta = await ensureMeta(ctx, project, article);
+      if (meta.status === 'publishing') throw conflict('Article is already being published.');
+      const published = await performPublish(ctx, project, article, meta, opts);
+      return { outcome: published.alreadyPublished ? 'already_published' : 'published', ...published };
+    });
+    if (result === 'locked') throw new CmsError(409, 'locked', 'Article is being processed. Try publishing again in a moment.');
+    return result;
+  }
   const article = await findArticle(ctx, project, id);
   let meta = await ensureMeta(ctx, project, article);
   if (article.publicationState === 'published') return { outcome: 'already_published', url: articleUrl(project, article), publishedAt: article.publishedAt };
